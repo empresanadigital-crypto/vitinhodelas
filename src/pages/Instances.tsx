@@ -29,6 +29,7 @@ const Instances = () => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrImage, setQrImage] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [qrStatus, setQrStatus] = useState("");
   const [newName, setNewName] = useState("");
   const [newProvider, setNewProvider] = useState<"evolution" | "z-api">("evolution");
   const [zapiInstanceId, setZapiInstanceId] = useState("");
@@ -123,6 +124,7 @@ const Instances = () => {
     setQrLoading(true);
     setQrDialogOpen(true);
     setQrImage(null);
+    setQrStatus("Conectando...");
 
     try {
       if (instance.provider === "z-api") {
@@ -196,12 +198,38 @@ const Instances = () => {
   const getQrCodeEvolution = async (instance: Instance) => {
     if (!instance.instance_id) throw new Error("Instance ID não configurado");
 
-    // Check if instance exists, re-create if needed
+    setQrStatus("Verificando status...");
+    // 1. Check current status first
     const { data: statusData } = await supabase.functions.invoke("evolution-proxy", {
       body: { action: "status", instanceName: instance.instance_id },
     });
 
-    if (!statusData?.success || statusData?.error === "not_found") {
+    const state = statusData?.data?.instance?.state ?? statusData?.data?.state;
+
+    // Already connected
+    if (state === "open") {
+      toast({ title: "Já conectado!", description: "Esta instância já está conectada ao WhatsApp." });
+      await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
+      fetchInstances();
+      setQrDialogOpen(false);
+      return;
+    }
+
+    // 2. If stuck in "connecting" or not found, delete and recreate for a clean QR cycle
+    if (state === "connecting" || !statusData?.success || statusData?.error === "not_found") {
+      setQrStatus("Reiniciando instância...");
+      // Delete silently (may fail if not found, that's ok)
+      try {
+        await supabase.functions.invoke("evolution-proxy", {
+          body: { action: "delete-instance", instanceName: instance.instance_id },
+        });
+      } catch { /* ignore */ }
+
+      // Wait a moment for cleanup
+      await new Promise((r) => setTimeout(r, 2000));
+
+      setQrStatus("Criando nova sessão...");
+      // Recreate
       const { data: createData } = await supabase.functions.invoke("evolution-proxy", {
         body: { action: "create-instance", instanceName: instance.instance_id },
       });
@@ -212,19 +240,12 @@ const Instances = () => {
       }
     }
 
-    // Check if already connected
-    const state = statusData?.data?.instance?.state ?? statusData?.data?.state;
-    if (state === "open") {
-      toast({ title: "Já conectado!", description: "Esta instância já está conectada ao WhatsApp." });
-      await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
-      fetchInstances();
-      setQrDialogOpen(false);
-      return;
-    }
+    // 3. Poll for QR code — wait 3s for Baileys to initialize, then check every 2s
+    setQrStatus("Aguardando WhatsApp gerar QR Code...");
+    await new Promise((r) => setTimeout(r, 3000));
 
-    // Poll for QR code (up to 8 attempts, 1s each = ~8s + latência da API)
-    for (let attempt = 0; attempt < 8; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
+    for (let attempt = 0; attempt < 10; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
 
       const { data, error } = await supabase.functions.invoke("evolution-proxy", {
         body: { action: "qr-code", instanceName: instance.instance_id },
@@ -238,6 +259,7 @@ const Instances = () => {
         return;
       }
 
+      // Check if connected during polling
       const s = data?.data?.instance?.state ?? data?.data?.state;
       if (s === "open") {
         toast({ title: "Conectado!", description: "Instância conectada ao WhatsApp." });
@@ -246,11 +268,18 @@ const Instances = () => {
         setQrDialogOpen(false);
         return;
       }
+
+      // If count > 0 but no base64, the QR was generated but we missed the format
+      const count = data?.data?.count ?? data?.data?.qrcode?.count;
+      if (count && count > 0) {
+        console.log("QR count > 0 but no image extracted, raw data:", JSON.stringify(data));
+      }
     }
 
     toast({
-      title: "QR ainda não gerado",
-      description: "A VPS está inicializando. Aguarde 10s e tente novamente.",
+      title: "QR não gerado",
+      description: "A Evolution API na VPS está lenta. Verifique se o Docker está rodando e tente novamente.",
+      variant: "destructive",
     });
     setQrDialogOpen(false);
   };
@@ -418,7 +447,7 @@ const Instances = () => {
             {qrLoading ? (
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Gerando QR Code...</p>
+                <p className="text-sm text-muted-foreground">{qrStatus || "Gerando QR Code..."}</p>
               </div>
             ) : qrImage ? (
               <img src={qrImage} alt="QR Code WhatsApp" className="rounded-lg" style={{ maxWidth: 300 }} />

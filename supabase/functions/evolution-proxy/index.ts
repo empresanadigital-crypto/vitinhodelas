@@ -132,6 +132,11 @@ serve(async (req) => {
       data = { raw: text };
     }
 
+    // Log response for debugging QR issues
+    if (action === 'qr-code' || action === 'status' || action === 'create-instance') {
+      console.log(`Evolution response [${action}] status=${response.status}:`, JSON.stringify(data).substring(0, 500));
+    }
+
     if (!response.ok) {
       console.error('Evolution API error:', JSON.stringify(data));
       // For 404 on status/qr-code, return graceful error instead of throwing
