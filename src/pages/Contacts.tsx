@@ -46,24 +46,34 @@ const Contacts = () => {
   );
 
   const importContacts = async () => {
-    const lines = bulkText.trim().split("\n");
+    const lines = bulkText.trim().split("\n").filter(l => l.trim());
     const newContacts = lines
       .map((line) => {
         const parts = line.split(/[,;\t]/);
-        if (parts.length >= 2) {
+        if (parts.length >= 2 && parts[0].trim() && parts[1].trim()) {
+          const phone = parts[1].trim().replace(/\D/g, "");
+          if (phone.length < 8) return null;
           return {
             user_id: user!.id,
             name: parts[0].trim(),
-            phone: parts[1].trim().replace(/\D/g, ""),
+            phone,
             tags: ["Importado"],
           };
         }
-        return null;
+        // Só número (sem nome)
+        const phone = parts[0].trim().replace(/\D/g, "");
+        if (phone.length < 8) return null;
+        return {
+          user_id: user!.id,
+          name: phone,
+          phone,
+          tags: ["Importado"],
+        };
       })
       .filter(Boolean) as any[];
 
     if (newContacts.length === 0) {
-      toast({ title: "Erro", description: "Nenhum contato válido encontrado", variant: "destructive" });
+      toast({ title: "Erro", description: "Nenhum contato válido encontrado. Cole números com pelo menos 8 dígitos.", variant: "destructive" });
       return;
     }
 
@@ -106,15 +116,15 @@ const Contacts = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div>
-                <Label className="text-foreground">Cole seus contatos (Nome, Número)</Label>
+                <Label className="text-foreground">Cole seus contatos (um por linha)</Label>
                 <Textarea
-                  placeholder={"Maria Silva, 5511999991234\nJoão Santos, 5521988885678"}
+                  placeholder={"5511999991234\nMaria Silva, 5511999991234\n5521988885678"}
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
                   className="mt-1 min-h-[200px] bg-secondary border-border text-foreground font-mono text-sm"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Formato: Nome, Número (um por linha).
+                  Aceita só o número ou Nome, Número (um por linha). Sem nome, o número será usado como nome.
                 </p>
               </div>
               <Button onClick={importContacts} className="w-full gradient-green text-primary-foreground font-semibold">
