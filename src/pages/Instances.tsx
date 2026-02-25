@@ -222,9 +222,9 @@ const Instances = () => {
       return;
     }
 
-    // Poll for QR code (up to 15 attempts, 1.5s each = ~22s)
-    for (let attempt = 0; attempt < 15; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 1500));
+    // Poll for QR code (up to 8 attempts, 1s each = ~8s + latência da API)
+    for (let attempt = 0; attempt < 8; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
 
       const { data, error } = await supabase.functions.invoke("evolution-proxy", {
         body: { action: "qr-code", instanceName: instance.instance_id },
