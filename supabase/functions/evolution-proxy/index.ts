@@ -58,10 +58,7 @@ serve(async (req) => {
         }
         endpoint = `/message/sendText/${instanceName}`;
         method = 'POST';
-        body = {
-          number: phone,
-          text: message,
-        };
+        body = { number: phone, text: message };
         break;
       }
 
@@ -74,10 +71,7 @@ serve(async (req) => {
         }
         endpoint = `/message/sendText/${instanceName}`;
         method = 'POST';
-        body = {
-          number: phone,
-          text: `${message}\n\n${buttonText}: ${buttonUrl}`,
-        };
+        body = { number: phone, text: `${message}\n\n${buttonText}: ${buttonUrl}` };
         break;
       }
 
@@ -113,11 +107,39 @@ serve(async (req) => {
     }
 
     console.log(`Evolution API: ${method} ${baseUrl}${endpoint}`);
-    const response = await fetch(`${baseUrl}${endpoint}`, fetchOptions);
-    const data = await response.json();
+    
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}${endpoint}`, { ...fetchOptions, signal: controller.signal });
+    } catch (fetchErr: any) {
+      clearTimeout(timeout);
+      if (fetchErr.name === 'AbortError') {
+        throw new Error('Evolution API timeout (15s). Sua VPS pode estar lenta.');
+      }
+      throw fetchErr;
+    }
+    clearTimeout(timeout);
+
+    let data: any;
+    const text = await response.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
 
     if (!response.ok) {
       console.error('Evolution API error:', JSON.stringify(data));
+      // For 404 on status/qr-code, return graceful error instead of throwing
+      if (response.status === 404 && (action === 'status' || action === 'qr-code' || action === 'delete-instance')) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'not_found', data }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       throw new Error(`Evolution API error [${response.status}]: ${JSON.stringify(data)}`);
     }
 
