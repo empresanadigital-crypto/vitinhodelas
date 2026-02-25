@@ -28,6 +28,7 @@ const Instances = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrImage, setQrImage] = useState<string | null>(null);
+  const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrStatus, setQrStatus] = useState("");
   const [newName, setNewName] = useState("");
@@ -124,6 +125,7 @@ const Instances = () => {
     setQrLoading(true);
     setQrDialogOpen(true);
     setQrImage(null);
+    setPairingCode(null);
     setQrStatus("Conectando...");
 
     try {
@@ -192,7 +194,17 @@ const Instances = () => {
       payload?.data?.instance?.qrcode?.base64;
 
     if (!rawQr || typeof rawQr !== "string") return null;
-    return rawQr.startsWith("data:image") ? rawQr : `data:image/png;base64,${rawQr}`;
+    if (rawQr.startsWith("data:image")) return rawQr;
+
+    // QR textual payload is usually very long; pairing code is short.
+    if (rawQr.length < 100) return null;
+    return `data:image/png;base64,${rawQr}`;
+  };
+
+  const extractPairingCode = (payload: any) => {
+    const rawCode = payload?.data?.pairingCode;
+    if (!rawCode || typeof rawCode !== "string") return null;
+    return rawCode.trim() || null;
   };
 
   const getQrCodeEvolution = async (instance: Instance) => {
@@ -238,14 +250,20 @@ const Instances = () => {
         setQrImage(qrFromCreate);
         return;
       }
+
+      const pairingFromCreate = extractPairingCode(createData);
+      if (pairingFromCreate) {
+        setPairingCode(pairingFromCreate);
+        return;
+      }
     }
 
-    // 3. Poll for QR code — wait 3s for Baileys to initialize, then check every 2s
+    // 3. Poll for QR/pairing code — VPS pequena pode demorar
     setQrStatus("Aguardando WhatsApp gerar QR Code...");
-    await new Promise((r) => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 4000));
 
-    for (let attempt = 0; attempt < 10; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+    for (let attempt = 0; attempt < 25; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 2500));
 
       const { data, error } = await supabase.functions.invoke("evolution-proxy", {
         body: { action: "qr-code", instanceName: instance.instance_id },
@@ -259,6 +277,13 @@ const Instances = () => {
         return;
       }
 
+      const pairing = extractPairingCode(data);
+      if (pairing) {
+        setPairingCode(pairing);
+        setQrStatus("Código de pareamento gerado.");
+        return;
+      }
+
       // Check if connected during polling
       const s = data?.data?.instance?.state ?? data?.data?.state;
       if (s === "open") {
@@ -269,16 +294,15 @@ const Instances = () => {
         return;
       }
 
-      // If count > 0 but no base64, the QR was generated but we missed the format
       const count = data?.data?.count ?? data?.data?.qrcode?.count;
-      if (count && count > 0) {
-        console.log("QR count > 0 but no image extracted, raw data:", JSON.stringify(data));
+      if (typeof count === "number") {
+        setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/25`);
       }
     }
 
     toast({
       title: "QR não gerado",
-      description: "A Evolution API na VPS está lenta. Verifique se o Docker está rodando e tente novamente.",
+      description: "A sessão ainda não retornou QR/código. Tente novamente em 30s e valide se a instância está online na VPS.",
       variant: "destructive",
     });
     setQrDialogOpen(false);
@@ -451,6 +475,12 @@ const Instances = () => {
               </div>
             ) : qrImage ? (
               <img src={qrImage} alt="QR Code WhatsApp" className="rounded-lg" style={{ maxWidth: 300 }} />
+            ) : pairingCode ? (
+              <div className="w-full rounded-lg border border-border bg-secondary p-4 text-center">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Código de pareamento</p>
+                <p className="mt-2 text-2xl font-bold tracking-widest text-foreground">{pairingCode}</p>
+                <p className="mt-2 text-xs text-muted-foreground">No WhatsApp, escolha conectar com número de telefone e digite este código.</p>
+              </div>
             ) : (
               <p className="text-muted-foreground">Nenhum QR Code disponível</p>
             )}
