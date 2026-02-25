@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -30,10 +29,6 @@ const Instances = () => {
   const [qrImage, setQrImage] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newProvider, setNewProvider] = useState("z-api");
-  const [newInstanceId, setNewInstanceId] = useState("");
-  const [newToken, setNewToken] = useState("");
-  const [newClientToken, setNewClientToken] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -55,35 +50,53 @@ const Instances = () => {
   }, []);
 
   const addInstance = async () => {
-    if (!newName || !newInstanceId || !newToken) {
-      toast({ title: "Erro", description: "Preencha nome, Instance ID e Token", variant: "destructive" });
+    if (!newName.trim()) {
+      toast({ title: "Erro", description: "Preencha o nome da instância", variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("instances").insert({
-      user_id: user!.id,
-      name: newName,
-      provider: newProvider,
-      instance_id: newInstanceId,
-      token: newToken,
-      client_token: newClientToken || null,
-      status: "disconnected",
-    });
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Sucesso", description: "Instância adicionada!" });
+
+    // Sanitize name for Evolution API (no spaces, lowercase)
+    const instanceName = newName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    try {
+      // Create instance on Evolution API
+      const { data: evoData, error: evoError } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "create-instance", instanceName },
+      });
+
+      if (evoError) throw evoError;
+      if (!evoData?.success) throw new Error(evoData?.error || "Erro ao criar instância");
+
+      // Save to database
+      const { error: dbError } = await supabase.from("instances").insert({
+        user_id: user!.id,
+        name: newName.trim(),
+        provider: "evolution",
+        instance_id: instanceName,
+        status: "disconnected",
+      });
+
+      if (dbError) throw dbError;
+
+      toast({ title: "Sucesso!", description: "Instância criada! Agora escaneie o QR Code para conectar." });
       setNewName("");
-      setNewInstanceId("");
-      setNewToken("");
-      setNewClientToken("");
       setDialogOpen(false);
       fetchInstances();
+
+      // If QR code came back in creation response, show it
+      const qrBase64 = evoData?.data?.qrcode?.base64;
+      if (qrBase64) {
+        setQrImage(qrBase64);
+        setQrDialogOpen(true);
+      }
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
     }
   };
 
   const getQrCode = async (instance: Instance) => {
-    if (!instance.instance_id || !instance.token) {
-      toast({ title: "Erro", description: "Instance ID ou Token não configurado", variant: "destructive" });
+    if (!instance.instance_id) {
+      toast({ title: "Erro", description: "Instance ID não configurado", variant: "destructive" });
       return;
     }
     setQrLoading(true);
@@ -91,17 +104,15 @@ const Instances = () => {
     setQrImage(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("zapi-proxy", {
-        body: {
-          action: "qr-code",
-          instanceId: instance.instance_id,
-          token: instance.token,
-          clientToken: instance.client_token,
-        },
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "qr-code", instanceName: instance.instance_id },
       });
       if (error) throw error;
-      if (data?.data?.value) {
-        setQrImage(data.data.value);
+      if (!data?.success) throw new Error(data?.error || "Erro ao gerar QR");
+
+      const qrBase64 = data?.data?.base64;
+      if (qrBase64) {
+        setQrImage(qrBase64);
       } else {
         toast({ title: "Info", description: "Instância já pode estar conectada. Verifique o status." });
         setQrDialogOpen(false);
@@ -115,24 +126,20 @@ const Instances = () => {
   };
 
   const checkStatus = async (instance: Instance) => {
-    if (!instance.instance_id || !instance.token) return;
+    if (!instance.instance_id) return;
     try {
-      const { data, error } = await supabase.functions.invoke("zapi-proxy", {
-        body: {
-          action: "status",
-          instanceId: instance.instance_id,
-          token: instance.token,
-          clientToken: instance.client_token,
-        },
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "status", instanceName: instance.instance_id },
       });
       if (error) throw error;
-      const connected = data?.data?.connected;
+
+      const state = data?.data?.instance?.state;
+      const connected = state === "open";
       const newStatus = connected ? "connected" : "disconnected";
-      const phone = data?.data?.smartPhone || instance.phone;
 
       await supabase
         .from("instances")
-        .update({ status: newStatus, phone })
+        .update({ status: newStatus })
         .eq("id", instance.id);
 
       fetchInstances();
@@ -142,8 +149,18 @@ const Instances = () => {
     }
   };
 
-  const removeInstance = async (id: string) => {
-    await supabase.from("instances").delete().eq("id", id);
+  const removeInstance = async (instance: Instance) => {
+    // Try to delete from Evolution API too
+    if (instance.instance_id) {
+      try {
+        await supabase.functions.invoke("evolution-proxy", {
+          body: { action: "delete-instance", instanceName: instance.instance_id },
+        });
+      } catch (e) {
+        // ignore - just delete from DB
+      }
+    }
+    await supabase.from("instances").delete().eq("id", instance.id);
     fetchInstances();
   };
 
@@ -160,7 +177,7 @@ const Instances = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Instâncias WhatsApp</h1>
-          <p className="text-muted-foreground">Conecte e gerencie múltiplos números via Z-API</p>
+          <p className="text-muted-foreground">Conecte e gerencie múltiplos números via Evolution API</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -170,37 +187,23 @@ const Instances = () => {
           </DialogTrigger>
           <DialogContent className="bg-card border-border">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Adicionar Instância Z-API</DialogTitle>
+              <DialogTitle className="text-foreground">Criar Nova Instância</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div>
                 <Label className="text-foreground">Nome da Instância</Label>
-                <Input placeholder="Ex: WhatsApp Marketing" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-secondary border-border text-foreground" />
-              </div>
-              <div>
-                <Label className="text-foreground">Provedor</Label>
-                <Select value={newProvider} onValueChange={setNewProvider}>
-                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="z-api">Z-API</SelectItem>
-                    <SelectItem value="evolution">Evolution API</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-foreground">Instance ID</Label>
-                <Input placeholder="Cole o Instance ID da Z-API" value={newInstanceId} onChange={(e) => setNewInstanceId(e.target.value)} className="bg-secondary border-border text-foreground" />
-              </div>
-              <div>
-                <Label className="text-foreground">Token</Label>
-                <Input placeholder="Cole o Token da Z-API" value={newToken} onChange={(e) => setNewToken(e.target.value)} className="bg-secondary border-border text-foreground" type="password" />
-              </div>
-              <div>
-                <Label className="text-foreground">Client Token (opcional)</Label>
-                <Input placeholder="Security token para webhooks" value={newClientToken} onChange={(e) => setNewClientToken(e.target.value)} className="bg-secondary border-border text-foreground" type="password" />
+                <Input
+                  placeholder="Ex: WhatsApp Marketing"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="bg-secondary border-border text-foreground"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  A instância será criada automaticamente na sua VPS
+                </p>
               </div>
               <Button onClick={addInstance} className="w-full gradient-green text-primary-foreground font-semibold">
-                Adicionar Instância
+                Criar Instância
               </Button>
             </div>
           </DialogContent>
@@ -263,7 +266,7 @@ const Instances = () => {
                 <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" onClick={() => checkStatus(instance)}>
                   <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Status
                 </Button>
-                <Button variant="outline" size="sm" className="border-border text-destructive hover:bg-destructive/10" onClick={() => removeInstance(instance.id)}>
+                <Button variant="outline" size="sm" className="border-border text-destructive hover:bg-destructive/10" onClick={() => removeInstance(instance)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -275,7 +278,7 @@ const Instances = () => {
           <div className="col-span-full flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Smartphone className="mb-3 h-10 w-10" />
             <p className="text-lg font-medium">Nenhuma instância</p>
-            <p className="text-sm">Adicione sua primeira instância Z-API para começar</p>
+            <p className="text-sm">Crie sua primeira instância para começar</p>
           </div>
         )}
       </div>
