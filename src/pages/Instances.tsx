@@ -99,24 +99,53 @@ const Instances = () => {
       toast({ title: "Erro", description: "Instance ID não configurado", variant: "destructive" });
       return;
     }
+
+    const extractQrImage = (payload: any) => {
+      const rawQr =
+        payload?.data?.base64 ??
+        payload?.data?.code ??
+        payload?.data?.qrcode?.base64 ??
+        payload?.data?.qrcode?.code;
+
+      if (!rawQr || typeof rawQr !== "string") return null;
+      return rawQr.startsWith("data:image") ? rawQr : `data:image/png;base64,${rawQr}`;
+    };
+
     setQrLoading(true);
     setQrDialogOpen(true);
     setQrImage(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
-        body: { action: "qr-code", instanceName: instance.instance_id },
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Erro ao gerar QR");
+      let pairingCode: string | null = null;
 
-      const qrBase64 = data?.data?.base64;
-      if (qrBase64) {
-        setQrImage(qrBase64);
-      } else {
-        toast({ title: "Info", description: "Instância já pode estar conectada. Verifique o status." });
-        setQrDialogOpen(false);
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+          body: { action: "qr-code", instanceName: instance.instance_id },
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "Erro ao gerar QR");
+
+        const qrImageData = extractQrImage(data);
+        if (qrImageData) {
+          setQrImage(qrImageData);
+          return;
+        }
+
+        pairingCode = data?.data?.pairingCode ?? data?.data?.qrcode?.pairingCode ?? pairingCode;
+
+        if (attempt < 9) {
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+        }
       }
+
+      toast({
+        title: "QR ainda não gerado",
+        description: pairingCode
+          ? `Use o código de pareamento: ${pairingCode}`
+          : "A instância ainda está inicializando. Tente novamente em alguns segundos.",
+      });
+      setQrDialogOpen(false);
     } catch (error: any) {
       toast({ title: "Erro ao gerar QR", description: error.message, variant: "destructive" });
       setQrDialogOpen(false);
