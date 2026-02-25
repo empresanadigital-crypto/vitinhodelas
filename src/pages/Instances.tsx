@@ -105,7 +105,8 @@ const Instances = () => {
         payload?.data?.base64 ??
         payload?.data?.code ??
         payload?.data?.qrcode?.base64 ??
-        payload?.data?.qrcode?.code;
+        payload?.data?.qrcode?.code ??
+        payload?.data?.instance?.qrcode?.base64;
 
       if (!rawQr || typeof rawQr !== "string") return null;
       return rawQr.startsWith("data:image") ? rawQr : `data:image/png;base64,${rawQr}`;
@@ -116,15 +117,38 @@ const Instances = () => {
     setQrImage(null);
 
     try {
-      let pairingCode: string | null = null;
+      // First, ensure the instance exists on Evolution (re-create if needed)
+      const { data: statusData } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "status", instanceName: instance.instance_id },
+      });
 
-      for (let attempt = 0; attempt < 10; attempt++) {
+      const instanceExists = statusData?.success;
+
+      if (!instanceExists) {
+        // Instance doesn't exist on Evolution, re-create it
+        const { data: createData, error: createError } = await supabase.functions.invoke("evolution-proxy", {
+          body: { action: "create-instance", instanceName: instance.instance_id },
+        });
+        if (createError) throw createError;
+
+        // Check if QR came with creation
+        const qrFromCreate = extractQrImage(createData);
+        if (qrFromCreate) {
+          setQrImage(qrFromCreate);
+          setQrLoading(false);
+          return;
+        }
+      }
+
+      // Poll for QR code
+      for (let attempt = 0; attempt < 12; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
         const { data, error } = await supabase.functions.invoke("evolution-proxy", {
           body: { action: "qr-code", instanceName: instance.instance_id },
         });
 
         if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || "Erro ao gerar QR");
 
         const qrImageData = extractQrImage(data);
         if (qrImageData) {
@@ -132,18 +156,20 @@ const Instances = () => {
           return;
         }
 
-        pairingCode = data?.data?.pairingCode ?? data?.data?.qrcode?.pairingCode ?? pairingCode;
-
-        if (attempt < 9) {
-          await new Promise((resolve) => setTimeout(resolve, 1200));
+        // Check if already connected
+        const state = data?.data?.instance?.state ?? data?.data?.state;
+        if (state === "open") {
+          toast({ title: "Já conectado!", description: "Esta instância já está conectada ao WhatsApp." });
+          await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
+          fetchInstances();
+          setQrDialogOpen(false);
+          return;
         }
       }
 
       toast({
         title: "QR ainda não gerado",
-        description: pairingCode
-          ? `Use o código de pareamento: ${pairingCode}`
-          : "A instância ainda está inicializando. Tente novamente em alguns segundos.",
+        description: "A instância está inicializando. Aguarde 10 segundos e clique em QR Code novamente.",
       });
       setQrDialogOpen(false);
     } catch (error: any) {
