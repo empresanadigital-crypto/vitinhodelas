@@ -599,7 +599,10 @@ const Instances = () => {
                 <p className="text-sm text-muted-foreground">{qrStatus || "Gerando QR Code..."}</p>
               </div>
             ) : qrImage ? (
-              <img src={qrImage} alt="QR Code WhatsApp" className="rounded-lg" style={{ maxWidth: 300 }} />
+              <>
+                <img src={qrImage} alt="QR Code WhatsApp" className="rounded-lg" style={{ maxWidth: 300 }} />
+                <p className="mt-2 text-xs text-muted-foreground animate-pulse">⏳ Aguardando conexão...</p>
+              </>
             ) : pairingCode ? (
               <div className="w-full rounded-lg border border-border bg-secondary p-4 text-center">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Código de pareamento</p>
@@ -612,6 +615,28 @@ const Instances = () => {
             <p className="mt-3 text-sm text-muted-foreground text-center">
               Abra o WhatsApp → Configurações → Aparelhos conectados → Escanear QR Code
             </p>
+            {(qrImage || pairingCode) && (
+              <Button
+                className="mt-4 w-full gradient-green text-primary-foreground font-semibold"
+                onClick={async () => {
+                  setQrDialogOpen(false);
+                  // Check status of all instances to update
+                  const { data } = await supabase
+                    .from("instances")
+                    .select("*")
+                    .order("created_at", { ascending: false });
+                  if (data) {
+                    for (const inst of data) {
+                      if (inst.status !== "connected" && inst.instance_id) {
+                        await checkStatus(inst as Instance);
+                      }
+                    }
+                  }
+                }}
+              >
+                <Wifi className="mr-2 h-4 w-4" /> Já escaneei, verificar conexão
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
