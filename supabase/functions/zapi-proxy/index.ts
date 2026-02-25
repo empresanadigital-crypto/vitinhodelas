@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -27,7 +27,7 @@ serve(async (req) => {
 
     switch (action) {
       case 'qr-code':
-        endpoint = '/qr-code';
+        endpoint = '/qr-code/image';
         break;
 
       case 'status':
@@ -57,12 +57,7 @@ serve(async (req) => {
           phone,
           message,
           buttonList: {
-            buttons: [
-              {
-                id: '1',
-                label: buttonText,
-              }
-            ]
+            buttons: [{ id: '1', label: buttonText }]
           }
         };
         break;
@@ -78,20 +73,56 @@ serve(async (req) => {
         );
     }
 
+    const isGet = action === 'qr-code' || action === 'status';
     const fetchOptions: RequestInit = {
-      method: action === 'qr-code' || action === 'status' ? 'GET' : 'POST',
+      method: isGet ? 'GET' : 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Client-Token': clientToken || '',
       },
     };
 
-    if (fetchOptions.method === 'POST') {
+    if (!isGet) {
       fetchOptions.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${baseUrl}${endpoint}`, fetchOptions);
-    const data = await response.json();
+    console.log(`Z-API: ${fetchOptions.method} ${baseUrl}${endpoint}`);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}${endpoint}`, { ...fetchOptions, signal: controller.signal });
+    } catch (fetchErr: any) {
+      clearTimeout(timeout);
+      if (fetchErr.name === 'AbortError') {
+        throw new Error('Z-API timeout (15s)');
+      }
+      throw fetchErr;
+    }
+    clearTimeout(timeout);
+
+    // Z-API qr-code/image returns an image directly
+    if (action === 'qr-code' && response.ok) {
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('image')) {
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        return new Response(
+          JSON.stringify({ success: true, data: { base64: `data:image/png;base64,${base64}` } }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    let data: any;
+    const text = await response.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
 
     if (!response.ok) {
       throw new Error(`Z-API error [${response.status}]: ${JSON.stringify(data)}`);
