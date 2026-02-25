@@ -109,7 +109,8 @@ serve(async (req) => {
     console.log(`Evolution API: ${method} ${baseUrl}${endpoint}`);
     
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeoutMs = action === 'qr-code' || action === 'status' ? 5000 : 15000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     
     let response: Response;
     try {
@@ -117,7 +118,7 @@ serve(async (req) => {
     } catch (fetchErr: any) {
       clearTimeout(timeout);
       if (fetchErr.name === 'AbortError') {
-        throw new Error('Evolution API timeout (15s). Sua VPS pode estar lenta.');
+        throw new Error(`Evolution API timeout (${timeoutMs}ms) na ação ${action}. Sua VPS pode estar lenta.`);
       }
       throw fetchErr;
     }
