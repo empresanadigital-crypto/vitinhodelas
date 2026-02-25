@@ -19,6 +19,7 @@ serve(async (req) => {
     }
 
     const baseUrl = EVOLUTION_API_URL.replace(/\/$/, '');
+    console.log(`Config: URL=${baseUrl}, KEY_LENGTH=${EVOLUTION_API_KEY.length}, KEY_START=${EVOLUTION_API_KEY.substring(0, 8)}...`);
     const { action, instanceName, phone, message, buttonText, buttonUrl } = await req.json();
 
     let endpoint = '';
