@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Send,
@@ -9,6 +9,9 @@ import {
   Settings2,
   Zap,
   AlertCircle,
+  Users,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +21,16 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  tags: string[] | null;
+}
 
 const Campaigns = () => {
   const [campaignName, setCampaignName] = useState("");
@@ -34,11 +47,60 @@ const Campaigns = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
 
+  // Contacts
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+  const [contactSearch, setContactSearch] = useState("");
+  const { toast } = useToast();
+
+  const fetchContacts = useCallback(async () => {
+    const { data } = await supabase
+      .from("contacts")
+      .select("id, name, phone, tags")
+      .order("created_at", { ascending: false });
+    setContacts(data || []);
+  }, []);
+
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
+
+  const filteredContacts = contacts.filter(
+    (c) =>
+      c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+      c.phone.includes(contactSearch)
+  );
+
+  const toggleContact = (id: string) => {
+    setSelectedContacts((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedContacts.size === filteredContacts.length) {
+      setSelectedContacts(new Set());
+    } else {
+      setSelectedContacts(new Set(filteredContacts.map((c) => c.id)));
+    }
+  };
+
   const progress = 65;
   const sent = 650;
   const total = 1000;
 
   const handleStart = () => {
+    if (selectedContacts.size === 0) {
+      toast({ title: "Erro", description: "Selecione pelo menos 1 contato na aba Contatos", variant: "destructive" });
+      return;
+    }
+    if (!message.trim()) {
+      toast({ title: "Erro", description: "Escreva a mensagem", variant: "destructive" });
+      return;
+    }
     setIsRunning(true);
     setIsPaused(false);
   };
@@ -73,11 +135,19 @@ const Campaigns = () => {
               <TabsTrigger value="message" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <MessageSquare className="mr-1.5 h-4 w-4" /> Mensagem
               </TabsTrigger>
+              <TabsTrigger value="contacts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Users className="mr-1.5 h-4 w-4" /> Contatos
+                {selectedContacts.size > 0 && (
+                  <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 text-xs font-bold">
+                    {selectedContacts.size}
+                  </span>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Settings2 className="mr-1.5 h-4 w-4" /> Configurações
+                <Settings2 className="mr-1.5 h-4 w-4" /> Config
               </TabsTrigger>
               <TabsTrigger value="schedule" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Clock className="mr-1.5 h-4 w-4" /> Agendamento
+                <Clock className="mr-1.5 h-4 w-4" /> Agendar
               </TabsTrigger>
             </TabsList>
 
@@ -146,6 +216,54 @@ const Campaigns = () => {
                   </div>
                 </motion.div>
               )}
+            </TabsContent>
+
+            {/* CONTACTS TAB */}
+            <TabsContent value="contacts" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {selectedContacts.size} de {contacts.length} selecionados
+                </p>
+                <Button variant="outline" size="sm" className="border-border text-foreground" onClick={toggleAll}>
+                  {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? (
+                    <><CheckSquare className="mr-1.5 h-3.5 w-3.5" /> Desmarcar todos</>
+                  ) : (
+                    <><Square className="mr-1.5 h-3.5 w-3.5" /> Selecionar todos</>
+                  )}
+                </Button>
+              </div>
+
+              <Input
+                placeholder="Buscar contato..."
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                className="bg-secondary border-border text-foreground"
+              />
+
+              <div className="max-h-[350px] overflow-y-auto rounded-lg border border-border divide-y divide-border">
+                {filteredContacts.length === 0 ? (
+                  <div className="flex flex-col items-center py-8 text-muted-foreground">
+                    <Users className="mb-2 h-6 w-6" />
+                    <p className="text-sm">Nenhum contato. Importe na aba Contatos do menu.</p>
+                  </div>
+                ) : (
+                  filteredContacts.map((contact) => (
+                    <label
+                      key={contact.id}
+                      className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-secondary/40 transition-colors"
+                    >
+                      <Checkbox
+                        checked={selectedContacts.has(contact.id)}
+                        onCheckedChange={() => toggleContact(contact.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{contact.phone}</p>
+                      </div>
+                    </label>
+                  ))
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-5">
@@ -282,6 +400,11 @@ const Campaigns = () => {
               <div className="flex flex-col items-center py-6 text-muted-foreground">
                 <Zap className="mb-2 h-8 w-8" />
                 <p className="text-sm">Campanha não iniciada</p>
+                {selectedContacts.size > 0 && (
+                  <p className="mt-1 text-xs text-primary font-medium">
+                    {selectedContacts.size} contatos selecionados
+                  </p>
+                )}
               </div>
             )}
           </div>
