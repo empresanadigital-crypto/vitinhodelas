@@ -14,7 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campaign_logs: {
+        Row: {
+          campaign_id: string
+          contact_name: string | null
+          contact_phone: string
+          error_message: string | null
+          id: string
+          instance_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          contact_name?: string | null
+          contact_phone: string
+          error_message?: string | null
+          id?: string
+          instance_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          contact_name?: string | null
+          contact_phone?: string
+          error_message?: string | null
+          id?: string
+          instance_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_logs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          button_text: string | null
+          button_url: string | null
+          completed_at: string | null
+          created_at: string
+          failed_count: number
+          id: string
+          interval_seconds: number
+          message: string
+          messages_per_instance: number
+          name: string
+          rotate_instances: boolean
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          total_contacts: number
+          updated_at: string
+          use_buttons: boolean
+          user_id: string
+        }
+        Insert: {
+          button_text?: string | null
+          button_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          interval_seconds?: number
+          message: string
+          messages_per_instance?: number
+          name: string
+          rotate_instances?: boolean
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_contacts?: number
+          updated_at?: string
+          use_buttons?: boolean
+          user_id: string
+        }
+        Update: {
+          button_text?: string | null
+          button_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          interval_seconds?: number
+          message?: string
+          messages_per_instance?: number
+          name?: string
+          rotate_instances?: boolean
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_contacts?: number
+          updated_at?: string
+          use_buttons?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone: string
+          tags: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+          tags?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+          tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      instances: {
+        Row: {
+          client_token: string | null
+          created_at: string
+          id: string
+          instance_id: string | null
+          messages_sent: number
+          name: string
+          phone: string | null
+          provider: string
+          status: string
+          token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_token?: string | null
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          messages_sent?: number
+          name: string
+          phone?: string | null
+          provider?: string
+          status?: string
+          token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_token?: string | null
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          messages_sent?: number
+          name?: string
+          phone?: string | null
+          provider?: string
+          status?: string
+          token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

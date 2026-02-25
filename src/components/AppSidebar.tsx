@@ -7,7 +7,9 @@ import {
   BarChart3,
   Settings,
   Zap,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -20,6 +22,7 @@ const navItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar">
@@ -55,11 +58,17 @@ const AppSidebar = () => {
         })}
       </nav>
 
-      <div className="border-t border-border p-4">
-        <div className="glass-card rounded-lg p-3">
-          <p className="text-xs text-muted-foreground">Instâncias ativas</p>
-          <p className="text-2xl font-bold text-primary">0</p>
+      <div className="border-t border-border p-4 space-y-3">
+        <div className="text-xs text-muted-foreground truncate px-1">
+          {user?.email}
         </div>
+        <button
+          onClick={signOut}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </button>
       </div>
     </aside>
   );
