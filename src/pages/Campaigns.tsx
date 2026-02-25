@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Send,
@@ -12,6 +12,7 @@ import {
   Users,
   CheckSquare,
   Square,
+  StopCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 interface Contact {
@@ -30,6 +32,14 @@ interface Contact {
   name: string;
   phone: string;
   tags: string[] | null;
+}
+
+interface Instance {
+  id: string;
+  name: string;
+  instance_id: string | null;
+  provider: string;
+  status: string;
 }
 
 const Campaigns = () => {
@@ -41,7 +51,7 @@ const Campaigns = () => {
   const [useButtons, setUseButtons] = useState(false);
   const [buttonText, setButtonText] = useState("");
   const [buttonUrl, setButtonUrl] = useState("");
-  const [selectedInstance, setSelectedInstance] = useState("");
+  const [selectedInstance, setSelectedInstance] = useState("all");
   const [rotateInstances, setRotateInstances] = useState(true);
   const [messagesPerInstance, setMessagesPerInstance] = useState("10");
   const [scheduleDate, setScheduleDate] = useState("");
@@ -51,6 +61,23 @@ const Campaigns = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [contactSearch, setContactSearch] = useState("");
+  const [filterTag, setFilterTag] = useState("all");
+
+  // Instances
+  const [instances, setInstances] = useState<Instance[]>([]);
+
+  // Dispatch state
+  const [sentCount, setSentCount] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
+  const [totalToSend, setTotalToSend] = useState(0);
+  const [currentContact, setCurrentContact] = useState("");
+  const [dispatchLog, setDispatchLog] = useState<string[]>([]);
+
+  // Refs for pause/stop control
+  const isPausedRef = useRef(false);
+  const isStoppedRef = useRef(false);
+
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchContacts = useCallback(async () => {
@@ -61,15 +88,32 @@ const Campaigns = () => {
     setContacts(data || []);
   }, []);
 
+  const fetchInstances = useCallback(async () => {
+    const { data } = await supabase
+      .from("instances")
+      .select("id, name, instance_id, provider, status")
+      .eq("status", "connected")
+      .order("created_at", { ascending: false });
+    setInstances(data || []);
+  }, []);
+
   useEffect(() => {
     fetchContacts();
-  }, [fetchContacts]);
+    fetchInstances();
+  }, [fetchContacts, fetchInstances]);
 
-  const filteredContacts = contacts.filter(
-    (c) =>
+  // Get unique tags
+  const allTags = Array.from(
+    new Set(contacts.flatMap((c) => c.tags || []))
+  ).sort();
+
+  const filteredContacts = contacts.filter((c) => {
+    const matchSearch =
       c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-      c.phone.includes(contactSearch)
-  );
+      c.phone.includes(contactSearch);
+    const matchTag = filterTag === "all" || (c.tags || []).includes(filterTag);
+    return matchSearch && matchTag;
+  });
 
   const toggleContact = (id: string) => {
     setSelectedContacts((prev) => {
@@ -81,18 +125,21 @@ const Campaigns = () => {
   };
 
   const toggleAll = () => {
-    if (selectedContacts.size === filteredContacts.length) {
+    if (selectedContacts.size === filteredContacts.length && filteredContacts.length > 0) {
       setSelectedContacts(new Set());
     } else {
       setSelectedContacts(new Set(filteredContacts.map((c) => c.id)));
     }
   };
 
-  const progress = 65;
-  const sent = 650;
-  const total = 1000;
+  const getProxyFunction = (provider: string) => {
+    if (provider === "baileys") return "baileys-proxy";
+    if (provider === "z-api") return "zapi-proxy";
+    return "evolution-proxy";
+  };
 
-  const handleStart = () => {
+  // ─── REAL DISPATCH ─────────────────────────────────
+  const handleStart = async () => {
     if (selectedContacts.size === 0) {
       toast({ title: "Erro", description: "Selecione pelo menos 1 contato na aba Contatos", variant: "destructive" });
       return;
@@ -101,19 +148,185 @@ const Campaigns = () => {
       toast({ title: "Erro", description: "Escreva a mensagem", variant: "destructive" });
       return;
     }
+
+    const connectedInstances = selectedInstance === "all"
+      ? instances
+      : instances.filter((i) => i.id === selectedInstance);
+
+    if (connectedInstances.length === 0) {
+      toast({ title: "Erro", description: "Nenhuma instância conectada disponível. Conecte uma instância primeiro.", variant: "destructive" });
+      return;
+    }
+
+    // Get selected contacts data
+    const contactsToSend = contacts.filter((c) => selectedContacts.has(c.id));
+    setTotalToSend(contactsToSend.length);
+    setSentCount(0);
+    setFailedCount(0);
+    setDispatchLog([]);
     setIsRunning(true);
     setIsPaused(false);
+    isPausedRef.current = false;
+    isStoppedRef.current = false;
+
+    // Save campaign to DB
+    const { data: campaign } = await supabase.from("campaigns").insert({
+      user_id: user!.id,
+      name: campaignName || "Campanha sem nome",
+      message,
+      total_contacts: contactsToSend.length,
+      interval_seconds: interval[0],
+      rotate_instances: rotateInstances,
+      messages_per_instance: parseInt(messagesPerInstance) || 10,
+      use_buttons: useButtons,
+      button_text: useButtons ? buttonText : null,
+      button_url: useButtons ? buttonUrl : null,
+      status: "running",
+      started_at: new Date().toISOString(),
+    }).select("id").single();
+
+    const campaignId = campaign?.id;
+
+    let instanceIndex = 0;
+    let msgCountOnInstance = 0;
+    const perInstance = parseInt(messagesPerInstance) || 10;
+    let sent = 0;
+    let failed = 0;
+
+    for (let i = 0; i < contactsToSend.length; i++) {
+      // Check stop
+      if (isStoppedRef.current) {
+        addLog(`⛔ Parado no contato ${i + 1}/${contactsToSend.length}`);
+        break;
+      }
+
+      // Check pause
+      while (isPausedRef.current && !isStoppedRef.current) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      if (isStoppedRef.current) break;
+
+      const contact = contactsToSend[i];
+      const inst = connectedInstances[instanceIndex];
+      const proxyFn = getProxyFunction(inst.provider);
+
+      // Replace variables in message
+      const personalizedMsg = message
+        .replace(/\{nome\}/gi, contact.name)
+        .replace(/\{telefone\}/gi, contact.phone)
+        .replace(/\{empresa\}/gi, campaignName)
+        .replace(/\{data\}/gi, new Date().toLocaleDateString("pt-BR"));
+
+      setCurrentContact(`${contact.name} (${contact.phone})`);
+
+      try {
+        const { data, error } = await supabase.functions.invoke(proxyFn, {
+          body: {
+            action: "send-text",
+            instanceName: inst.instance_id,
+            phone: contact.phone,
+            message: personalizedMsg,
+            // Z-API fields
+            instanceId: inst.instance_id,
+            token: null,
+          },
+        });
+
+        if (error || !data?.success) {
+          failed++;
+          setFailedCount(failed);
+          const errMsg = data?.error || error?.message || "Erro desconhecido";
+          addLog(`❌ ${contact.phone} - ${errMsg}`);
+          
+          if (campaignId) {
+            await supabase.from("campaign_logs").insert({
+              campaign_id: campaignId,
+              user_id: user!.id,
+              contact_phone: contact.phone,
+              contact_name: contact.name,
+              instance_id: inst.id,
+              status: "failed",
+              error_message: errMsg,
+            });
+          }
+        } else {
+          sent++;
+          setSentCount(sent);
+          addLog(`✅ ${contact.phone} - Enviada`);
+
+          if (campaignId) {
+            await supabase.from("campaign_logs").insert({
+              campaign_id: campaignId,
+              user_id: user!.id,
+              contact_phone: contact.phone,
+              contact_name: contact.name,
+              instance_id: inst.id,
+              status: "sent",
+            });
+          }
+        }
+      } catch (err: any) {
+        failed++;
+        setFailedCount(failed);
+        addLog(`❌ ${contact.phone} - ${err.message}`);
+      }
+
+      // Update campaign progress
+      if (campaignId) {
+        await supabase.from("campaigns").update({
+          sent_count: sent,
+          failed_count: failed,
+        }).eq("id", campaignId);
+      }
+
+      // Rotate instance
+      msgCountOnInstance++;
+      if (rotateInstances && msgCountOnInstance >= perInstance && connectedInstances.length > 1) {
+        instanceIndex = (instanceIndex + 1) % connectedInstances.length;
+        msgCountOnInstance = 0;
+        addLog(`🔄 Alternando para instância: ${connectedInstances[instanceIndex].name}`);
+      }
+
+      // Wait interval (except last message)
+      if (i < contactsToSend.length - 1 && !isStoppedRef.current) {
+        await new Promise((r) => setTimeout(r, interval[0] * 1000));
+      }
+    }
+
+    // Finalize
+    if (campaignId) {
+      await supabase.from("campaigns").update({
+        status: isStoppedRef.current ? "stopped" : "completed",
+        completed_at: new Date().toISOString(),
+        sent_count: sent,
+        failed_count: failed,
+      }).eq("id", campaignId);
+    }
+
+    setIsRunning(false);
+    setCurrentContact("");
+    toast({
+      title: isStoppedRef.current ? "Campanha parada" : "Campanha concluída!",
+      description: `${sent} enviadas, ${failed} falhas de ${contactsToSend.length} contatos.`,
+    });
+  };
+
+  const addLog = (msg: string) => {
+    setDispatchLog((prev) => [...prev.slice(-50), msg]);
   };
 
   const handlePause = () => {
-    setIsPaused(!isPaused);
+    isPausedRef.current = !isPausedRef.current;
+    setIsPaused(isPausedRef.current);
   };
 
   const handleStop = () => {
-    setIsRunning(false);
+    isStoppedRef.current = true;
+    isPausedRef.current = false;
     setIsPaused(false);
   };
 
+  const progress = totalToSend > 0 ? Math.round(((sentCount + failedCount) / totalToSend) * 100) : 0;
   const variables = ["{nome}", "{telefone}", "{empresa}", "{data}"];
 
   return (
@@ -198,21 +411,11 @@ const Campaigns = () => {
                 >
                   <div>
                     <Label className="text-foreground">Texto do Botão</Label>
-                    <Input
-                      placeholder="Saiba Mais"
-                      value={buttonText}
-                      onChange={(e) => setButtonText(e.target.value)}
-                      className="bg-secondary border-border text-foreground"
-                    />
+                    <Input placeholder="Saiba Mais" value={buttonText} onChange={(e) => setButtonText(e.target.value)} className="bg-secondary border-border text-foreground" />
                   </div>
                   <div>
                     <Label className="text-foreground">URL do Botão</Label>
-                    <Input
-                      placeholder="https://seusite.com.br"
-                      value={buttonUrl}
-                      onChange={(e) => setButtonUrl(e.target.value)}
-                      className="bg-secondary border-border text-foreground"
-                    />
+                    <Input placeholder="https://seusite.com.br" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} className="bg-secondary border-border text-foreground" />
                   </div>
                 </motion.div>
               )}
@@ -220,17 +423,32 @@ const Campaigns = () => {
 
             {/* CONTACTS TAB */}
             <TabsContent value="contacts" className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-sm text-muted-foreground">
                   {selectedContacts.size} de {contacts.length} selecionados
                 </p>
-                <Button variant="outline" size="sm" className="border-border text-foreground" onClick={toggleAll}>
-                  {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? (
-                    <><CheckSquare className="mr-1.5 h-3.5 w-3.5" /> Desmarcar todos</>
-                  ) : (
-                    <><Square className="mr-1.5 h-3.5 w-3.5" /> Selecionar todos</>
+                <div className="flex gap-2">
+                  {allTags.length > 0 && (
+                    <Select value={filterTag} onValueChange={setFilterTag}>
+                      <SelectTrigger className="w-[160px] bg-secondary border-border text-foreground text-xs h-8">
+                        <SelectValue placeholder="Filtrar por tag" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="all">Todas as tags</SelectItem>
+                        {allTags.map((tag) => (
+                          <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
-                </Button>
+                  <Button variant="outline" size="sm" className="border-border text-foreground h-8" onClick={toggleAll}>
+                    {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? (
+                      <><CheckSquare className="mr-1.5 h-3.5 w-3.5" /> Desmarcar</>
+                    ) : (
+                      <><Square className="mr-1.5 h-3.5 w-3.5" /> Selecionar todos</>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <Input
@@ -260,6 +478,11 @@ const Campaigns = () => {
                         <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
                         <p className="text-xs text-muted-foreground font-mono">{contact.phone}</p>
                       </div>
+                      <div className="flex gap-1">
+                        {(contact.tags || []).map((tag) => (
+                          <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{tag}</span>
+                        ))}
+                      </div>
                     </label>
                   ))
                 )}
@@ -274,34 +497,31 @@ const Campaigns = () => {
                     <SelectValue placeholder="Selecione uma instância" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="all">Todas (rotacionar)</SelectItem>
-                    <SelectItem value="1">WhatsApp Principal</SelectItem>
-                    <SelectItem value="2">WhatsApp Vendas</SelectItem>
-                    <SelectItem value="3">WhatsApp Suporte</SelectItem>
+                    <SelectItem value="all">Todas conectadas (rotacionar)</SelectItem>
+                    {instances.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id}>
+                        {inst.name} ({inst.provider})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {instances.length === 0 && (
+                  <p className="mt-1 text-xs text-destructive">Nenhuma instância conectada. Conecte uma na aba Instâncias.</p>
+                )}
               </div>
 
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
                 <Switch checked={rotateInstances} onCheckedChange={setRotateInstances} />
                 <div>
                   <Label className="text-foreground">Rotacionar entre instâncias</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Alterna automaticamente entre os WhatsApps conectados
-                  </p>
+                  <p className="text-xs text-muted-foreground">Alterna entre WhatsApps conectados</p>
                 </div>
               </div>
 
               {rotateInstances && (
                 <div>
                   <Label className="text-foreground">Mensagens por instância antes de alternar</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={messagesPerInstance}
-                    onChange={(e) => setMessagesPerInstance(e.target.value)}
-                    className="bg-secondary border-border text-foreground"
-                  />
+                  <Input type="number" min="1" value={messagesPerInstance} onChange={(e) => setMessagesPerInstance(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
               )}
 
@@ -310,24 +530,16 @@ const Campaigns = () => {
                   <Label className="text-foreground">Intervalo entre mensagens</Label>
                   <span className="text-sm font-semibold text-primary">{interval[0]}s</span>
                 </div>
-                <Slider
-                  value={interval}
-                  onValueChange={setInterval}
-                  max={120}
-                  min={5}
-                  step={1}
-                  className="mt-2"
-                />
+                <Slider value={interval} onValueChange={setInterval} max={120} min={5} step={1} className="mt-2" />
                 <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                  <span>5s</span>
-                  <span>120s</span>
+                  <span>5s</span><span>120s</span>
                 </div>
               </div>
             </TabsContent>
 
             <TabsContent value="schedule" className="space-y-4">
               <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
-                <AlertCircle className="mt-0.5 h-5 w-5 text-info" />
+                <AlertCircle className="mt-0.5 h-5 w-5 text-primary" />
                 <p className="text-sm text-muted-foreground">
                   Agende o disparo para uma data e hora específica. A campanha será iniciada automaticamente.
                 </p>
@@ -335,21 +547,11 @@ const Campaigns = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-foreground">Data</Label>
-                  <Input
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(e) => setScheduleDate(e.target.value)}
-                    className="bg-secondary border-border text-foreground"
-                  />
+                  <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
                 <div>
                   <Label className="text-foreground">Hora</Label>
-                  <Input
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                    className="bg-secondary border-border text-foreground"
-                  />
+                  <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
               </div>
             </TabsContent>
@@ -374,27 +576,37 @@ const Campaigns = () => {
                 <div className="h-2 overflow-hidden rounded-full bg-secondary">
                   <motion.div
                     className="h-full gradient-green rounded-full"
-                    initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ duration: 0.3 }}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-primary">{sent}</p>
-                    <p className="text-xs text-muted-foreground">Enviadas</p>
+                    <p className="text-lg font-bold text-primary">{sentCount}</p>
+                    <p className="text-[10px] text-muted-foreground">Enviadas</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-foreground">{total - sent}</p>
-                    <p className="text-xs text-muted-foreground">Restantes</p>
+                    <p className="text-lg font-bold text-destructive">{failedCount}</p>
+                    <p className="text-[10px] text-muted-foreground">Falhas</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary p-2">
+                    <p className="text-lg font-bold text-foreground">{totalToSend - sentCount - failedCount}</p>
+                    <p className="text-[10px] text-muted-foreground">Restantes</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${isPaused ? "bg-warning" : "bg-primary animate-pulse-green"}`} />
-                  <span className="text-xs text-muted-foreground">
-                    {isPaused ? "Pausado" : "Enviando..."}
+                  <div className={`h-2 w-2 rounded-full ${isPaused ? "bg-yellow-500" : "bg-primary animate-pulse"}`} />
+                  <span className="text-xs text-muted-foreground truncate">
+                    {isPaused ? "Pausado" : currentContact ? `Enviando: ${currentContact}` : "Enviando..."}
                   </span>
                 </div>
+              </div>
+            ) : totalToSend > 0 ? (
+              <div className="space-y-2 text-center py-4">
+                <p className="text-sm font-medium text-foreground">Campanha finalizada</p>
+                <p className="text-xs text-muted-foreground">
+                  ✅ {sentCount} enviadas · ❌ {failedCount} falhas
+                </p>
               </div>
             ) : (
               <div className="flex flex-col items-center py-6 text-muted-foreground">
@@ -416,32 +628,37 @@ const Campaigns = () => {
               <Button
                 onClick={handleStart}
                 className="w-full gradient-green text-primary-foreground font-semibold"
+                disabled={selectedContacts.size === 0 || !message.trim()}
               >
-                <Send className="mr-2 h-4 w-4" /> Iniciar Disparo
+                <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)
               </Button>
             ) : (
               <>
-                <Button
-                  onClick={handlePause}
-                  variant="outline"
-                  className="w-full border-border text-foreground"
-                >
+                <Button onClick={handlePause} variant="outline" className="w-full border-border text-foreground">
                   {isPaused ? (
                     <><Play className="mr-2 h-4 w-4" /> Retomar</>
                   ) : (
                     <><Pause className="mr-2 h-4 w-4" /> Pausar</>
                   )}
                 </Button>
-                <Button
-                  onClick={handleStop}
-                  variant="outline"
-                  className="w-full border-destructive text-destructive hover:bg-destructive/10"
-                >
-                  Parar Campanha
+                <Button onClick={handleStop} variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/10">
+                  <StopCircle className="mr-2 h-4 w-4" /> Parar Campanha
                 </Button>
               </>
             )}
           </div>
+
+          {/* Log */}
+          {dispatchLog.length > 0 && (
+            <div className="glass-card rounded-xl p-5">
+              <h3 className="mb-3 font-semibold text-foreground">Log</h3>
+              <div className="max-h-[200px] overflow-y-auto space-y-1 text-xs font-mono">
+                {dispatchLog.map((log, i) => (
+                  <p key={i} className="text-muted-foreground">{log}</p>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Preview */}
           <div className="glass-card rounded-xl p-5">
