@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Send,
@@ -13,6 +13,7 @@ import {
   CheckSquare,
   Square,
   StopCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,16 +67,13 @@ const Campaigns = () => {
   // Instances
   const [instances, setInstances] = useState<Instance[]>([]);
 
-  // Dispatch state
+  // Campaign tracking
+  const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
   const [sentCount, setSentCount] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
   const [totalToSend, setTotalToSend] = useState(0);
-  const [currentContact, setCurrentContact] = useState("");
   const [dispatchLog, setDispatchLog] = useState<string[]>([]);
-
-  // Refs for pause/stop control
-  const isPausedRef = useRef(false);
-  const isStoppedRef = useRef(false);
+  const [campaignStatus, setCampaignStatus] = useState<string>("idle");
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -101,6 +99,41 @@ const Campaigns = () => {
     fetchContacts();
     fetchInstances();
   }, [fetchContacts, fetchInstances]);
+
+  // Poll campaign progress when running
+  useEffect(() => {
+    if (!activeCampaignId || !isRunning) return;
+
+    const pollInterval = window.setInterval(async () => {
+      const { data } = await supabase
+        .from("campaigns")
+        .select("sent_count, failed_count, total_contacts, status")
+        .eq("id", activeCampaignId)
+        .single();
+
+      if (data) {
+        setSentCount(data.sent_count);
+        setFailedCount(data.failed_count);
+        setTotalToSend(data.total_contacts);
+        setCampaignStatus(data.status);
+
+        if (data.status === "completed" || data.status === "stopped") {
+          setIsRunning(false);
+          setIsPaused(false);
+          toast({
+            title: data.status === "completed" ? "Campanha concluída!" : "Campanha parada",
+            description: `${data.sent_count} enviadas, ${data.failed_count} falhas de ${data.total_contacts} contatos.`,
+          });
+        } else if (data.status === "paused") {
+          setIsPaused(true);
+        } else if (data.status === "sending") {
+          setIsPaused(false);
+        }
+      }
+    }, 3000);
+
+    return () => window.clearInterval(pollInterval);
+  }, [activeCampaignId, isRunning, toast]);
 
   // Get unique tags
   const allTags = Array.from(
@@ -132,13 +165,16 @@ const Campaigns = () => {
     }
   };
 
-  const getProxyFunction = (provider: string) => {
-    if (provider === "baileys") return "baileys-proxy";
-    if (provider === "z-api") return "zapi-proxy";
-    return "evolution-proxy";
+  // Helper to call worker-proxy
+  const invokeWorker = async (action: string, extra: Record<string, unknown> = {}) => {
+    const { data, error } = await supabase.functions.invoke("worker-proxy", {
+      body: { action, ...extra },
+    });
+    if (error) throw new Error(error.message);
+    return data;
   };
 
-  // ─── REAL DISPATCH ─────────────────────────────────
+  // ─── START via worker-proxy ─────────────────────────
   const handleStart = async () => {
     if (selectedContacts.size === 0) {
       toast({ title: "Erro", description: "Selecione pelo menos 1 contato na aba Contatos", variant: "destructive" });
@@ -148,182 +184,107 @@ const Campaigns = () => {
       toast({ title: "Erro", description: "Escreva a mensagem", variant: "destructive" });
       return;
     }
-
-    const connectedInstances = selectedInstance === "all"
-      ? instances
-      : instances.filter((i) => i.id === selectedInstance);
-
-    if (connectedInstances.length === 0) {
-      toast({ title: "Erro", description: "Nenhuma instância conectada disponível. Conecte uma instância primeiro.", variant: "destructive" });
+    if (instances.length === 0) {
+      toast({ title: "Erro", description: "Nenhuma instância conectada disponível.", variant: "destructive" });
       return;
     }
 
-    // Get selected contacts data
-    const contactsToSend = contacts.filter((c) => selectedContacts.has(c.id));
-    setTotalToSend(contactsToSend.length);
-    setSentCount(0);
-    setFailedCount(0);
-    setDispatchLog([]);
-    setIsRunning(true);
-    setIsPaused(false);
-    isPausedRef.current = false;
-    isStoppedRef.current = false;
+    const contactIds = Array.from(selectedContacts);
 
-    // Save campaign to DB
-    const { data: campaign } = await supabase.from("campaigns").insert({
+    // Get selected tags for filtering
+    const selectedTags = filterTag !== "all" ? [filterTag] : undefined;
+
+    // Save campaign to DB first
+    const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
       user_id: user!.id,
       name: campaignName || "Campanha sem nome",
       message,
-      total_contacts: contactsToSend.length,
+      total_contacts: contactIds.length,
       interval_seconds: interval[0],
       rotate_instances: rotateInstances,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
       use_buttons: useButtons,
       button_text: useButtons ? buttonText : null,
       button_url: useButtons ? buttonUrl : null,
-      status: "running",
+      status: "sending",
       started_at: new Date().toISOString(),
     }).select("id").single();
 
-    const campaignId = campaign?.id;
-
-    let instanceIndex = 0;
-    let msgCountOnInstance = 0;
-    const perInstance = parseInt(messagesPerInstance) || 10;
-    let sent = 0;
-    let failed = 0;
-
-    for (let i = 0; i < contactsToSend.length; i++) {
-      // Check stop
-      if (isStoppedRef.current) {
-        addLog(`⛔ Parado no contato ${i + 1}/${contactsToSend.length}`);
-        break;
-      }
-
-      // Check pause
-      while (isPausedRef.current && !isStoppedRef.current) {
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      if (isStoppedRef.current) break;
-
-      const contact = contactsToSend[i];
-      const inst = connectedInstances[instanceIndex];
-      const proxyFn = getProxyFunction(inst.provider);
-
-      // Replace variables in message
-      const personalizedMsg = message
-        .replace(/\{nome\}/gi, contact.name)
-        .replace(/\{telefone\}/gi, contact.phone)
-        .replace(/\{empresa\}/gi, campaignName)
-        .replace(/\{data\}/gi, new Date().toLocaleDateString("pt-BR"));
-
-      setCurrentContact(`${contact.name} (${contact.phone})`);
-
-      try {
-        const { data, error } = await supabase.functions.invoke(proxyFn, {
-          body: {
-            action: "send-text",
-            instanceName: inst.instance_id,
-            phone: contact.phone,
-            message: personalizedMsg,
-            // Z-API fields
-            instanceId: inst.instance_id,
-            token: null,
-          },
-        });
-
-        if (error || !data?.success) {
-          failed++;
-          setFailedCount(failed);
-          const errMsg = data?.error || error?.message || "Erro desconhecido";
-          addLog(`❌ ${contact.phone} - ${errMsg}`);
-          
-          if (campaignId) {
-            await supabase.from("campaign_logs").insert({
-              campaign_id: campaignId,
-              user_id: user!.id,
-              contact_phone: contact.phone,
-              contact_name: contact.name,
-              instance_id: inst.id,
-              status: "failed",
-              error_message: errMsg,
-            });
-          }
-        } else {
-          sent++;
-          setSentCount(sent);
-          addLog(`✅ ${contact.phone} - Enviada`);
-
-          if (campaignId) {
-            await supabase.from("campaign_logs").insert({
-              campaign_id: campaignId,
-              user_id: user!.id,
-              contact_phone: contact.phone,
-              contact_name: contact.name,
-              instance_id: inst.id,
-              status: "sent",
-            });
-          }
-        }
-      } catch (err: any) {
-        failed++;
-        setFailedCount(failed);
-        addLog(`❌ ${contact.phone} - ${err.message}`);
-      }
-
-      // Update campaign progress
-      if (campaignId) {
-        await supabase.from("campaigns").update({
-          sent_count: sent,
-          failed_count: failed,
-        }).eq("id", campaignId);
-      }
-
-      // Rotate instance
-      msgCountOnInstance++;
-      if (rotateInstances && msgCountOnInstance >= perInstance && connectedInstances.length > 1) {
-        instanceIndex = (instanceIndex + 1) % connectedInstances.length;
-        msgCountOnInstance = 0;
-        addLog(`🔄 Alternando para instância: ${connectedInstances[instanceIndex].name}`);
-      }
-
-      // Wait interval (except last message)
-      if (i < contactsToSend.length - 1 && !isStoppedRef.current) {
-        await new Promise((r) => setTimeout(r, interval[0] * 1000));
-      }
+    if (campaignError || !campaign) {
+      toast({ title: "Erro", description: campaignError?.message || "Falha ao criar campanha", variant: "destructive" });
+      return;
     }
 
-    // Finalize
-    if (campaignId) {
-      await supabase.from("campaigns").update({
-        status: isStoppedRef.current ? "stopped" : "completed",
-        completed_at: new Date().toISOString(),
-        sent_count: sent,
-        failed_count: failed,
-      }).eq("id", campaignId);
-    }
+    const campaignId = campaign.id;
+    setActiveCampaignId(campaignId);
+    setSentCount(0);
+    setFailedCount(0);
+    setTotalToSend(contactIds.length);
+    setDispatchLog([]);
+    setIsRunning(true);
+    setIsPaused(false);
+    setCampaignStatus("sending");
 
-    setIsRunning(false);
-    setCurrentContact("");
-    toast({
-      title: isStoppedRef.current ? "Campanha parada" : "Campanha concluída!",
-      description: `${sent} enviadas, ${failed} falhas de ${contactsToSend.length} contatos.`,
-    });
+    try {
+      const result = await invokeWorker("start", {
+        campaign_id: campaignId,
+        contact_ids: contactIds,
+        tags: selectedTags,
+      });
+
+      addLog(`🚀 Campanha iniciada no worker: ${result?.jobs_created || contactIds.length} jobs criados`);
+      toast({ title: "Campanha iniciada!", description: "O worker está processando os envios em segundo plano." });
+    } catch (err: any) {
+      addLog(`❌ Erro ao iniciar: ${err.message}`);
+      toast({ title: "Erro ao iniciar", description: err.message, variant: "destructive" });
+      setIsRunning(false);
+
+      // Revert campaign status
+      await supabase.from("campaigns").update({ status: "draft" }).eq("id", campaignId);
+    }
   };
 
   const addLog = (msg: string) => {
     setDispatchLog((prev) => [...prev.slice(-50), msg]);
   };
 
-  const handlePause = () => {
-    isPausedRef.current = !isPausedRef.current;
-    setIsPaused(isPausedRef.current);
+  const handlePause = async () => {
+    if (!activeCampaignId) return;
+    try {
+      if (isPaused) {
+        await invokeWorker("resume", { campaign_id: activeCampaignId });
+        addLog("▶️ Campanha retomada");
+        setIsPaused(false);
+      } else {
+        await invokeWorker("pause", { campaign_id: activeCampaignId });
+        addLog("⏸️ Campanha pausada");
+        setIsPaused(true);
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
   };
 
-  const handleStop = () => {
-    isStoppedRef.current = true;
-    isPausedRef.current = false;
-    setIsPaused(false);
+  const handleStop = async () => {
+    if (!activeCampaignId) return;
+    try {
+      await invokeWorker("stop", { campaign_id: activeCampaignId });
+      addLog("⛔ Campanha parada");
+      setIsRunning(false);
+      setIsPaused(false);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleRefreshStatus = async () => {
+    if (!activeCampaignId) return;
+    try {
+      const result = await invokeWorker("status", { campaign_id: activeCampaignId });
+      addLog(`📊 Status: ${JSON.stringify(result)}`);
+    } catch (err: any) {
+      addLog(`❌ Erro ao consultar status: ${err.message}`);
+    }
   };
 
   const progress = totalToSend > 0 ? Math.round(((sentCount + failedCount) / totalToSend) * 100) : 0;
@@ -566,7 +527,14 @@ const Campaigns = () => {
         >
           {/* Status */}
           <div className="glass-card rounded-xl p-5">
-            <h3 className="mb-3 font-semibold text-foreground">Status do Disparo</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-foreground">Status do Disparo</h3>
+              {isRunning && (
+                <Button variant="ghost" size="sm" onClick={handleRefreshStatus} className="h-7 w-7 p-0">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
             {isRunning ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
@@ -596,8 +564,8 @@ const Campaigns = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className={`h-2 w-2 rounded-full ${isPaused ? "bg-yellow-500" : "bg-primary animate-pulse"}`} />
-                  <span className="text-xs text-muted-foreground truncate">
-                    {isPaused ? "Pausado" : currentContact ? `Enviando: ${currentContact}` : "Enviando..."}
+                  <span className="text-xs text-muted-foreground">
+                    {isPaused ? "Pausado" : "Worker processando..."}
                   </span>
                 </div>
               </div>
