@@ -19,23 +19,24 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [contactsRes, instancesRes, campaignsRes] = await Promise.all([
+      const [contactsRes, instancesRes, allCampaignsRes, recentCampaignsRes] = await Promise.all([
         supabase.from("contacts").select("id", { count: "exact", head: true }),
-        supabase.from("instances").select("id, status", { count: "exact" }),
+        supabase.from("instances").select("id, status"),
+        supabase.from("campaigns").select("id, sent_count, failed_count"),
         supabase.from("campaigns").select("*").order("created_at", { ascending: false }).limit(5),
       ]);
 
       const activeInstances = (instancesRes.data || []).filter((i: any) => i.status === "connected").length;
-      const campaignList = campaignsRes.data || [];
-      const totalSent = campaignList.reduce((acc: number, c: any) => acc + (c.sent_count || 0), 0);
+      const allCampaigns = allCampaignsRes.data || [];
+      const totalSent = allCampaigns.reduce((acc: number, c: any) => acc + (c.sent_count || 0), 0);
 
       setStats({
         contacts: contactsRes.count || 0,
         instances: activeInstances,
-        campaigns: campaignList.length,
+        campaigns: allCampaigns.length,
         totalSent,
       });
-      setCampaigns(campaignList);
+      setCampaigns(recentCampaignsRes.data || []);
       setLoading(false);
     };
     fetchData();
