@@ -26,11 +26,13 @@ export type Database = {
           idempotency_key: string
           instance_id: string | null
           last_error: string | null
+          locked_at: string | null
           max_attempts: number
           scheduled_for: string
           started_at: string | null
           status: string
           user_id: string
+          worker_id: string | null
         }
         Insert: {
           attempts?: number
@@ -43,11 +45,13 @@ export type Database = {
           idempotency_key: string
           instance_id?: string | null
           last_error?: string | null
+          locked_at?: string | null
           max_attempts?: number
           scheduled_for?: string
           started_at?: string | null
           status?: string
           user_id: string
+          worker_id?: string | null
         }
         Update: {
           attempts?: number
@@ -60,11 +64,13 @@ export type Database = {
           idempotency_key?: string
           instance_id?: string | null
           last_error?: string | null
+          locked_at?: string | null
           max_attempts?: number
           scheduled_for?: string
           started_at?: string | null
           status?: string
           user_id?: string
+          worker_id?: string | null
         }
         Relationships: [
           {
@@ -443,12 +449,55 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_campaign_jobs: {
+        Args: { p_batch_size?: number; p_worker_id?: string }
+        Returns: {
+          attempts: number
+          campaign_id: string
+          contact_name: string | null
+          contact_phone: string
+          created_at: string
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          instance_id: string | null
+          last_error: string | null
+          locked_at: string | null
+          max_attempts: number
+          scheduled_for: string
+          started_at: string | null
+          status: string
+          user_id: string
+          worker_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "campaign_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_campaign_counts: {
+        Args: {
+          p_campaign_id: string
+          p_failed_delta?: number
+          p_sent_delta?: number
+        }
+        Returns: undefined
+      }
+      reap_stale_jobs: {
+        Args: { p_stale_minutes?: number }
+        Returns: {
+          new_status: string
+          reaped_id: string
+        }[]
       }
     }
     Enums: {
