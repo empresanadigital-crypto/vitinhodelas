@@ -255,6 +255,9 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          messages_sent_this_month: number
+          month_reset_at: string
+          phone: string | null
           plan_id: string | null
           updated_at: string
         }
@@ -264,6 +267,9 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          messages_sent_this_month?: number
+          month_reset_at?: string
+          phone?: string | null
           plan_id?: string | null
           updated_at?: string
         }
@@ -273,6 +279,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          messages_sent_this_month?: number
+          month_reset_at?: string
+          phone?: string | null
           plan_id?: string | null
           updated_at?: string
         }

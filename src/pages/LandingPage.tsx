@@ -45,24 +45,23 @@ const LandingPage = () => {
 
   const plans = [
     {
-      name: "Starter",
-      price: "97",
+      name: "Grátis",
+      price: "0",
       popular: false,
       features: [
         "1 número WhatsApp",
-        "500 mensagens/dia",
+        "100 envios/mês",
         "Importação CSV",
         "Relatórios básicos",
-        "Suporte por email",
       ],
     },
     {
       name: "Pro",
-      price: "197",
+      price: "67",
       popular: true,
       features: [
-        "5 números WhatsApp",
-        "5.000 mensagens/dia",
+        "3 números WhatsApp",
+        "Envios ilimitados",
         "Rotação de chips",
         "Relatórios avançados",
         "Agendamento",
@@ -72,13 +71,12 @@ const LandingPage = () => {
     },
     {
       name: "Business",
-      price: "397",
+      price: "197",
       popular: false,
       features: [
         "10 números WhatsApp",
-        "Mensagens ilimitadas",
+        "Envios ilimitados",
         "Tudo do Pro",
-        "API de integração",
         "Anti-ban avançado",
         "Gerente dedicado",
         "Setup assistido",
@@ -338,8 +336,14 @@ const LandingPage = () => {
                 )}
                 <h3 className="mb-1 text-xl font-bold">{plan.name}</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-extrabold">R${plan.price}</span>
-                  <span className="text-muted-foreground">/mês</span>
+                  {plan.price === "0" ? (
+                    <span className="text-4xl font-extrabold">Grátis</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-extrabold">R${plan.price}</span>
+                      <span className="text-muted-foreground">/mês</span>
+                    </>
+                  )}
                 </div>
                 <ul className="mb-8 space-y-3">
                   {plan.features.map((f) => (
@@ -357,7 +361,7 @@ const LandingPage = () => {
                   }`}
                   onClick={() => navigate("/auth")}
                 >
-                  {plan.popular ? "Começar Agora" : "Escolher Plano"}
+                  {plan.price === "0" ? "Começar Grátis" : plan.popular ? "Começar Agora" : "Escolher Plano"}
                 </Button>
               </motion.div>
             ))}
