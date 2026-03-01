@@ -12,6 +12,13 @@ serve(async (req) => {
   }
 
   try {
+    const WORKER_URL = Deno.env.get('WORKER_URL');
+    const WORKER_API_KEY = Deno.env.get('WORKER_API_KEY');
+
+    if (!WORKER_URL || !WORKER_API_KEY) {
+      throw new Error('WORKER_URL ou WORKER_API_KEY não configurados nos secrets');
+    }
+
     // Autenticar usuário via JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -38,12 +45,9 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    // Ler ação do body
     const { action, campaign_id, contact_ids, tags } = await req.json();
 
-    const WORKER_URL = (Deno.env.get('BAILEYS_API_URL') || 'http://159.65.230.5:3200').replace(/:\d+$/, ':3200');
-    const WORKER_API_KEY = Deno.env.get('BAILEYS_API_KEY') || 'READYZAP2025';
-
+    const baseUrl = WORKER_URL.replace(/\/$/, '');
     let endpoint = '';
     let method = 'POST';
     let body: Record<string, unknown> = {};
@@ -53,32 +57,26 @@ serve(async (req) => {
         endpoint = '/campaign/start';
         body = { campaign_id, user_id: userId, contact_ids, tags };
         break;
-
       case 'pause':
         endpoint = '/campaign/pause';
         body = { campaign_id };
         break;
-
       case 'resume':
         endpoint = '/campaign/resume';
         body = { campaign_id };
         break;
-
       case 'stop':
         endpoint = '/campaign/stop';
         body = { campaign_id };
         break;
-
       case 'status':
         endpoint = `/campaign/status/${campaign_id}`;
         method = 'GET';
         break;
-
       case 'health':
         endpoint = '/health';
         method = 'GET';
         break;
-
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),
@@ -98,7 +96,7 @@ serve(async (req) => {
       fetchOptions.body = JSON.stringify(body);
     }
 
-    console.log(`Worker proxy: ${method} ${WORKER_URL}${endpoint}`);
+    console.log(`Worker proxy: ${method} ${baseUrl}${endpoint}`);
 
     const controller = new AbortController();
     const timeoutMs = 30000;
@@ -106,7 +104,7 @@ serve(async (req) => {
 
     let response: Response;
     try {
-      response = await fetch(`${WORKER_URL}${endpoint}`, {
+      response = await fetch(`${baseUrl}${endpoint}`, {
         ...fetchOptions,
         signal: controller.signal,
       });
