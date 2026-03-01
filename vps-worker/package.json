@@ -1,0 +1,14 @@
+{
+  "name": "readyzap-worker",
+  "version": "1.0.0",
+  "description": "Worker server-side para processar fila de campaign_jobs do ReadyZap",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "express": "^4.21.2"
+  }
+}
