@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_jobs: {
+        Row: {
+          attempts: number
+          campaign_id: string
+          contact_name: string | null
+          contact_phone: string
+          created_at: string
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          instance_id: string | null
+          last_error: string | null
+          max_attempts: number
+          scheduled_for: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          campaign_id: string
+          contact_name?: string | null
+          contact_phone: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          idempotency_key: string
+          instance_id?: string | null
+          last_error?: string | null
+          max_attempts?: number
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          campaign_id?: string
+          contact_name?: string | null
+          contact_phone?: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string
+          instance_id?: string | null
+          last_error?: string | null
+          max_attempts?: number
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_jobs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_jobs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_logs: {
         Row: {
           campaign_id: string
@@ -259,6 +328,7 @@ export type Database = {
           month_reset_at: string
           phone: string | null
           plan_id: string | null
+          settings: Json
           updated_at: string
         }
         Insert: {
@@ -271,6 +341,7 @@ export type Database = {
           month_reset_at?: string
           phone?: string | null
           plan_id?: string | null
+          settings?: Json
           updated_at?: string
         }
         Update: {
@@ -283,6 +354,7 @@ export type Database = {
           month_reset_at?: string
           phone?: string | null
           plan_id?: string | null
+          settings?: Json
           updated_at?: string
         }
         Relationships: [
