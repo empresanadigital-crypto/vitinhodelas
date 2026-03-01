@@ -206,8 +206,8 @@ const Campaigns = () => {
       use_buttons: useButtons,
       button_text: useButtons ? buttonText : null,
       button_url: useButtons ? buttonUrl : null,
-      status: "sending",
-      started_at: new Date().toISOString(),
+      status: "draft",
+      started_at: null,
     }).select("id").single();
 
     if (campaignError || !campaign) {
@@ -223,7 +223,7 @@ const Campaigns = () => {
     setDispatchLog([]);
     setIsRunning(true);
     setIsPaused(false);
-    setCampaignStatus("sending");
+    setCampaignStatus("draft");
 
     try {
       const result = await invokeWorker("start", {
