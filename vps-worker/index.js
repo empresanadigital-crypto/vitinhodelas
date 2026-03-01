@@ -463,7 +463,7 @@ app.post('/campaign/start', async (req, res) => {
     }
 
     if (campaign.status === 'sending') {
-      return res.status(400).json({ error: 'Campanha já está em envio' });
+      return res.json({ success: true, already_sending: true, data: { campaign_id, status: 'sending' } });
     }
 
     let contactsQuery = supabase
