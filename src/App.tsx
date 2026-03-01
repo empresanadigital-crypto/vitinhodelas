@@ -12,6 +12,7 @@ import Campaigns from "./pages/Campaigns";
 import Reports from "./pages/Reports";
 import SettingsPage from "./pages/SettingsPage";
 import Auth from "./pages/Auth";
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,9 +31,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/instancias" element={<Instances />} />
             <Route path="/contatos" element={<Contacts />} />
             <Route path="/campanhas" element={<Campaigns />} />
