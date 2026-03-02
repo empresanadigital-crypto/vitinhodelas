@@ -57,7 +57,7 @@ const LandingPage = () => {
     },
     {
       name: "Pro",
-      price: "67",
+      price: "27",
       popular: true,
       features: [
         "3 números WhatsApp",
@@ -71,7 +71,7 @@ const LandingPage = () => {
     },
     {
       name: "Business",
-      price: "197",
+      price: "97",
       popular: false,
       features: [
         "10 números WhatsApp",
