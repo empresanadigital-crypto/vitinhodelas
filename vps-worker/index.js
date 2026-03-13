@@ -105,11 +105,31 @@ async function sendViaEvolution(instanceName, phone, message) {
   return data;
 }
 
-async function sendViaZapi(instanceId, token, clientToken, phone, message) {
+async function sendViaZapi(instanceId, token, clientToken, phone, message, buttonOptions) {
   const baseUrl = `https://api.z-api.io/instances/${instanceId}/token/${token}`;
+  const headers = { 'Content-Type': 'application/json', 'Client-Token': clientToken || '' };
+
+  // Se tem botão, usa endpoint de botão
+  if (buttonOptions && buttonOptions.buttonText && buttonOptions.buttonUrl) {
+    const res = await fetch(`${baseUrl}/send-button-list`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        phone,
+        message,
+        buttonList: {
+          buttons: [{ id: '1', label: buttonOptions.buttonText }]
+        }
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || `Z-API button HTTP ${res.status}`);
+    return data;
+  }
+
   const res = await fetch(`${baseUrl}/send-text`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Client-Token': clientToken || '' },
+    headers,
     body: JSON.stringify({ phone, message }),
   });
   const data = await res.json();
