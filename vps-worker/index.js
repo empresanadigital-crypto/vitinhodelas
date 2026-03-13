@@ -220,7 +220,13 @@ async function processJob(job) {
     message = message.replace(/\{nome\}/gi, job.contact_name || '');
     message = message.replace(/\{telefone\}/gi, job.contact_phone || '');
 
-    await sendMessage(instance, job.contact_phone, message);
+    // Preparar opções de botão se a campanha usa botões
+    const buttonOptions = campaign.use_buttons ? {
+      buttonText: campaign.button_text,
+      buttonUrl: campaign.button_url,
+    } : null;
+
+    await sendMessage(instance, job.contact_phone, message, buttonOptions);
 
     // Marcar como enviado
     await supabase
