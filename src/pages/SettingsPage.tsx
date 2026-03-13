@@ -63,15 +63,19 @@ const SettingsPage = () => {
 
       const { data, error } = await supabase
         .from("profiles")
-        .update({ settings: settings as any })
-        .eq("id", user.id)
+        .upsert(
+          {
+            id: user.id,
+            email: user.email ?? null,
+            settings: settings as any,
+          },
+          { onConflict: "id" }
+        )
         .select("settings")
         .maybeSingle();
 
       if (error) throw error;
-      console.log("Settings saved:", data);
-
-      toast({ title: "Salvo!", description: "Configurações salvas com sucesso." });
+      if (!data) throw new Error("Perfil do usuário não encontrado para salvar configurações.");
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
