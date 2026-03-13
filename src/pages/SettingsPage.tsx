@@ -76,6 +76,8 @@ const SettingsPage = () => {
 
       if (error) throw error;
       if (!data) throw new Error("Perfil do usuário não encontrado para salvar configurações.");
+
+      toast({ title: "Salvo!", description: "Configurações salvas com sucesso." });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
