@@ -3,14 +3,76 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
-import { Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const SettingsPage = () => {
   const [apiProvider, setApiProvider] = useState("z-api");
   const [defaultInterval, setDefaultInterval] = useState("15");
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [apiToken, setApiToken] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Load settings from profile
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("settings")
+        .eq("id", user.id)
+        .single();
+      if (data?.settings && typeof data.settings === "object" && !Array.isArray(data.settings)) {
+        const s = data.settings as Record<string, unknown>;
+        if (s.api_provider) setApiProvider(s.api_provider as string);
+        if (s.default_interval) setDefaultInterval(String(s.default_interval));
+        if (s.api_base_url) setApiBaseUrl(s.api_base_url as string);
+        if (s.api_token) setApiToken(s.api_token as string);
+      }
+      setLoading(false);
+    };
+    load();
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const settings = {
+        api_provider: apiProvider,
+        default_interval: parseInt(defaultInterval) || 15,
+        api_base_url: apiBaseUrl,
+        api_token: apiToken,
+      };
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ settings })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast({ title: "Salvo!", description: "Configurações salvas com sucesso." });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -77,8 +139,17 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        <Button className="gradient-green text-primary-foreground font-semibold">
-          <Save className="mr-2 h-4 w-4" /> Salvar Configurações
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="gradient-green text-primary-foreground font-semibold"
+        >
+          {saving ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
+          {saving ? "Salvando..." : "Salvar Configurações"}
         </Button>
       </motion.div>
     </div>
