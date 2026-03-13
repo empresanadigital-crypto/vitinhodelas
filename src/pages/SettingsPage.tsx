@@ -22,12 +22,20 @@ const SettingsPage = () => {
   // Load settings from profile
   useEffect(() => {
     if (!user) return;
+
     const load = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("settings")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        toast({ title: "Erro", description: "Não foi possível carregar suas configurações.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
       if (data?.settings && typeof data.settings === "object" && !Array.isArray(data.settings)) {
         const s = data.settings as Record<string, unknown>;
         if (s.api_provider) setApiProvider(s.api_provider as string);
@@ -35,10 +43,12 @@ const SettingsPage = () => {
         if (s.api_base_url) setApiBaseUrl(s.api_base_url as string);
         if (s.api_token) setApiToken(s.api_token as string);
       }
+
       setLoading(false);
     };
+
     load();
-  }, [user]);
+  }, [user, toast]);
 
   const handleSave = async () => {
     if (!user) return;
