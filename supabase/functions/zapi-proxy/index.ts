@@ -52,13 +52,13 @@ serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        endpoint = '/send-button-list';
+        endpoint = '/send-button-actions';
         body = {
           phone,
           message,
-          buttonList: {
-            buttons: [{ id: '1', label: buttonText }]
-          }
+          buttonActions: [
+            { id: '1', type: 'URL', url: buttonUrl, label: buttonText }
+          ]
         };
         break;
 
