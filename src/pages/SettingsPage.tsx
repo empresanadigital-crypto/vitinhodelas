@@ -51,12 +51,15 @@ const SettingsPage = () => {
         api_token: apiToken,
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
-        .update({ settings })
-        .eq("id", user.id);
+        .update({ settings: settings as any })
+        .eq("id", user.id)
+        .select("settings")
+        .single();
 
       if (error) throw error;
+      console.log("Settings saved:", data);
 
       toast({ title: "Salvo!", description: "Configurações salvas com sucesso." });
     } catch (err: any) {
