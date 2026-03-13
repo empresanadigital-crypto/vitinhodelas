@@ -111,15 +111,20 @@ async function sendViaZapi(instanceId, token, clientToken, phone, message, butto
 
   // Se tem botão, usa endpoint de botão
   if (buttonOptions && buttonOptions.buttonText && buttonOptions.buttonUrl) {
-    const res = await fetch(`${baseUrl}/send-button-list`, {
+    const res = await fetch(`${baseUrl}/send-button-actions`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         phone,
         message,
-        buttonList: {
-          buttons: [{ id: '1', label: buttonOptions.buttonText }]
-        }
+        buttonActions: [
+          {
+            id: '1',
+            type: 'URL',
+            url: buttonOptions.buttonUrl,
+            label: buttonOptions.buttonText,
+          }
+        ]
       }),
     });
     const data = await res.json();
