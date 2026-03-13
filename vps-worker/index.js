@@ -137,7 +137,7 @@ async function sendViaZapi(instanceId, token, clientToken, phone, message, butto
   return data;
 }
 
-async function sendMessage(instance, phone, message) {
+async function sendMessage(instance, phone, message, buttonOptions) {
   const provider = instance.provider || 'baileys';
   switch (provider) {
     case 'baileys':
@@ -145,7 +145,7 @@ async function sendMessage(instance, phone, message) {
     case 'evolution':
       return sendViaEvolution(instance.name, phone, message);
     case 'z-api':
-      return sendViaZapi(instance.instance_id, instance.token, instance.client_token, phone, message);
+      return sendViaZapi(instance.instance_id, instance.token, instance.client_token, phone, message, buttonOptions);
     default:
       throw new Error(`Provider desconhecido: ${provider}`);
   }
