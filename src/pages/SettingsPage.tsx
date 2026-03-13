@@ -56,7 +56,7 @@ const SettingsPage = () => {
         .update({ settings: settings as any })
         .eq("id", user.id)
         .select("settings")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       console.log("Settings saved:", data);
