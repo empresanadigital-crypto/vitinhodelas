@@ -156,9 +156,9 @@ async function sendMessage(instance, phone, message, buttonOptions) {
   const provider = instance.provider || 'baileys';
   switch (provider) {
     case 'baileys':
-      return sendViaBaileys(instance.name, phone, message);
+      return sendViaBaileys(instance.name, phone, message, buttonOptions);
     case 'evolution':
-      return sendViaEvolution(instance.name, phone, message);
+      return sendViaEvolution(instance.name, phone, message, buttonOptions);
     case 'z-api':
       return sendViaZapi(instance.instance_id, instance.token, instance.client_token, phone, message, buttonOptions);
     default:
