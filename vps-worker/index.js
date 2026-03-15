@@ -82,23 +82,33 @@ app.use((req, res, next) => {
 
 // ─── PROVIDERS ─────────────────────────────────────
 
-async function sendViaBaileys(instanceName, phone, message) {
+// Anexa link do botão ao texto para providers que não suportam botões nativos
+function appendButtonToMessage(message, buttonOptions) {
+  if (buttonOptions && buttonOptions.buttonText && buttonOptions.buttonUrl) {
+    return `${message}\n\n🔗 *${buttonOptions.buttonText}*\n${buttonOptions.buttonUrl}`;
+  }
+  return message;
+}
+
+async function sendViaBaileys(instanceName, phone, message, buttonOptions) {
+  const finalMessage = appendButtonToMessage(message, buttonOptions);
   const res = await fetch(`${BAILEYS_API_URL}/message/send-text`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': BAILEYS_API_KEY },
-    body: JSON.stringify({ instanceName, phone, message }),
+    body: JSON.stringify({ instanceName, phone, message: finalMessage }),
   });
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || `Baileys HTTP ${res.status}`);
   return data;
 }
 
-async function sendViaEvolution(instanceName, phone, message) {
+async function sendViaEvolution(instanceName, phone, message, buttonOptions) {
   if (!EVOLUTION_API_URL) throw new Error('EVOLUTION_API_URL não configurado');
+  const finalMessage = appendButtonToMessage(message, buttonOptions);
   const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
-    body: JSON.stringify({ number: phone, text: message }),
+    body: JSON.stringify({ number: phone, text: finalMessage }),
   });
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || `Evolution HTTP ${res.status}`);
