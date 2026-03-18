@@ -567,15 +567,20 @@ app.post('/campaign/start', async (req, res) => {
       totalInserted += inserted?.length || 0;
     }
 
+    const campaignUpdate = {
+      status: 'sending',
+      started_at: new Date().toISOString(),
+      total_contacts: totalInserted,
+      sent_count: 0,
+      failed_count: 0,
+    };
+    if (selected_instance_id) {
+      campaignUpdate.selected_instance_id = selected_instance_id;
+    }
+
     await supabase
       .from('campaigns')
-      .update({
-        status: 'sending',
-        started_at: new Date().toISOString(),
-        total_contacts: totalInserted,
-        sent_count: 0,
-        failed_count: 0,
-      })
+      .update(campaignUpdate)
       .eq('id', campaign_id);
 
     console.log(`🚀 Campanha "${campaign.name}" iniciada com ${totalInserted} jobs`);

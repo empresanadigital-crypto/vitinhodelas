@@ -54,7 +54,7 @@ serve(async (req) => {
     switch (action) {
       case 'start':
         endpoint = '/campaign/start';
-        body = { campaign_id, user_id: userId, contact_ids, tags };
+        body = { campaign_id, user_id: userId, contact_ids, tags, selected_instance_id };
         break;
       case 'pause':
         endpoint = '/campaign/pause';

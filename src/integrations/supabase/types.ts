@@ -154,6 +154,7 @@ export type Database = {
           name: string
           rotate_instances: boolean
           scheduled_at: string | null
+          selected_instance_id: string | null
           sent_count: number
           started_at: string | null
           status: string
@@ -175,6 +176,7 @@ export type Database = {
           name: string
           rotate_instances?: boolean
           scheduled_at?: string | null
+          selected_instance_id?: string | null
           sent_count?: number
           started_at?: string | null
           status?: string
@@ -196,6 +198,7 @@ export type Database = {
           name?: string
           rotate_instances?: boolean
           scheduled_at?: string | null
+          selected_instance_id?: string | null
           sent_count?: number
           started_at?: string | null
           status?: string
@@ -204,7 +207,15 @@ export type Database = {
           use_buttons?: boolean
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_selected_instance_id_fkey"
+            columns: ["selected_instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {

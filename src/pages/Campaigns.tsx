@@ -240,6 +240,7 @@ const Campaigns = () => {
         campaign_id: campaignId,
         contact_ids: contactIds,
         tags: selectedTags,
+        selected_instance_id: selectedInstance !== "all" ? selectedInstance : undefined,
       });
 
       addLog(`🚀 Campanha iniciada no worker: ${result?.jobs_created || contactIds.length} jobs criados`);
