@@ -171,6 +171,22 @@ async function sendMessage(instance, phone, message, buttonOptions) {
 const instanceRotationCounters = new Map();
 
 async function pickInstance(campaign, userId) {
+  // Se a campanha tem instância específica, usa ela diretamente
+  if (campaign.selected_instance_id) {
+    const { data: instance, error } = await supabase
+      .from('instances')
+      .select('*')
+      .eq('id', campaign.selected_instance_id)
+      .eq('status', 'connected')
+      .single();
+
+    if (error || !instance) {
+      throw new Error(`Instância selecionada (${campaign.selected_instance_id}) não encontrada ou desconectada.`);
+    }
+    return instance;
+  }
+
+  // Sem instância específica: pega todas conectadas do usuário
   const { data: instances, error } = await supabase
     .from('instances')
     .select('*')
