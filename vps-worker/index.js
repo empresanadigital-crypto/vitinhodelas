@@ -171,6 +171,22 @@ async function sendMessage(instance, phone, message, buttonOptions) {
 const instanceRotationCounters = new Map();
 
 async function pickInstance(campaign, userId) {
+  // Se a campanha tem instância específica, usa ela diretamente
+  if (campaign.selected_instance_id) {
+    const { data: instance, error } = await supabase
+      .from('instances')
+      .select('*')
+      .eq('id', campaign.selected_instance_id)
+      .eq('status', 'connected')
+      .single();
+
+    if (error || !instance) {
+      throw new Error(`Instância selecionada (${campaign.selected_instance_id}) não encontrada ou desconectada.`);
+    }
+    return instance;
+  }
+
+  // Sem instância específica: pega todas conectadas do usuário
   const { data: instances, error } = await supabase
     .from('instances')
     .select('*')
@@ -487,7 +503,7 @@ app.get('/health', async (req, res) => {
 
 app.post('/campaign/start', async (req, res) => {
   try {
-    const { campaign_id, user_id, contact_ids, tags } = req.body;
+    const { campaign_id, user_id, contact_ids, tags, selected_instance_id } = req.body;
     if (!campaign_id || !user_id) {
       return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
     }
@@ -551,15 +567,20 @@ app.post('/campaign/start', async (req, res) => {
       totalInserted += inserted?.length || 0;
     }
 
+    const campaignUpdate = {
+      status: 'sending',
+      started_at: new Date().toISOString(),
+      total_contacts: totalInserted,
+      sent_count: 0,
+      failed_count: 0,
+    };
+    if (selected_instance_id) {
+      campaignUpdate.selected_instance_id = selected_instance_id;
+    }
+
     await supabase
       .from('campaigns')
-      .update({
-        status: 'sending',
-        started_at: new Date().toISOString(),
-        total_contacts: totalInserted,
-        sent_count: 0,
-        failed_count: 0,
-      })
+      .update(campaignUpdate)
       .eq('id', campaign_id);
 
     console.log(`🚀 Campanha "${campaign.name}" iniciada com ${totalInserted} jobs`);
