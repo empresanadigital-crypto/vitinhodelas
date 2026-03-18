@@ -1,0 +1,115 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const results: Record<string, unknown> = {
+    timestamp: new Date().toISOString(),
+    tests: {},
+  };
+
+  // 1. Check secrets
+  const WORKER_URL = Deno.env.get('WORKER_URL');
+  const WORKER_API_KEY = Deno.env.get('WORKER_API_KEY');
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  results.tests['secrets'] = {
+    WORKER_URL: WORKER_URL ? `${WORKER_URL.substring(0, 20)}... (len=${WORKER_URL.length})` : 'NOT SET',
+    WORKER_API_KEY: WORKER_API_KEY ? `${WORKER_API_KEY.substring(0, 8)}... (len=${WORKER_API_KEY.length})` : 'NOT SET',
+    SUPABASE_URL: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'NOT SET',
+    SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE_KEY ? `${SERVICE_ROLE_KEY.substring(0, 12)}... (len=${SERVICE_ROLE_KEY.length})` : 'NOT SET',
+  };
+
+  // 2. Test database connection
+  try {
+    const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!);
+    const { data, error } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
+    const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+    results.tests['database'] = {
+      status: error ? 'FAIL' : 'OK',
+      error: error?.message || null,
+      profiles_count: count,
+    };
+  } catch (e: any) {
+    results.tests['database'] = { status: 'FAIL', error: e.message };
+  }
+
+  // 3. Test worker connectivity
+  if (WORKER_URL) {
+    const baseUrl = WORKER_URL.replace(/\/$/, '');
+
+    // 3a. Health check (GET, no auth needed)
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch(`${baseUrl}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      const body = await resp.text();
+      let parsed;
+      try { parsed = JSON.parse(body); } catch { parsed = body; }
+      results.tests['worker_health'] = {
+        status: resp.status === 200 ? 'OK' : 'FAIL',
+        http_status: resp.status,
+        response: parsed,
+      };
+    } catch (e: any) {
+      results.tests['worker_health'] = {
+        status: 'FAIL',
+        error: e.message,
+        error_type: e.name,
+        hint: e.name === 'AbortError'
+          ? 'Timeout após 10s - worker pode estar offline'
+          : 'Connection refused - worker não está rodando na VPS ou porta bloqueada',
+      };
+    }
+
+    // 3b. Authenticated endpoint test
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch(`${baseUrl}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': WORKER_API_KEY || '',
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      const body = await resp.text();
+      results.tests['worker_auth'] = {
+        status: resp.status === 200 ? 'OK' : 'FAIL',
+        http_status: resp.status,
+        api_key_accepted: resp.status !== 401 && resp.status !== 403,
+      };
+    } catch (e: any) {
+      results.tests['worker_auth'] = {
+        status: 'FAIL',
+        error: e.message,
+      };
+    }
+  } else {
+    results.tests['worker_health'] = { status: 'SKIP', reason: 'WORKER_URL not set' };
+  }
+
+  // Summary
+  const testEntries = Object.entries(results.tests as Record<string, any>);
+  const allOk = testEntries.every(([, v]) => v.status === 'OK');
+  results.overall = allOk ? 'ALL_PASS' : 'HAS_FAILURES';
+
+  return new Response(JSON.stringify(results, null, 2), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+});
