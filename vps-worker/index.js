@@ -503,7 +503,7 @@ app.get('/health', async (req, res) => {
 
 app.post('/campaign/start', async (req, res) => {
   try {
-    const { campaign_id, user_id, contact_ids, tags } = req.body;
+    const { campaign_id, user_id, contact_ids, tags, selected_instance_id } = req.body;
     if (!campaign_id || !user_id) {
       return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
     }
