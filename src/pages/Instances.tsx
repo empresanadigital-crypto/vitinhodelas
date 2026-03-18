@@ -220,7 +220,7 @@ const Instances = () => {
           toast({ title: "Erro", description: "Preencha Instance ID e Token da Z-API", variant: "destructive" });
           return;
         }
-        await supabase.from("instances").insert({
+        const { error: insertError } = await supabase.from("instances").insert({
           user_id: user!.id,
           name: newName.trim(),
           provider: "z-api",
@@ -229,6 +229,7 @@ const Instances = () => {
           client_token: zapiClientToken.trim() || null,
           status: "disconnected",
         });
+        if (insertError) throw insertError;
         toast({ title: "Instância Z-API adicionada!", description: "Clique em QR Code para conectar." });
       }
       setNewName(""); setZapiInstanceId(""); setZapiToken(""); setZapiClientToken("");
