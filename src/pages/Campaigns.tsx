@@ -194,6 +194,15 @@ const Campaigns = () => {
     // Get selected tags for filtering
     const selectedTags = filterTag !== "all" ? [filterTag] : undefined;
 
+    // Validação: botão só funciona com Z-API
+    if (useButtons && selectedInstance !== "all") {
+      const chosenInstance = instances.find(i => i.id === selectedInstance);
+      if (chosenInstance && chosenInstance.provider !== "z-api") {
+        toast({ title: "Atenção", description: `Botões nativos só funcionam com Z-API. A instância "${chosenInstance.name}" usa ${chosenInstance.provider} e vai enviar texto simples.`, variant: "destructive" });
+        return;
+      }
+    }
+
     // Save campaign to DB first
     const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
       user_id: user!.id,
@@ -201,11 +210,12 @@ const Campaigns = () => {
       message,
       total_contacts: contactIds.length,
       interval_seconds: interval[0],
-      rotate_instances: rotateInstances,
+      rotate_instances: selectedInstance === "all" ? rotateInstances : false,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
       use_buttons: useButtons,
       button_text: useButtons ? buttonText : null,
       button_url: useButtons ? buttonUrl : null,
+      selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
       status: "draft",
       started_at: null,
     }).select("id").single();
