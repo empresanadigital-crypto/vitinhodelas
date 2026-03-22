@@ -520,7 +520,7 @@ const Instances = () => {
             <div className="space-y-4 py-2">
               <div>
                 <Label className="text-foreground">Provedor</Label>
-                <Select value={newProvider} onValueChange={(v) => setNewProvider(v as "baileys" | "evolution" | "z-api")}>
+                <Select value={newProvider} onValueChange={(v) => setNewProvider(v as "baileys" | "z-api")}>
                   <SelectTrigger className="bg-secondary border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -533,14 +533,8 @@ const Instances = () => {
                     </SelectItem>
                     <SelectItem value="baileys">
                       <div className="flex items-center gap-2">
-                        <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Baileys</span>
+                        <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Disparo Pro</span>
                         <span>Grátis · Requer VPS (porta 3100)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="evolution">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded px-1.5 py-0.5 text-xs bg-emerald-500/10 text-emerald-400 font-medium">Evolution</span>
-                        <span>Grátis · Requer VPS + Docker</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
