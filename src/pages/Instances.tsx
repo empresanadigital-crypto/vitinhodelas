@@ -528,13 +528,13 @@ const Instances = () => {
                     <SelectItem value="z-api">
                       <div className="flex items-center gap-2">
                         <span className="rounded px-1.5 py-0.5 text-xs bg-blue-500/10 text-blue-400 font-medium">Z-API</span>
-                        <span>Pago · Suporta botões nativos</span>
+                        <span>Com botões clicáveis</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="baileys">
                       <div className="flex items-center gap-2">
                         <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Disparo Pro</span>
-                        <span>Grátis · Requer VPS (porta 3100)</span>
+                        <span>Envio de texto</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
