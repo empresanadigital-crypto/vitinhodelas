@@ -563,7 +563,7 @@ const Instances = () => {
               )}
               {newProvider === "baileys" && (
                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 text-sm text-muted-foreground">
-                  🚀 Disparo Pro roda direto na VPS (porta 3100), sem intermediários. QR Code aparece em segundos!
+                  ✅ Pronto para usar. Basta criar a instância e escanear o QR Code pelo WhatsApp.
                 </div>
               )}
               <Button onClick={addInstance} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
