@@ -73,36 +73,62 @@ const Contacts = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginatedContacts = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const importContacts = async () => {
-    const lines = bulkText.trim().split("\n").filter(l => l.trim());
-    const newContacts = lines
+  const parseLines = (text: string) => {
+    const lines = text.trim().split("\n").filter(l => l.trim());
+    return lines
       .map((line) => {
         const parts = line.split(/[,;\t]/);
         if (parts.length >= 2 && parts[0].trim() && parts[1].trim()) {
           const phone = parts[1].trim().replace(/\D/g, "");
           if (phone.length < 8) return null;
-          return {
-            user_id: user!.id,
-            name: parts[0].trim(),
-            phone,
-            tags: ["Importado"],
-          };
+          return { name: parts[0].trim(), phone };
         }
         const phone = parts[0].trim().replace(/\D/g, "");
         if (phone.length < 8) return null;
-        return {
-          user_id: user!.id,
-          name: phone,
-          phone,
-          tags: ["Importado"],
-        };
+        return { name: phone, phone };
       })
-      .filter(Boolean) as any[];
+      .filter(Boolean) as { name: string; phone: string }[];
+  };
 
-    if (newContacts.length === 0) {
-      toast({ title: "Erro", description: "Nenhum contato válido encontrado. Cole números com pelo menos 8 dígitos.", variant: "destructive" });
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    const ext = file.name.split(".").pop()?.toLowerCase();
+
+    if (ext === "xlsx" || ext === "xls") {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const wb = XLSX.read(evt.target?.result, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const text = XLSX.utils.sheet_to_csv(ws);
+        setFileContacts(parseLines(text));
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target?.result as string;
+        setFileContacts(parseLines(text));
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const importContacts = async (source: "text" | "file") => {
+    const parsed = source === "text" ? parseLines(bulkText) : fileContacts;
+
+    if (parsed.length === 0) {
+      toast({ title: "Erro", description: "Nenhum contato válido encontrado.", variant: "destructive" });
       return;
     }
+
+    const newContacts = parsed.map(c => ({
+      user_id: user!.id,
+      name: c.name,
+      phone: c.phone,
+      tags: ["Importado"],
+    }));
 
     const { error } = await supabase.from("contacts").insert(newContacts);
     if (error) {
@@ -110,6 +136,8 @@ const Contacts = () => {
     } else {
       toast({ title: "Sucesso", description: `${newContacts.length} contatos importados!` });
       setBulkText("");
+      setFileContacts([]);
+      setFileName("");
       setImportDialog(false);
       fetchContacts();
     }
