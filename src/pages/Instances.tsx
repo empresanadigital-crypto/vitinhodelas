@@ -338,7 +338,7 @@ const Instances = () => {
       }
       setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/15`);
     }
-    throw new Error("Servidor Disparo Pro não retornou QR. Verifique se está rodando na VPS (porta 3100).");
+    throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns segundos.");
   };
 
   const pollConnectionStatus = async (instance: Instance, provider: string) => {
@@ -528,13 +528,13 @@ const Instances = () => {
                     <SelectItem value="z-api">
                       <div className="flex items-center gap-2">
                         <span className="rounded px-1.5 py-0.5 text-xs bg-blue-500/10 text-blue-400 font-medium">Z-API</span>
-                        <span>Pago · Suporta botões nativos</span>
+                        <span>Com botões clicáveis</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="baileys">
                       <div className="flex items-center gap-2">
                         <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Disparo Pro</span>
-                        <span>Grátis · Requer VPS (porta 3100)</span>
+                        <span>Envio de texto</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -563,7 +563,7 @@ const Instances = () => {
               )}
               {newProvider === "baileys" && (
                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 text-sm text-muted-foreground">
-                  🚀 Disparo Pro roda direto na VPS (porta 3100), sem intermediários. QR Code aparece em segundos!
+                  ✅ Pronto para usar. Basta criar a instância e escanear o QR Code pelo WhatsApp.
                 </div>
               )}
               <Button onClick={addInstance} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
