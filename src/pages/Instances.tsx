@@ -491,7 +491,6 @@ const Instances = () => {
   const getProviderBadgeClass = (provider: string) => {
     switch (provider) {
       case "baileys": return "bg-orange-500/10 text-orange-400";
-      case "evolution": return "bg-emerald-500/10 text-emerald-400";
       case "z-api": return "bg-blue-500/10 text-blue-400";
       default: return "bg-muted text-muted-foreground";
     }
