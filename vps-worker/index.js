@@ -786,6 +786,10 @@ app.listen(PORT, '0.0.0.0', () => {
   reaperLoop().catch(err => {
     console.error('💀 Reaper loop crashed:', err);
   });
+
+  schedulerLoop().catch(err => {
+    console.error('💀 Scheduler crashed:', err);
+  });
 });
 
 process.on('SIGINT', () => {
