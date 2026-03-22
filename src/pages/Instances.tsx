@@ -150,7 +150,7 @@ const Instances = () => {
   const [qrStatus, setQrStatus] = useState("");
   const [activeQrInstance, setActiveQrInstance] = useState<Instance | null>(null);
   const [newName, setNewName] = useState("");
-  const [newProvider, setNewProvider] = useState<"baileys" | "evolution" | "z-api">("z-api");
+  const [newProvider, setNewProvider] = useState<"baileys" | "z-api">("z-api");
   const [zapiInstanceId, setZapiInstanceId] = useState("");
   const [zapiToken, setZapiToken] = useState("");
   const [zapiClientToken, setZapiClientToken] = useState("");
@@ -194,7 +194,7 @@ const Instances = () => {
       return;
     }
     try {
-      if (newProvider === "baileys" || newProvider === "evolution") {
+      if (newProvider === "baileys") {
         const instanceName = newName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
         const proxyFn = getProxyFunction(newProvider);
         const { data: createData, error: createError } = await supabase.functions.invoke(proxyFn, {
@@ -338,7 +338,7 @@ const Instances = () => {
       }
       setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/15`);
     }
-    throw new Error("Servidor Baileys não retornou QR. Verifique se está rodando na VPS (porta 3100).");
+    throw new Error("Servidor Disparo Pro não retornou QR. Verifique se está rodando na VPS (porta 3100).");
   };
 
   const pollConnectionStatus = async (instance: Instance, provider: string) => {
@@ -482,8 +482,7 @@ const Instances = () => {
 
   const getProviderLabel = (provider: string) => {
     switch (provider) {
-      case "baileys": return "Baileys";
-      case "evolution": return "Evolution";
+      case "baileys": return "Disparo Pro";
       case "z-api": return "Z-API";
       default: return provider;
     }
@@ -492,7 +491,6 @@ const Instances = () => {
   const getProviderBadgeClass = (provider: string) => {
     switch (provider) {
       case "baileys": return "bg-orange-500/10 text-orange-400";
-      case "evolution": return "bg-emerald-500/10 text-emerald-400";
       case "z-api": return "bg-blue-500/10 text-blue-400";
       default: return "bg-muted text-muted-foreground";
     }
@@ -522,7 +520,7 @@ const Instances = () => {
             <div className="space-y-4 py-2">
               <div>
                 <Label className="text-foreground">Provedor</Label>
-                <Select value={newProvider} onValueChange={(v) => setNewProvider(v as "baileys" | "evolution" | "z-api")}>
+                <Select value={newProvider} onValueChange={(v) => setNewProvider(v as "baileys" | "z-api")}>
                   <SelectTrigger className="bg-secondary border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -535,14 +533,8 @@ const Instances = () => {
                     </SelectItem>
                     <SelectItem value="baileys">
                       <div className="flex items-center gap-2">
-                        <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Baileys</span>
+                        <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Disparo Pro</span>
                         <span>Grátis · Requer VPS (porta 3100)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="evolution">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded px-1.5 py-0.5 text-xs bg-emerald-500/10 text-emerald-400 font-medium">Evolution</span>
-                        <span>Grátis · Requer VPS + Docker</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -571,12 +563,7 @@ const Instances = () => {
               )}
               {newProvider === "baileys" && (
                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 text-sm text-muted-foreground">
-                  🚀 Baileys roda direto na VPS (porta 3100), sem intermediários. QR Code aparece em segundos!
-                </div>
-              )}
-              {newProvider === "evolution" && (
-                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-muted-foreground">
-                  💡 Evolution API roda na sua VPS via Docker. A instância será criada automaticamente.
+                  🚀 Disparo Pro roda direto na VPS (porta 3100), sem intermediários. QR Code aparece em segundos!
                 </div>
               )}
               <Button onClick={addInstance} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
