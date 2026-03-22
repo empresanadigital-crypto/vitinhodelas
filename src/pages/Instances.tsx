@@ -563,12 +563,7 @@ const Instances = () => {
               )}
               {newProvider === "baileys" && (
                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 text-sm text-muted-foreground">
-                  🚀 Baileys roda direto na VPS (porta 3100), sem intermediários. QR Code aparece em segundos!
-                </div>
-              )}
-              {newProvider === "evolution" && (
-                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-muted-foreground">
-                  💡 Evolution API roda na sua VPS via Docker. A instância será criada automaticamente.
+                  🚀 Disparo Pro roda direto na VPS (porta 3100), sem intermediários. QR Code aparece em segundos!
                 </div>
               )}
               <Button onClick={addInstance} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
