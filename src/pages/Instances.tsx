@@ -338,7 +338,7 @@ const Instances = () => {
       }
       setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/15`);
     }
-    throw new Error("Servidor Disparo Pro não retornou QR. Verifique se está rodando na VPS (porta 3100).");
+    throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns segundos.");
   };
 
   const pollConnectionStatus = async (instance: Instance, provider: string) => {
