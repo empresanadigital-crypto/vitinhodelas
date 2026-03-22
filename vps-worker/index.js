@@ -466,6 +466,82 @@ async function reaperLoop() {
   }
 }
 
+// ─── SCHEDULER LOOP (campanhas agendadas) ─────────
+
+async function schedulerLoop() {
+  while (workerRunning) {
+    try {
+      const now = new Date().toISOString();
+      const { data: scheduled } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('status', 'scheduled')
+        .lte('scheduled_at', now);
+
+      for (const campaign of (scheduled || [])) {
+        console.log(`📅 Iniciando campanha agendada: ${campaign.name}`);
+
+        // Use saved contact_ids if available, otherwise all user contacts
+        let contactsQuery = supabase
+          .from('contacts')
+          .select('id, phone, name')
+          .eq('user_id', campaign.user_id);
+
+        const savedContactIds = campaign.contact_ids;
+        if (savedContactIds && Array.isArray(savedContactIds) && savedContactIds.length > 0) {
+          contactsQuery = contactsQuery.in('id', savedContactIds);
+        }
+
+        const { data: contacts } = await contactsQuery;
+
+        if (!contacts || contacts.length === 0) {
+          console.warn(`📅 Campanha ${campaign.name}: nenhum contato encontrado, pulando.`);
+          await supabase.from('campaigns').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', campaign.id);
+          continue;
+        }
+
+        const jobs = contacts.map(contact => ({
+          campaign_id: campaign.id,
+          user_id: campaign.user_id,
+          contact_phone: contact.phone,
+          contact_name: contact.name,
+          status: 'queued',
+          idempotency_key: `${campaign.id}:${contact.phone}`,
+          scheduled_for: new Date().toISOString(),
+        }));
+
+        let totalInserted = 0;
+        for (let i = 0; i < jobs.length; i += 500) {
+          const batch = jobs.slice(i, i + 500);
+          const { data: inserted, error: insertError } = await supabase
+            .from('campaign_jobs')
+            .upsert(batch, { onConflict: 'idempotency_key', ignoreDuplicates: true })
+            .select('id');
+
+          if (insertError) {
+            console.error(`📅 Erro ao inserir jobs: ${insertError.message}`);
+            break;
+          }
+          totalInserted += inserted?.length || 0;
+        }
+
+        await supabase.from('campaigns').update({
+          status: 'sending',
+          started_at: new Date().toISOString(),
+          total_contacts: totalInserted,
+          sent_count: 0,
+          failed_count: 0,
+        }).eq('id', campaign.id);
+
+        console.log(`📅 Campanha "${campaign.name}" iniciada com ${totalInserted} jobs`);
+      }
+    } catch (err) {
+      console.error('Scheduler error:', err.message);
+    }
+    await sleep(60000);
+  }
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -709,6 +785,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   reaperLoop().catch(err => {
     console.error('💀 Reaper loop crashed:', err);
+  });
+
+  schedulerLoop().catch(err => {
+    console.error('💀 Scheduler crashed:', err);
   });
 });
 

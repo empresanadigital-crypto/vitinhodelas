@@ -145,6 +145,7 @@ export type Database = {
           button_text: string | null
           button_url: string | null
           completed_at: string | null
+          contact_ids: Json | null
           created_at: string
           failed_count: number
           id: string
@@ -167,6 +168,7 @@ export type Database = {
           button_text?: string | null
           button_url?: string | null
           completed_at?: string | null
+          contact_ids?: Json | null
           created_at?: string
           failed_count?: number
           id?: string
@@ -189,6 +191,7 @@ export type Database = {
           button_text?: string | null
           button_url?: string | null
           completed_at?: string | null
+          contact_ids?: Json | null
           created_at?: string
           failed_count?: number
           id?: string

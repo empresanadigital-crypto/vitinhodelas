@@ -194,6 +194,14 @@ const Campaigns = () => {
     // Get selected tags for filtering
     const selectedTags = filterTag !== "all" ? [filterTag] : undefined;
 
+    // Scheduling logic
+    const isScheduled = !!(scheduleDate && scheduleTime);
+    const scheduledAt = isScheduled ? new Date(`${scheduleDate}T${scheduleTime}`).toISOString() : null;
+    if (isScheduled && new Date(scheduledAt!) < new Date()) {
+      toast({ title: "Erro", description: "A data/hora de agendamento deve ser no futuro.", variant: "destructive" });
+      return;
+    }
+
     // Validação: botão só funciona com Z-API
     if (useButtons && selectedInstance !== "all") {
       const chosenInstance = instances.find(i => i.id === selectedInstance);
@@ -216,9 +224,11 @@ const Campaigns = () => {
       button_text: useButtons ? buttonText : null,
       button_url: useButtons ? buttonUrl : null,
       selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
-      status: "draft",
+      contact_ids: contactIds,
+      status: isScheduled ? "scheduled" : "draft",
+      scheduled_at: scheduledAt,
       started_at: null,
-    }).select("id").single();
+    } as any).select("id").single();
 
     if (campaignError || !campaign) {
       toast({ title: "Erro", description: campaignError?.message || "Falha ao criar campanha", variant: "destructive" });
@@ -231,9 +241,17 @@ const Campaigns = () => {
     setFailedCount(0);
     setTotalToSend(contactIds.length);
     setDispatchLog([]);
+    setCampaignStatus(isScheduled ? "scheduled" : "draft");
+
+    if (isScheduled) {
+      addLog(`📅 Campanha agendada para ${new Date(scheduledAt!).toLocaleString("pt-BR")}`);
+      toast({ title: "Campanha agendada!", description: `Será disparada em ${new Date(scheduledAt!).toLocaleString("pt-BR")}` });
+      setIsRunning(false);
+      return;
+    }
+
     setIsRunning(true);
     setIsPaused(false);
-    setCampaignStatus("draft");
 
     try {
       const result = await invokeWorker("start", {
