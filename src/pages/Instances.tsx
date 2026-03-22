@@ -194,7 +194,7 @@ const Instances = () => {
       return;
     }
     try {
-      if (newProvider === "baileys" || newProvider === "evolution") {
+      if (newProvider === "baileys") {
         const instanceName = newName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
         const proxyFn = getProxyFunction(newProvider);
         const { data: createData, error: createError } = await supabase.functions.invoke(proxyFn, {
