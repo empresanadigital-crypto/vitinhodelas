@@ -482,8 +482,7 @@ const Instances = () => {
 
   const getProviderLabel = (provider: string) => {
     switch (provider) {
-      case "baileys": return "Baileys";
-      case "evolution": return "Evolution";
+      case "baileys": return "Disparo Pro";
       case "z-api": return "Z-API";
       default: return provider;
     }
