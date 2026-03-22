@@ -29,6 +29,10 @@ const Contacts = () => {
   const [importDialog, setImportDialog] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [importTab, setImportTab] = useState("text");
+  const [fileContacts, setFileContacts] = useState<{ name: string; phone: string }[]>([]);
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
