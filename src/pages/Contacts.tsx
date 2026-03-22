@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Upload, Search, Trash2, Users, Loader2 } from "lucide-react";
+import { Upload, Search, Trash2, Users, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,12 +18,25 @@ interface Contact {
   tags: string[];
 }
 
+const PAGE_SIZE = 50;
+
 const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [importDialog, setImportDialog] = useState(false);
   const [bulkText, setBulkText] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
+
+  // Edit
+  const [editDialog, setEditDialog] = useState(false);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editTags, setEditTags] = useState("");
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -41,9 +55,17 @@ const Contacts = () => {
 
   useEffect(() => { fetchContacts(); }, []);
 
+  // Filter across ALL contacts
   const filtered = contacts.filter(
     (c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)
   );
+
+  // Reset page when search changes
+  useEffect(() => { setCurrentPage(1); }, [search]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedContacts = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const importContacts = async () => {
     const lines = bulkText.trim().split("\n").filter(l => l.trim());
@@ -60,7 +82,6 @@ const Contacts = () => {
             tags: ["Importado"],
           };
         }
-        // Só número (sem nome)
         const phone = parts[0].trim().replace(/\D/g, "");
         if (phone.length < 8) return null;
         return {
@@ -88,9 +109,35 @@ const Contacts = () => {
     }
   };
 
-  const removeContact = async (id: string) => {
-    await supabase.from("contacts").delete().eq("id", id);
+  const removeContact = async () => {
+    if (!deleteTarget) return;
+    await supabase.from("contacts").delete().eq("id", deleteTarget.id);
+    setDeleteTarget(null);
     fetchContacts();
+  };
+
+  const openEdit = (contact: Contact) => {
+    setEditContact(contact);
+    setEditName(contact.name);
+    setEditTags((contact.tags || []).join(", "));
+    setEditDialog(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editContact) return;
+    const tags = editTags.split(",").map(t => t.trim()).filter(Boolean);
+    const { error } = await supabase
+      .from("contacts")
+      .update({ name: editName.trim(), tags })
+      .eq("id", editContact.id);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Contato atualizado!" });
+      setEditDialog(false);
+      setEditContact(null);
+      fetchContacts();
+    }
   };
 
   if (loading) {
@@ -145,7 +192,7 @@ const Contacts = () => {
           <span>Nome</span><span>Número</span><span>Tags</span><span></span>
         </div>
         <div className="divide-y divide-border">
-          {filtered.map((contact) => (
+          {paginatedContacts.map((contact) => (
             <div key={contact.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-secondary/30">
               <span className="font-medium text-foreground">{contact.name}</span>
               <span className="font-mono text-sm text-muted-foreground">{contact.phone}</span>
@@ -154,9 +201,14 @@ const Contacts = () => {
                   <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{tag}</span>
                 ))}
               </div>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => removeContact(contact.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => openEdit(contact)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(contact)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
           {filtered.length === 0 && (
@@ -166,6 +218,63 @@ const Contacts = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages} · {filtered.length} contatos no total
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="border-border text-foreground">
+              Anterior
+            </Button>
+            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="border-border text-foreground">
+              Próximo
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Remover contato</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este contato? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border text-foreground">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={removeContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit dialog */}
+      <Dialog open={editDialog} onOpenChange={setEditDialog}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Editar Contato</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-foreground">Nome</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1 bg-secondary border-border text-foreground" />
+            </div>
+            <div>
+              <Label className="text-foreground">Tags (separadas por vírgula)</Label>
+              <Input value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="Ex: VIP, Cliente, Importado" className="mt-1 bg-secondary border-border text-foreground" />
+            </div>
+            <Button onClick={saveEdit} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!editName.trim()}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
