@@ -195,23 +195,79 @@ const Contacts = () => {
             <DialogHeader>
               <DialogTitle className="text-foreground">Importar Contatos</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div>
-                <Label className="text-foreground">Cole seus contatos (um por linha)</Label>
-                <Textarea
-                  placeholder={"5511999991234\nMaria Silva, 5511999991234\n5521988885678"}
-                  value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
-                  className="mt-1 min-h-[200px] bg-secondary border-border text-foreground font-mono text-sm"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Aceita só o número ou Nome, Número (um por linha). Sem nome, o número será usado como nome.
-                </p>
-              </div>
-              <Button onClick={importContacts} className="w-full gradient-green text-primary-foreground font-semibold">
-                <Upload className="mr-2 h-4 w-4" /> Importar Contatos
-              </Button>
-            </div>
+            <Tabs value={importTab} onValueChange={(v) => setImportTab(v)} className="w-full">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="text" className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" /> Colar texto
+                </TabsTrigger>
+                <TabsTrigger value="file" className="flex items-center gap-1.5">
+                  <FileSpreadsheet className="h-3.5 w-3.5" /> Arquivo CSV/Excel
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="text" className="space-y-4 pt-2">
+                <div>
+                  <Label className="text-foreground">Cole seus contatos (um por linha)</Label>
+                  <Textarea
+                    placeholder={"5511999991234\nMaria Silva, 5511999991234\n5521988885678"}
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    className="mt-1 min-h-[200px] bg-secondary border-border text-foreground font-mono text-sm"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Aceita só o número ou Nome, Número (um por linha). Sem nome, o número será usado como nome.
+                  </p>
+                </div>
+                {bulkText.trim() && (
+                  <p className="text-sm text-muted-foreground">
+                    ✅ <strong className="text-foreground">{parseLines(bulkText).length}</strong> contatos válidos encontrados
+                  </p>
+                )}
+                <Button
+                  onClick={() => importContacts("text")}
+                  className="w-full gradient-green text-primary-foreground font-semibold"
+                  disabled={!bulkText.trim() || parseLines(bulkText).length === 0}
+                >
+                  <Upload className="mr-2 h-4 w-4" /> Importar Contatos
+                </Button>
+              </TabsContent>
+              <TabsContent value="file" className="space-y-4 pt-2">
+                <div>
+                  <Label className="text-foreground">Selecione um arquivo CSV, TXT ou Excel</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.txt,.xlsx,.xls"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2 border-dashed border-2 border-border text-muted-foreground hover:text-foreground h-20"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <FileSpreadsheet className="h-5 w-5" />
+                      <span className="text-sm">{fileName || "Clique para selecionar arquivo"}</span>
+                    </div>
+                  </Button>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Formatos aceitos: .csv, .txt, .xlsx — uma coluna com número ou duas colunas (nome, número)
+                  </p>
+                </div>
+                {fileContacts.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    ✅ <strong className="text-foreground">{fileContacts.length}</strong> contatos encontrados no arquivo
+                  </p>
+                )}
+                <Button
+                  onClick={() => importContacts("file")}
+                  className="w-full gradient-green text-primary-foreground font-semibold"
+                  disabled={fileContacts.length === 0}
+                >
+                  <Upload className="mr-2 h-4 w-4" /> Importar {fileContacts.length} Contatos
+                </Button>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
