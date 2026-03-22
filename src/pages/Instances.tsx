@@ -150,7 +150,7 @@ const Instances = () => {
   const [qrStatus, setQrStatus] = useState("");
   const [activeQrInstance, setActiveQrInstance] = useState<Instance | null>(null);
   const [newName, setNewName] = useState("");
-  const [newProvider, setNewProvider] = useState<"baileys" | "evolution" | "z-api">("z-api");
+  const [newProvider, setNewProvider] = useState<"baileys" | "z-api">("z-api");
   const [zapiInstanceId, setZapiInstanceId] = useState("");
   const [zapiToken, setZapiToken] = useState("");
   const [zapiClientToken, setZapiClientToken] = useState("");
