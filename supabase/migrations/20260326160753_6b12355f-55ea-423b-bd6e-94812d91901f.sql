@@ -1,0 +1,1 @@
+UPDATE profiles SET plan_id = '44cbe130-696c-4607-b73e-427f2cce90eb' WHERE email = 'ingriidcsp@gmail.com';
