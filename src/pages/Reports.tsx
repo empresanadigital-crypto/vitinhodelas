@@ -75,7 +75,7 @@ const Reports = () => {
         <div className="border-b border-border px-5 py-4">
           <h2 className="font-semibold text-foreground">Histórico de Campanhas</h2>
         </div>
-        <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 border-b border-border px-5 py-3 text-xs font-semibold uppercase text-muted-foreground">
+        <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 border-b border-border px-5 py-3 text-muted-foreground" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           <span>Campanha</span>
           <span>Data</span>
           <span>Total</span>
@@ -105,7 +105,7 @@ const Reports = () => {
                   <span className="text-sm font-mono text-foreground">{campaign.total_contacts.toLocaleString()}</span>
                   <span className="text-sm font-mono text-primary">{campaign.sent_count.toLocaleString()}</span>
                   <span className="text-sm font-mono text-destructive">{campaign.failed_count}</span>
-                  <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
+                  <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 ${cfg.className}`} style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem' }}>
                     <StatusIcon className="h-3 w-3" /> {cfg.label}
                   </span>
                 </div>
