@@ -87,11 +87,11 @@ const Dashboard = () => {
                       <span className="text-muted-foreground">Falhas: </span>
                       <span className="font-medium text-destructive">{campaign.failed_count}</span>
                     </div>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    <span className={`rounded-full px-2.5 py-0.5 ${
                       campaign.status === "completed" ? "bg-success/10 text-success" :
                       campaign.status === "running" ? "bg-warning/10 text-warning" :
                       "bg-muted text-muted-foreground"
-                    }`}>{status.label}</span>
+                    }`} style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem' }}>{status.label}</span>
                   </div>
                 </div>
               );
