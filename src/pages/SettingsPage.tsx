@@ -161,7 +161,7 @@ const SettingsPage = () => {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="gradient-green text-primary-foreground font-semibold"
+          className="gradient-blue text-primary-foreground font-semibold"
         >
           {saving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

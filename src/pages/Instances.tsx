@@ -94,7 +94,7 @@ const QrDialogBody = ({ qrLoading, qrStatus, qrImage, pairingCode, provider, onV
           <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
           <span className="text-xs text-muted-foreground">Aguardando conexão... o QR expira em ~30 segundos</span>
         </div>
-        <Button className="w-full gradient-green text-primary-foreground font-semibold" onClick={onVerify}>
+        <Button className="w-full gradient-blue text-primary-foreground font-semibold" onClick={onVerify}>
           <Wifi className="mr-2 h-4 w-4" /> Já escaneei — verificar conexão
         </Button>
       </div>
@@ -124,7 +124,7 @@ const QrDialogBody = ({ qrLoading, qrStatus, qrImage, pairingCode, provider, onV
             </div>
           ))}
         </div>
-        <Button className="w-full gradient-green text-primary-foreground font-semibold" onClick={onVerify}>
+        <Button className="w-full gradient-blue text-primary-foreground font-semibold" onClick={onVerify}>
           <Wifi className="mr-2 h-4 w-4" /> Já pareei — verificar conexão
         </Button>
       </div>
@@ -509,7 +509,7 @@ const Instances = () => {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gradient-green text-primary-foreground font-semibold">
+            <Button className="gradient-blue text-primary-foreground font-semibold">
               <Plus className="mr-2 h-4 w-4" /> Nova Instância
             </Button>
           </DialogTrigger>
@@ -566,7 +566,7 @@ const Instances = () => {
                   ✅ Pronto para usar. Basta criar a instância e escanear o QR Code pelo WhatsApp.
                 </div>
               )}
-              <Button onClick={addInstance} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
+              <Button onClick={addInstance} className="w-full gradient-blue text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
                 <ChevronRight className="mr-2 h-4 w-4" />
                 {newProvider === "z-api" ? "Adicionar Instância Z-API" : "Criar Instância"}
               </Button>
@@ -652,7 +652,7 @@ const Instances = () => {
             <Smartphone className="mb-3 h-10 w-10" />
             <p className="text-lg font-medium">Nenhuma instância ainda</p>
             <p className="mb-4 text-sm">Crie sua primeira instância para começar a disparar</p>
-            <Button className="gradient-green text-primary-foreground font-semibold" onClick={() => setDialogOpen(true)}>
+            <Button className="gradient-blue text-primary-foreground font-semibold" onClick={() => setDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Criar primeira instância
             </Button>
           </div>
