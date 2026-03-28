@@ -14,12 +14,13 @@ const StatCard = ({ title, value, icon: Icon, description }: StatCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-xl p-5"
+      className="rounded-xl p-5"
+      style={{ background: 'hsl(235,14%,9%)', border: '1px solid hsl(235,12%,14%)' }}
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="mt-1 text-3xl font-bold text-foreground">{value}</p>
+          <p className="mt-1 font-display font-extrabold text-foreground" style={{ fontSize: '32px' }}>{value}</p>
           {description && (
             <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           )}
