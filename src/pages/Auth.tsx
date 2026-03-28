@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Zap, Mail, Lock, User, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
@@ -48,7 +44,6 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Update profile with phone
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("profiles").update({ phone: phoneDigits, full_name: name.trim() }).eq("id", user.id);
@@ -72,108 +67,291 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-8 px-4">
-        <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
-            <Zap className="h-7 w-7 text-white" />
+    <>
+      <style>{`
+        @keyframes auth-shimmer {
+          0%   { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(400%) skewX(-15deg); }
+        }
+        @keyframes auth-spin {
+          to { transform: translate(-50%,-50%) rotate(360deg); }
+        }
+      `}</style>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100vh' }}>
+        {/* LEFT — FORM */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: '60px 72px', background: '#0d0d11',
+          borderRight: '1px solid rgba(255,255,255,.07)',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* subtle glow */}
+          <div style={{
+            position: 'absolute', top: -100, left: -100, width: 400, height: 400,
+            background: 'radial-gradient(circle, rgba(59,130,246,.08) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 9,
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 20px rgba(59,130,246,.3)',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+            </div>
+            <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 20, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.04em' }}>
+              ReadyZap
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">ReadyZap</h1>
-          <p className="text-muted-foreground mt-1">
-            {isLogin ? "Entre na sua conta" : "Crie sua conta grátis"}
+
+          {/* Title */}
+          <h1 style={{
+            fontFamily: "'Bricolage Grotesque', sans-serif",
+            fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 800,
+            color: '#f2f2ff', letterSpacing: '-0.035em', lineHeight: 1.1, marginBottom: 8,
+          }}>
+            {isLogin ? <>Entre na<br/>sua conta</> : <>Crie sua<br/>conta grátis</>}
+          </h1>
+          <p style={{ fontSize: 14, color: 'rgba(242,242,255,.52)', marginBottom: 36 }}>
+            {isLogin ? 'Acesse o painel e comece a disparar.' : 'Comece gratuitamente com 100 envios/mês.'}
           </p>
+
+          <form onSubmit={handleSubmit}>
+            {/* Signup fields */}
+            {!isLogin && (
+              <>
+                <FieldInput label="NOME COMPLETO" icon="user" placeholder="Seu nome" value={name} onChange={setName} required maxLength={100} />
+                <FieldInput label="WHATSAPP" icon="phone" placeholder="(11) 99999-9999" value={phone} onChange={(v) => setPhone(formatPhone(v))} required />
+              </>
+            )}
+
+            <FieldInput label="EMAIL" icon="mail" placeholder="seu@email.com" type="email" value={email} onChange={setEmail} required maxLength={255} />
+            <FieldInput label="SENHA" icon="lock" placeholder="••••••••" type="password" value={password} onChange={setPassword} required minLength={6} />
+
+            {isLogin && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -10, marginBottom: 28 }}>
+                <span style={{ fontSize: 12, color: '#60a5fa', cursor: 'pointer' }}>Esqueci minha senha</span>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%', height: 50, borderRadius: 100,
+                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                color: '#fff', fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
+                letterSpacing: '-0.01em', position: 'relative', overflow: 'hidden',
+                boxShadow: '0 0 28px rgba(59,130,246,.35)',
+                opacity: loading ? 0.7 : 1, transition: 'all .2s',
+              }}
+            >
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar Conta Grátis"}
+              </span>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, width: 40, height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent)',
+                animation: 'auth-shimmer 3.5s ease-in-out infinite 1s',
+              }} />
+            </button>
+
+            {/* Toggle */}
+            <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: 'rgba(242,242,255,.22)' }}>
+              {isLogin ? "Não tem conta? " : "Já tem conta? "}
+              <span
+                onClick={() => setIsLogin(!isLogin)}
+                style={{ color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
+              >
+                {isLogin ? "Cadastre-se grátis" : "Faça login"}
+              </span>
+            </p>
+          </form>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass-card rounded-xl p-6 space-y-4">
-          {!isLogin && (
-            <>
-              <div>
-                <Label className="text-foreground">Nome completo</Label>
-                <div className="relative mt-1">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Seu nome"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-secondary border-border text-foreground pl-10"
-                    required
-                    maxLength={100}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="text-foreground">WhatsApp</Label>
-                <div className="relative mt-1">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="(11) 99999-9999"
-                    value={phone}
-                    onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    className="bg-secondary border-border text-foreground pl-10"
-                    required
-                  />
-                </div>
-              </div>
-            </>
-          )}
-          <div>
-            <Label className="text-foreground">Email</Label>
-            <div className="relative mt-1">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-secondary border-border text-foreground pl-10"
-                required
-                maxLength={255}
-              />
-            </div>
-          </div>
-          <div>
-            <Label className="text-foreground">Senha</Label>
-            <div className="relative mt-1">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-secondary border-border text-foreground pl-10"
-                required
-                minLength={6}
-              />
-            </div>
-          </div>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full gradient-blue text-primary-foreground font-semibold"
-          >
-            {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar Conta Grátis"}
-          </Button>
+        {/* RIGHT — BRAND */}
+        <div style={{
+          position: 'relative', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: '60px 72px',
+        }}>
+          {/* gradient mesh */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: `
+              radial-gradient(ellipse 80% 60% at 20% 20%, rgba(59,130,246,.25) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 80% at 80% 80%, rgba(24,242,106,.18) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 50% at 50% 50%, rgba(59,130,246,.08) 0%, transparent 70%)
+            `,
+            pointerEvents: 'none',
+          }} />
 
-          {!isLogin && (
-            <p className="text-center text-xs text-muted-foreground">
-              Você começa no plano Grátis com 100 envios/mês
+          {/* orb */}
+          <div style={{
+            position: 'absolute', top: '30%', left: '40%',
+            width: 500, height: 500, transform: 'translate(-50%, -50%)',
+            background: 'conic-gradient(from 0deg, rgba(59,130,246,.12) 0%, rgba(24,242,106,.1) 33%, rgba(59,130,246,.08) 66%, rgba(24,242,106,.12) 100%)',
+            borderRadius: '50%', animation: 'auth-spin 20s linear infinite',
+            pointerEvents: 'none', filter: 'blur(40px)',
+          }} />
+
+          {/* grid overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: 'linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px)',
+            backgroundSize: '60px 60px', pointerEvents: 'none',
+          }} />
+
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            {/* Kicker */}
+            <div style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '.12em',
+              textTransform: 'uppercase' as const, color: '#60a5fa',
+              display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 20,
+            }}>
+              <span style={{ width: 20, height: 1, background: '#60a5fa', opacity: 0.5, display: 'inline-block' }} />
+              Plataforma de WhatsApp
+            </div>
+
+            <h2 style={{
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontSize: 'clamp(36px, 3.5vw, 54px)', fontWeight: 800,
+              letterSpacing: '-0.035em', lineHeight: 1.06,
+              color: '#f2f2ff', marginBottom: 20,
+            }}>
+              Dispare no WhatsApp.<br/>
+              <span style={{
+                background: 'linear-gradient(135deg, #60a5fa 0%, #18f26a 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>
+                Sem ban. Em escala.
+              </span>
+            </h2>
+
+            <p style={{ fontSize: 15, color: 'rgba(242,242,255,.52)', lineHeight: 1.75, maxWidth: 380, marginBottom: 40 }}>
+              Multi-chip, anti-ban inteligente e relatórios em tempo real. Tudo que você precisa para alcançar milhares de clientes com segurança.
             </p>
-          )}
 
-          <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline font-medium"
-            >
-              {isLogin ? "Cadastre-se grátis" : "Faça login"}
-            </button>
-          </p>
-        </form>
+            {/* Stats */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
+              background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.07)',
+              borderRadius: 12, overflow: 'hidden', marginBottom: 36,
+            }}>
+              {[
+                { n: '2', em: 'M+', l: 'Mensagens enviadas' },
+                { n: '99', em: '%', l: 'Taxa de entrega' },
+                { n: '500', em: '+', l: 'Clientes ativos' },
+              ].map((s, i) => (
+                <div key={i} style={{ background: 'rgba(7,7,9,.6)', backdropFilter: 'blur(12px)', padding: '18px 16px' }}>
+                  <div style={{
+                    fontFamily: "'Bricolage Grotesque', sans-serif",
+                    fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em',
+                    color: '#f2f2ff', lineHeight: 1, marginBottom: 4,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {s.n}<span style={{ color: '#60a5fa' }}>{s.em}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(242,242,255,.22)' }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Testimonial */}
+            <div style={{
+              background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.11)',
+              borderRadius: 12, padding: 20, backdropFilter: 'blur(8px)',
+            }}>
+              <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: 2, marginBottom: 10 }}>★★★★★</div>
+              <p style={{ fontSize: 14, color: 'rgba(242,242,255,.52)', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 14 }}>
+                "Triplicamos as vendas no primeiro mês. A personalização é impressionante e nunca mais perdemos um chip por banimento."
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(59,130,246,.3), rgba(24,242,106,.2))',
+                  border: '1px solid rgba(59,130,246,.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700, fontFamily: "'Bricolage Grotesque', sans-serif", color: '#60a5fa',
+                }}>
+                  CM
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f2f2ff', fontFamily: "'Bricolage Grotesque', sans-serif" }}>Carlos M.</div>
+                  <div style={{ fontSize: 11, color: 'rgba(242,242,255,.22)' }}>Consultor de Vendas</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* Reusable field component */
+const iconPaths: Record<string, JSX.Element> = {
+  mail: <><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></>,
+  lock: <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+  user: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+  phone: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,
+};
+
+function FieldInput({ label, icon, placeholder, type = "text", value, onChange, required, minLength, maxLength }: {
+  label: string; icon: string; placeholder: string; type?: string;
+  value: string; onChange: (v: string) => void; required?: boolean; minLength?: number; maxLength?: number;
+}) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <label style={{
+        display: 'block', fontSize: 12, fontWeight: 600,
+        color: 'rgba(242,242,255,.52)', letterSpacing: '.04em',
+        textTransform: 'uppercase' as const, marginBottom: 7,
+      }}>
+        {label}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <svg
+          style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(242,242,255,.22)', pointerEvents: 'none' }}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          {iconPaths[icon]}
+        </svg>
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          minLength={minLength}
+          maxLength={maxLength}
+          style={{
+            width: '100%', background: '#131318',
+            border: '1px solid rgba(255,255,255,.11)', borderRadius: 10,
+            padding: '13px 14px 13px 40px', fontSize: 14,
+            color: '#f2f2ff', fontFamily: "'Inter', sans-serif",
+            outline: 'none', transition: 'border-color .15s, box-shadow .15s',
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = 'rgba(59,130,246,.5)';
+            e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,.1)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = 'rgba(255,255,255,.11)';
+            e.target.style.boxShadow = 'none';
+          }}
+        />
       </div>
     </div>
   );
-};
+}
 
 export default Auth;
