@@ -165,7 +165,7 @@ const LandingPage = () => {
           >
             Dispare mensagens no
             <br />
-            <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
               WhatsApp em escala
             </span>
           </motion.h1>

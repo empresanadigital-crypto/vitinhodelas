@@ -96,7 +96,7 @@ const Reports = () => {
               return (
                 <div
                   key={campaign.id}
-                  className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/30"
+                  className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]"
                 >
                   <span className="font-medium text-foreground">{campaign.name}</span>
                   <span className="text-sm text-muted-foreground">

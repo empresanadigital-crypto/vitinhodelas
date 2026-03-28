@@ -70,7 +70,7 @@ const Dashboard = () => {
               const status = statusConfig[campaign.status as keyof typeof statusConfig] || statusConfig.draft;
               const StatusIcon = status.icon;
               return (
-                <div key={campaign.id} className="flex items-center justify-between rounded-lg bg-secondary/50 p-4">
+                <div key={campaign.id} className="flex items-center justify-between rounded-lg bg-secondary/50 p-4 hover:bg-[hsl(235,12%,11%)] transition-colors">
                   <div className="flex items-center gap-3">
                     <StatusIcon className={`h-5 w-5 ${status.className}`} />
                     <div>
@@ -88,7 +88,7 @@ const Dashboard = () => {
                       <span className="font-medium text-destructive">{campaign.failed_count}</span>
                     </div>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      campaign.status === "completed" ? "bg-primary/10 text-primary" :
+                      campaign.status === "completed" ? "bg-success/10 text-success" :
                       campaign.status === "running" ? "bg-warning/10 text-warning" :
                       "bg-muted text-muted-foreground"
                     }`}>{status.label}</span>

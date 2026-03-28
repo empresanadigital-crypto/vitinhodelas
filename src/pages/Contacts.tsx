@@ -283,7 +283,7 @@ const Contacts = () => {
         </div>
         <div className="divide-y divide-border">
           {paginatedContacts.map((contact) => (
-            <div key={contact.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-secondary/30">
+            <div key={contact.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]">
               <span className="font-medium text-foreground">{contact.name}</span>
               <span className="font-mono text-sm text-muted-foreground">{contact.phone}</span>
               <div className="flex gap-1">

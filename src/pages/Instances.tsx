@@ -603,15 +603,15 @@ const Instances = () => {
             <motion.div key={instance.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-card rounded-xl p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${instance.status === "connected" ? "bg-primary/10" : "bg-muted"}`}>
-                    <Smartphone className={`h-5 w-5 ${instance.status === "connected" ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${instance.status === "connected" ? "bg-success/10" : "bg-muted"}`}>
+                    <Smartphone className={`h-5 w-5 ${instance.status === "connected" ? "text-success" : "text-muted-foreground"}`} />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{instance.name}</p>
                     <p className="text-xs text-muted-foreground">{instance.phone || "Não conectado"}</p>
                   </div>
                 </div>
-                <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${instance.status === "connected" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${instance.status === "connected" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                   {instance.status === "connected" ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                   {instance.status === "connected" ? "Online" : "Offline"}
                 </span>
