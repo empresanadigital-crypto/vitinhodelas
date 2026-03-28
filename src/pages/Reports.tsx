@@ -15,7 +15,7 @@ interface Campaign {
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  completed: { label: "Concluída", icon: CheckCircle, className: "bg-primary/10 text-primary" },
+  completed: { label: "Concluída", icon: CheckCircle, className: "bg-success/10 text-success" },
   sending: { label: "Enviando", icon: Clock, className: "bg-yellow-500/10 text-yellow-500" },
   running: { label: "Enviando", icon: Clock, className: "bg-yellow-500/10 text-yellow-500" },
   paused: { label: "Pausada", icon: Pause, className: "bg-orange-500/10 text-orange-500" },

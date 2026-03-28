@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
 const statusConfig = {
-  completed: { label: "Concluída", icon: CheckCircle, className: "text-primary" },
+  completed: { label: "Concluída", icon: CheckCircle, className: "text-success" },
   running: { label: "Enviando", icon: Clock, className: "text-warning" },
   paused: { label: "Pausada", icon: XCircle, className: "text-muted-foreground" },
   draft: { label: "Rascunho", icon: Clock, className: "text-muted-foreground" },
