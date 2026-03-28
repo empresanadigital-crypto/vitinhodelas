@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
-import { Send, Users, Smartphone, CheckCircle, Clock, XCircle, Loader2 } from "lucide-react";
-import StatCard from "@/components/StatCard";
-import { motion } from "framer-motion";
+import { Send, Users, Smartphone, CheckCircle, Clock, XCircle, Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const statusConfig = {
-  completed: { label: "Concluída", icon: CheckCircle, className: "text-success" },
-  running: { label: "Enviando", icon: Clock, className: "text-warning" },
-  paused: { label: "Pausada", icon: XCircle, className: "text-muted-foreground" },
-  draft: { label: "Rascunho", icon: Clock, className: "text-muted-foreground" },
-  scheduled: { label: "Agendada", icon: Clock, className: "text-info" },
+  completed: { label: "Concluída", badge: "badge-ok" },
+  running: { label: "Enviando", badge: "badge-running" },
+  paused: { label: "Pausada", badge: "badge-draft" },
+  draft: { label: "Rascunho", badge: "badge-draft" },
+  scheduled: { label: "Agendada", badge: "badge-running" },
 };
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ contacts: 0, instances: 0, campaigns: 0, totalSent: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,62 +43,213 @@ const Dashboard = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' }}>Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral dos seus disparos</p>
+    <div style={{ padding: 28 }}>
+      {/* Page Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h1
+            style={{
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontSize: 22,
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+              color: "hsl(var(--foreground))",
+              marginBottom: 2,
+            }}
+          >
+            Dashboard
+          </h1>
+          <p style={{ fontSize: 12, color: "rgba(242,242,255,0.22)" }}>
+            Visão geral dos seus disparos
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/campanhas")}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "hsl(var(--primary))",
+            color: "#fff",
+            fontFamily: "'Bricolage Grotesque', sans-serif",
+            fontSize: 13,
+            fontWeight: 700,
+            padding: "9px 18px",
+            borderRadius: 8,
+            border: "none",
+            cursor: "pointer",
+            boxShadow: "0 0 16px rgba(59,130,246,0.25)",
+            transition: "all .13s",
+          }}
+        >
+          <Plus style={{ width: 13, height: 13 }} />
+          Nova Campanha
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Mensagens Enviadas" value={stats.totalSent.toLocaleString()} icon={Send} description="Total" />
-        <StatCard title="Contatos" value={stats.contacts.toLocaleString()} icon={Users} description="Total na base" />
-        <StatCard title="Instâncias Ativas" value={stats.instances} icon={Smartphone} description="Conectadas" />
-        <StatCard title="Campanhas" value={stats.campaigns} icon={CheckCircle} description="Total criadas" />
+      {/* Stats Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 22 }}>
+        {[
+          { label: "Mensagens Enviadas", value: stats.totalSent.toLocaleString(), desc: "Total", up: false },
+          { label: "Contatos", value: stats.contacts.toLocaleString(), desc: "Total na base", up: false },
+          { label: "Instâncias Ativas", value: String(stats.instances), desc: "Conectadas", up: false },
+          { label: "Campanhas", value: String(stats.campaigns), desc: "Total criadas", up: false },
+        ].map((s, i) => (
+          <div
+            key={i}
+            style={{
+              background: "hsl(235 12% 10%)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 10,
+              padding: 16,
+              transition: "border-color .15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
+          >
+            <div
+              style={{
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase" as const,
+                color: "rgba(242,242,255,0.22)",
+                marginBottom: 10,
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                color: "hsl(var(--foreground))",
+                lineHeight: 1,
+                marginBottom: 5,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {s.value}
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: s.up ? "#18f26a" : "rgba(242,242,255,0.22)" }}>
+              {s.desc}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card rounded-xl p-5">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Campanhas Recentes</h2>
+      {/* Campaigns Table */}
+      <div
+        style={{
+          background: "hsl(235 12% 10%)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 10,
+          overflow: "hidden",
+        }}
+      >
+        {/* Table Header */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 90px 90px 100px",
+            padding: "9px 18px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "hsl(235 14% 7%)",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase" as const,
+            color: "rgba(242,242,255,0.22)",
+          }}
+        >
+          <div>Campanha</div>
+          <div>Enviadas</div>
+          <div>Falhas</div>
+          <div>Status</div>
+        </div>
+
+        {/* Table Rows */}
         {campaigns.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">Nenhuma campanha ainda. Crie sua primeira!</p>
+          <div style={{ padding: "32px 18px", textAlign: "center", color: "rgba(242,242,255,0.22)", fontSize: 13 }}>
+            Nenhuma campanha ainda. Crie sua primeira!
+          </div>
         ) : (
-          <div className="space-y-3">
-            {campaigns.map((campaign) => {
-              const status = statusConfig[campaign.status as keyof typeof statusConfig] || statusConfig.draft;
-              const StatusIcon = status.icon;
-              return (
-                <div key={campaign.id} className="flex items-center justify-between rounded-lg bg-secondary/50 p-4 hover:bg-[hsl(235,12%,11%)] transition-colors">
-                  <div className="flex items-center gap-3">
-                    <StatusIcon className={`h-5 w-5 ${status.className}`} />
-                    <div>
-                      <p className="font-medium text-foreground">{campaign.name}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(campaign.created_at).toLocaleDateString("pt-BR")}</p>
-                    </div>
+          campaigns.map((campaign) => {
+            const status = statusConfig[campaign.status as keyof typeof statusConfig] || statusConfig.draft;
+            return (
+              <div
+                key={campaign.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 90px 90px 100px",
+                  padding: "14px 18px",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  alignItems: "center",
+                  transition: "background .12s",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "hsl(var(--foreground))" }}>
+                    {campaign.name}
                   </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Enviadas: </span>
-                      <span className="font-medium text-foreground">{campaign.sent_count}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Falhas: </span>
-                      <span className="font-medium text-destructive">{campaign.failed_count}</span>
-                    </div>
-                    <span className={`rounded-full px-2.5 py-0.5 ${
-                      campaign.status === "completed" ? "bg-success/10 text-success" :
-                      campaign.status === "running" ? "bg-warning/10 text-warning" :
-                      "bg-muted text-muted-foreground"
-                    }`} style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem' }}>{status.label}</span>
+                  <div style={{ fontSize: 10, color: "rgba(242,242,255,0.10)", marginTop: 1 }}>
+                    {new Date(campaign.created_at).toLocaleDateString("pt-BR")}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{ fontSize: 13, color: "rgba(242,242,255,0.50)", fontWeight: 500 }}>
+                  {campaign.sent_count}
+                </div>
+                <div style={{ fontSize: 13, color: "#ef4444", fontWeight: 500 }}>
+                  {campaign.failed_count}
+                </div>
+                <div>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: 5,
+                      ...(campaign.status === "completed"
+                        ? {
+                            background: "rgba(24,242,106,0.08)",
+                            color: "#18f26a",
+                            border: "1px solid rgba(24,242,106,0.18)",
+                          }
+                        : campaign.status === "running" || campaign.status === "scheduled"
+                        ? {
+                            background: "rgba(59,130,246,0.10)",
+                            color: "#60a5fa",
+                            border: "1px solid rgba(59,130,246,0.22)",
+                          }
+                        : {
+                            background: "rgba(255,255,255,0.04)",
+                            color: "rgba(242,242,255,0.22)",
+                            border: "1px solid rgba(255,255,255,0.06)",
+                          }),
+                    }}
+                  >
+                    {status.label}
+                  </span>
+                </div>
+              </div>
+            );
+          })
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };
