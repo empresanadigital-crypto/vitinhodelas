@@ -31,7 +31,7 @@ const AppSidebar = () => {
           <Zap className="h-5 w-5 text-white" />
         </div>
         <div>
-          <span className="text-lg font-bold text-foreground">ReadyZap</span>
+          <span className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.03em' }}>ReadyZap</span>
           <span className="ml-1 text-xs text-primary font-semibold">Sender</span>
         </div>
       </div>
@@ -45,12 +45,12 @@ const AppSidebar = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 ${
                 isActive
                   ? "text-[#60a5fa] border-l-2 border-[#3b82f6]"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               }`}
-              style={isActive ? { backgroundColor: 'rgba(59,130,246,0.10)' } : undefined}
+              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: '0.875rem', ...(isActive ? { backgroundColor: 'rgba(59,130,246,0.10)' } : {}) }}
             >
               <item.icon className={`h-5 w-5 ${isActive ? "text-[#60a5fa]" : ""}`} />
               {item.label}

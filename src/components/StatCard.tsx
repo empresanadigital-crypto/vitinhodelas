@@ -20,7 +20,7 @@ const StatCard = ({ title, value, icon: Icon, description }: StatCardProps) => {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="mt-1 font-display font-extrabold text-foreground" style={{ fontSize: '32px' }}>{value}</p>
+          <p className="mt-1 text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.04em' }}>{value}</p>
           {description && (
             <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           )}
