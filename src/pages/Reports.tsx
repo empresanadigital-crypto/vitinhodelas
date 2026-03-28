@@ -55,7 +55,7 @@ const Reports = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
+        <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' }}>Relatórios</h1>
         <p className="text-muted-foreground">Histórico e métricas dos disparos</p>
       </div>
 

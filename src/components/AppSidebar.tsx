@@ -31,7 +31,7 @@ const AppSidebar = () => {
           <Zap className="h-5 w-5 text-white" />
         </div>
         <div>
-          <span className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.03em' }}>ReadyZap</span>
+          <span className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.04em' }}>ReadyZap</span>
           <span className="ml-1 text-xs text-primary font-semibold">Sender</span>
         </div>
       </div>

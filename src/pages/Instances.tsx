@@ -504,7 +504,7 @@ const Instances = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Instâncias WhatsApp</h1>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' }}>Instâncias WhatsApp</h1>
           <p className="text-muted-foreground">Gerencie suas conexões de WhatsApp</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
