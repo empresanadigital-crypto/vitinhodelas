@@ -572,7 +572,7 @@ const Campaigns = () => {
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-secondary">
                   <motion.div
-                    className="h-full gradient-green rounded-full"
+                    className="h-full gradient-blue rounded-full"
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.3 }}
                   />
@@ -624,7 +624,7 @@ const Campaigns = () => {
             {!isRunning ? (
               <Button
                 onClick={handleStart}
-                className="w-full gradient-green text-primary-foreground font-semibold"
+                className="w-full gradient-blue text-primary-foreground font-semibold"
                 disabled={selectedContacts.size === 0 || !message.trim()}
               >
                 <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)

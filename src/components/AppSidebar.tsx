@@ -27,8 +27,8 @@ const AppSidebar = () => {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar">
       <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-green">
-          <Zap className="h-5 w-5 text-primary-foreground" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
+          <Zap className="h-5 w-5 text-white" />
         </div>
         <div>
           <span className="text-lg font-bold text-foreground">ReadyZap</span>
@@ -47,11 +47,12 @@ const AppSidebar = () => {
               to={item.to}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-primary/10 text-primary glow-green"
+                  ? "text-[#60a5fa] border-l-2 border-[#3b82f6]"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               }`}
+              style={isActive ? { backgroundColor: 'rgba(59,130,246,0.10)' } : undefined}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
+              <item.icon className={`h-5 w-5 ${isActive ? "text-[#60a5fa]" : ""}`} />
               {item.label}
             </NavLink>
           );

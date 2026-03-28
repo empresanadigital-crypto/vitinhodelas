@@ -75,8 +75,8 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 px-4">
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl gradient-green mb-4">
-            <Zap className="h-7 w-7 text-primary-foreground" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
+            <Zap className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">ReadyZap</h1>
           <p className="text-muted-foreground mt-1">
@@ -149,7 +149,7 @@ const Auth = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full gradient-green text-primary-foreground font-semibold"
+            className="w-full gradient-blue text-primary-foreground font-semibold"
           >
             {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar Conta Grátis"}
           </Button>

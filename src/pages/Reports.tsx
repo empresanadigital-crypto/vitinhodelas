@@ -15,7 +15,7 @@ interface Campaign {
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  completed: { label: "Concluída", icon: CheckCircle, className: "bg-primary/10 text-primary" },
+  completed: { label: "Concluída", icon: CheckCircle, className: "bg-success/10 text-success" },
   sending: { label: "Enviando", icon: Clock, className: "bg-yellow-500/10 text-yellow-500" },
   running: { label: "Enviando", icon: Clock, className: "bg-yellow-500/10 text-yellow-500" },
   paused: { label: "Pausada", icon: Pause, className: "bg-orange-500/10 text-orange-500" },
@@ -96,7 +96,7 @@ const Reports = () => {
               return (
                 <div
                   key={campaign.id}
-                  className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 px-5 py-3.5 transition-colors hover:bg-secondary/30"
+                  className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]"
                 >
                   <span className="font-medium text-foreground">{campaign.name}</span>
                   <span className="text-sm text-muted-foreground">

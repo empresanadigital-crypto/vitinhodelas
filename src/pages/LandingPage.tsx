@@ -103,8 +103,8 @@ const LandingPage = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-green">
-              <Zap className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
+              <Zap className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight">
               Ready<span className="text-primary">Zap</span>
@@ -120,7 +120,7 @@ const LandingPage = () => {
 
           <div className="hidden items-center gap-3 md:flex">
             <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>Entrar</Button>
-            <Button size="sm" className="gradient-green text-primary-foreground font-semibold" onClick={() => navigate("/auth")}>
+            <Button size="sm" className="gradient-blue text-primary-foreground font-semibold" onClick={() => navigate("/auth")}>
               Começar Grátis <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
@@ -137,7 +137,7 @@ const LandingPage = () => {
               <a href="#pricing" className="text-sm text-muted-foreground" onClick={() => setMobileMenu(false)}>Planos</a>
               <a href="#testimonials" className="text-sm text-muted-foreground" onClick={() => setMobileMenu(false)}>Depoimentos</a>
               <a href="#faq" className="text-sm text-muted-foreground" onClick={() => setMobileMenu(false)}>FAQ</a>
-              <Button className="gradient-green text-primary-foreground font-semibold w-full" onClick={() => navigate("/auth")}>
+              <Button className="gradient-blue text-primary-foreground font-semibold w-full" onClick={() => navigate("/auth")}>
                 Começar Grátis
               </Button>
             </div>
@@ -165,7 +165,7 @@ const LandingPage = () => {
           >
             Dispare mensagens no
             <br />
-            <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
               WhatsApp em escala
             </span>
           </motion.h1>
@@ -184,7 +184,7 @@ const LandingPage = () => {
           >
             <Button
               size="lg"
-              className="gradient-green text-primary-foreground font-bold text-base px-8 py-6 glow-green"
+              className="gradient-blue text-primary-foreground font-bold text-base px-8 py-6 glow-blue"
               onClick={() => navigate("/auth")}
             >
               Começar Agora — É Grátis <ChevronRight className="ml-2 h-5 w-5" />
@@ -250,7 +250,7 @@ const LandingPage = () => {
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
-                className="glass-card rounded-xl p-6 transition-all hover:border-primary/30 hover:glow-green"
+                className="glass-card rounded-xl p-6 transition-all hover:border-primary/30 hover:glow-blue"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
@@ -291,7 +291,7 @@ const LandingPage = () => {
                 variants={fadeUp}
                 custom={i}
               >
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-green">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-blue">
                   <s.icon className="h-7 w-7 text-primary-foreground" />
                 </div>
                 <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-6xl font-black text-primary/5">{s.step}</span>
@@ -320,7 +320,7 @@ const LandingPage = () => {
                 key={plan.name}
                 className={`relative rounded-2xl p-8 ${
                   plan.popular
-                    ? "border-2 border-primary glow-green bg-card"
+                    ? "border-2 border-primary glow-blue bg-card"
                     : "glass-card"
                 }`}
                 initial="hidden"
@@ -330,7 +330,7 @@ const LandingPage = () => {
                 custom={i}
               >
                 {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-green px-4 py-1 text-xs font-bold text-primary-foreground">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-blue px-4 py-1 text-xs font-bold text-primary-foreground">
                     MAIS POPULAR
                   </span>
                 )}
@@ -356,7 +356,7 @@ const LandingPage = () => {
                 <Button
                   className={`w-full font-semibold ${
                     plan.popular
-                      ? "gradient-green text-primary-foreground"
+                      ? "gradient-blue text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                   onClick={() => navigate("/auth")}
@@ -439,7 +439,7 @@ const LandingPage = () => {
       {/* CTA Final */}
       <section className="py-24 px-6">
         <motion.div
-          className="mx-auto max-w-4xl rounded-3xl gradient-green p-12 text-center md:p-16"
+          className="mx-auto max-w-4xl rounded-3xl gradient-blue p-12 text-center md:p-16"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
@@ -466,8 +466,8 @@ const LandingPage = () => {
       <footer className="border-t border-border/50 py-12 px-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-green">
-              <Zap className="h-4 w-4 text-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
+              <Zap className="h-4 w-4 text-white" />
             </div>
             <span className="font-bold">Ready<span className="text-primary">Zap</span></span>
           </div>

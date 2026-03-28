@@ -224,7 +224,7 @@ const Contacts = () => {
                 )}
                 <Button
                   onClick={() => importContacts("text")}
-                  className="w-full gradient-green text-primary-foreground font-semibold"
+                  className="w-full gradient-blue text-primary-foreground font-semibold"
                   disabled={!bulkText.trim() || parseLines(bulkText).length === 0}
                 >
                   <Upload className="mr-2 h-4 w-4" /> Importar Contatos
@@ -261,7 +261,7 @@ const Contacts = () => {
                 )}
                 <Button
                   onClick={() => importContacts("file")}
-                  className="w-full gradient-green text-primary-foreground font-semibold"
+                  className="w-full gradient-blue text-primary-foreground font-semibold"
                   disabled={fileContacts.length === 0}
                 >
                   <Upload className="mr-2 h-4 w-4" /> Importar {fileContacts.length} Contatos
@@ -283,7 +283,7 @@ const Contacts = () => {
         </div>
         <div className="divide-y divide-border">
           {paginatedContacts.map((contact) => (
-            <div key={contact.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-secondary/30">
+            <div key={contact.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]">
               <span className="font-medium text-foreground">{contact.name}</span>
               <span className="font-mono text-sm text-muted-foreground">{contact.phone}</span>
               <div className="flex gap-1">
@@ -359,7 +359,7 @@ const Contacts = () => {
               <Label className="text-foreground">Tags (separadas por vírgula)</Label>
               <Input value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="Ex: VIP, Cliente, Importado" className="mt-1 bg-secondary border-border text-foreground" />
             </div>
-            <Button onClick={saveEdit} className="w-full gradient-green text-primary-foreground font-semibold" disabled={!editName.trim()}>
+            <Button onClick={saveEdit} className="w-full gradient-blue text-primary-foreground font-semibold" disabled={!editName.trim()}>
               Salvar Alterações
             </Button>
           </div>
