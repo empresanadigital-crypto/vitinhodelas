@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Send, Users, Smartphone, CheckCircle, Clock, XCircle, Loader2, Plus } from "lucide-react";
+import { Plus, Loader2, Send, Users, Smartphone, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const statusConfig = {
   completed: { label: "Concluída", badge: "badge-ok" },
@@ -51,9 +52,9 @@ const Dashboard = () => {
   }
 
   return (
-    <div style={{ padding: 28 }}>
+    <div className="p-6 md:p-7 space-y-6">
       {/* Page Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1
             style={{
@@ -67,65 +68,38 @@ const Dashboard = () => {
           >
             Dashboard
           </h1>
-          <p style={{ fontSize: 12, color: "rgba(242,242,255,0.22)" }}>
+          <p className="text-xs text-muted-foreground">
             Visão geral dos seus disparos
           </p>
         </div>
-        <button
+        <Button
           onClick={() => navigate("/campanhas")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            background: "hsl(var(--primary))",
-            color: "#fff",
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-            fontSize: 13,
-            fontWeight: 700,
-            padding: "9px 18px",
-            borderRadius: 8,
-            border: "none",
-            cursor: "pointer",
-            boxShadow: "0 0 16px rgba(59,130,246,0.25)",
-            transition: "all .13s",
-          }}
+          className="gradient-blue text-primary-foreground font-semibold"
         >
-          <Plus style={{ width: 13, height: 13 }} />
+          <Plus className="mr-2 h-4 w-4" />
           Nova Campanha
-        </button>
+        </Button>
       </div>
 
       {/* Stats Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 22 }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Mensagens Enviadas", value: stats.totalSent.toLocaleString(), desc: "Total", up: false },
-          { label: "Contatos", value: stats.contacts.toLocaleString(), desc: "Total na base", up: false },
-          { label: "Instâncias Ativas", value: String(stats.instances), desc: "Conectadas", up: false },
-          { label: "Campanhas", value: String(stats.campaigns), desc: "Total criadas", up: false },
+          { label: "Mensagens Enviadas", value: stats.totalSent.toLocaleString(), desc: "Total", icon: Send },
+          { label: "Contatos", value: stats.contacts.toLocaleString(), desc: "Total na base", icon: Users },
+          { label: "Instâncias Ativas", value: String(stats.instances), desc: "Conectadas", icon: Smartphone },
+          { label: "Campanhas", value: String(stats.campaigns), desc: "Total criadas", icon: BarChart3 },
         ].map((s, i) => (
           <div
             key={i}
-            style={{
-              background: "hsl(235 12% 10%)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 10,
-              padding: 16,
-              transition: "border-color .15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
+            className="glass-card rounded-xl p-4 transition-colors hover:border-border/60"
           >
-            <div
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase" as const,
-                color: "rgba(242,242,255,0.22)",
-                marginBottom: 10,
-              }}
-            >
-              {s.label}
+            <div className="flex items-start justify-between mb-3">
+              <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground">
+                {s.label}
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <s.icon className="h-4 w-4 text-primary" />
+              </div>
             </div>
             <div
               style={{
@@ -141,7 +115,7 @@ const Dashboard = () => {
             >
               {s.value}
             </div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: s.up ? "#18f26a" : "rgba(242,242,255,0.22)" }}>
+            <div className="text-[10px] font-semibold text-muted-foreground">
               {s.desc}
             </div>
           </div>
@@ -149,26 +123,17 @@ const Dashboard = () => {
       </div>
 
       {/* Campaigns Table */}
-      <div
-        style={{
-          background: "hsl(235 12% 10%)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 10,
-          overflow: "hidden",
-        }}
-      >
+      <div className="glass-card rounded-xl overflow-hidden">
         {/* Table Header */}
         <div
+          className="hidden sm:grid px-5 py-3 border-b border-border"
           style={{
-            display: "grid",
             gridTemplateColumns: "1fr 90px 90px 100px",
-            padding: "9px 18px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
             background: "hsl(235 14% 7%)",
             fontSize: 9,
             fontWeight: 700,
             letterSpacing: "0.07em",
-            textTransform: "uppercase" as const,
+            textTransform: "uppercase",
             color: "rgba(242,242,255,0.22)",
           }}
         >
@@ -180,8 +145,13 @@ const Dashboard = () => {
 
         {/* Table Rows */}
         {campaigns.length === 0 ? (
-          <div style={{ padding: "32px 18px", textAlign: "center", color: "rgba(242,242,255,0.22)", fontSize: 13 }}>
-            Nenhuma campanha ainda. Crie sua primeira!
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <Send className="mb-3 h-10 w-10" />
+            <p className="text-base font-medium mb-1">Nenhuma campanha ainda</p>
+            <p className="text-sm mb-4">Crie sua primeira campanha para começar a disparar</p>
+            <Button onClick={() => navigate("/campanhas")} className="gradient-blue text-primary-foreground font-semibold">
+              <Plus className="mr-2 h-4 w-4" /> Criar primeira campanha
+            </Button>
           </div>
         ) : (
           campaigns.map((campaign) => {
@@ -189,40 +159,33 @@ const Dashboard = () => {
             return (
               <div
                 key={campaign.id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 90px 90px 100px",
-                  padding: "14px 18px",
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  alignItems: "center",
-                  transition: "background .12s",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                className="flex flex-col sm:grid gap-2 sm:gap-0 px-5 py-4 border-b border-border transition-colors hover:bg-white/[0.02] cursor-pointer"
+                style={{ gridTemplateColumns: "1fr 90px 90px 100px", alignItems: "center" }}
               >
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "hsl(var(--foreground))" }}>
+                  <div className="text-sm font-semibold text-foreground">
                     {campaign.name}
                   </div>
-                  <div style={{ fontSize: 10, color: "rgba(242,242,255,0.10)", marginTop: 1 }}>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
                     {new Date(campaign.created_at).toLocaleDateString("pt-BR")}
                   </div>
                 </div>
-                <div style={{ fontSize: 13, color: "rgba(242,242,255,0.50)", fontWeight: 500 }}>
-                  {campaign.sent_count}
+                <div className="flex sm:block gap-4">
+                  <span className="sm:hidden text-xs text-muted-foreground">Enviadas: </span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {campaign.sent_count}
+                  </span>
                 </div>
-                <div style={{ fontSize: 13, color: "#ef4444", fontWeight: 500 }}>
-                  {campaign.failed_count}
+                <div className="flex sm:block gap-4">
+                  <span className="sm:hidden text-xs text-muted-foreground">Falhas: </span>
+                  <span className="text-sm text-destructive font-medium">
+                    {campaign.failed_count}
+                  </span>
                 </div>
                 <div>
                   <span
+                    className="inline-flex text-[10px] font-bold px-2.5 py-1 rounded-md"
                     style={{
-                      display: "inline-flex",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: "3px 10px",
-                      borderRadius: 5,
                       ...(campaign.status === "completed"
                         ? {
                             background: "rgba(24,242,106,0.08)",

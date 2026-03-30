@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, Search, Trash2, Users, Loader2, Pencil, FileSpreadsheet, FileText } from "lucide-react";
+import { Upload, Search, Trash2, Users, Loader2, Pencil, FileSpreadsheet, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -34,10 +34,8 @@ const Contacts = () => {
   const [fileName, setFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
 
-  // Edit
   const [editDialog, setEditDialog] = useState(false);
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [editName, setEditName] = useState("");
@@ -61,15 +59,12 @@ const Contacts = () => {
 
   useEffect(() => { fetchContacts(); }, []);
 
-  // Filter across ALL contacts
   const filtered = contacts.filter(
     (c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)
   );
 
-  // Reset page when search changes
   useEffect(() => { setCurrentPage(1); }, [search]);
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginatedContacts = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
@@ -179,11 +174,11 @@ const Contacts = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 md:p-7 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' }}>Contatos</h1>
-          <p className="text-muted-foreground">{contacts.length} contatos na base</p>
+          <h1 className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Contatos</h1>
+          <p className="text-xs text-muted-foreground">{contacts.length} contatos na base</p>
         </div>
         <Dialog open={importDialog} onOpenChange={setImportDialog}>
           <DialogTrigger asChild>
@@ -278,15 +273,16 @@ const Contacts = () => {
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card overflow-hidden rounded-xl">
-        <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3 text-xs font-semibold uppercase text-muted-foreground">
+        {/* Desktop table header */}
+        <div className="hidden md:grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
           <span>Nome</span><span>Número</span><span>Tags</span><span></span>
         </div>
         <div className="divide-y divide-border">
           {paginatedContacts.map((contact) => (
-            <div key={contact.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]">
+            <div key={contact.id} className="flex flex-col md:grid md:grid-cols-[1fr_1fr_auto_auto] md:items-center gap-2 md:gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]">
               <span className="font-medium text-foreground">{contact.name}</span>
               <span className="font-mono text-sm text-muted-foreground">{contact.phone}</span>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-wrap">
                 {(contact.tags || []).map((tag) => (
                   <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{tag}</span>
                 ))}
@@ -302,8 +298,15 @@ const Contacts = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Users className="mb-2 h-8 w-8" /><p>Nenhum contato encontrado</p>
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <Users className="mb-3 h-10 w-10" />
+              <p className="text-base font-medium mb-1">Nenhum contato encontrado</p>
+              <p className="text-sm mb-4">{contacts.length === 0 ? "Importe seus contatos para começar" : "Tente outro termo de busca"}</p>
+              {contacts.length === 0 && (
+                <Button variant="outline" className="border-border text-foreground" onClick={() => setImportDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Importar contatos
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -311,7 +314,7 @@ const Contacts = () => {
 
       {/* Pagination */}
       {filtered.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             Página {currentPage} de {totalPages} · {filtered.length} contatos no total
           </p>
