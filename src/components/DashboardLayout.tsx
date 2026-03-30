@@ -5,7 +5,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <AppSidebar />
-      <main className="flex-1 p-0" style={{ marginLeft: 220 }}>
+      <main className="flex-1 min-w-0" style={{ marginLeft: 220 }}>
         <Outlet />
       </main>
     </div>

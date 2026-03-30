@@ -19,7 +19,6 @@ const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Load settings from profile
   useEffect(() => {
     if (!user) return;
 
@@ -94,10 +93,10 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' }}>Configurações</h1>
-        <p className="text-muted-foreground">Configurações gerais do disparador</p>
+        <h1 className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Configurações</h1>
+        <p className="text-xs text-muted-foreground">Configurações gerais do disparador</p>
       </div>
 
       <motion.div
@@ -106,7 +105,7 @@ const SettingsPage = () => {
         className="glass-card max-w-2xl space-y-6 rounded-xl p-6"
       >
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-foreground">API WhatsApp</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>API WhatsApp</h2>
           <div className="space-y-4">
             <div>
               <Label className="text-foreground">Provedor Padrão</Label>
@@ -118,7 +117,7 @@ const SettingsPage = () => {
                   <SelectItem value="z-api">Z-API</SelectItem>
                   <SelectItem value="evolution">Evolution API</SelectItem>
                   <SelectItem value="codechat">CodeChat</SelectItem>
-                  <SelectItem value="baileys">Baileys</SelectItem>
+                  <SelectItem value="baileys">Disparo Pro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -145,7 +144,7 @@ const SettingsPage = () => {
         </div>
 
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Disparos</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>Disparos</h2>
           <div>
             <Label className="text-foreground">Intervalo padrão entre mensagens (segundos)</Label>
             <Input

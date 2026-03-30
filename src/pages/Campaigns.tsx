@@ -320,10 +320,10 @@ const Campaigns = () => {
   const variables = ["{nome}", "{telefone}", "{empresa}", "{data}"];
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' }}>Nova Campanha</h1>
-        <p className="text-muted-foreground">Configure e dispare mensagens em massa</p>
+        <h1 className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Nova Campanha</h1>
+        <p className="text-xs text-muted-foreground">Configure e dispare mensagens em massa</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
