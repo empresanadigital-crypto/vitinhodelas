@@ -4,13 +4,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-const statusConfig = {
-  completed: { label: "Concluída", badge: "badge-ok" },
-  sending: { label: "Enviando", badge: "badge-running" },
-  paused: { label: "Pausada", badge: "badge-draft" },
-  draft: { label: "Rascunho", badge: "badge-draft" },
-  scheduled: { label: "Agendada", badge: "badge-running" },
-  cancelled: { label: "Cancelada", badge: "badge-draft" },
+const statusConfig: Record<string, { label: string; className?: string; style?: React.CSSProperties }> = {
+  completed: { label: "Concluída", className: "badge-ok" },
+  sending: { label: "Enviando", className: "badge-info" },
+  paused: { label: "Pausada", className: "badge-warning" },
+  draft: {
+    label: "Rascunho",
+    style: { background: "rgba(255,255,255,0.04)", color: "rgba(242,242,255,0.3)", border: "1px solid rgba(255,255,255,0.06)" },
+  },
+  scheduled: { label: "Agendada", className: "badge-info" },
+  cancelled: { label: "Cancelada", className: "badge-error" },
+};
+
+const metricNumberStyle: React.CSSProperties = {
+  fontFamily: "'Outfit', sans-serif",
+  fontSize: 38,
+  fontWeight: 900,
+  letterSpacing: "-0.05em",
+  background: "linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  fontVariantNumeric: "tabular-nums",
+  lineHeight: 1,
+  marginBottom: 6,
 };
 
 const Dashboard = () => {
@@ -60,16 +76,16 @@ const Dashboard = () => {
           <h1
             style={{
               fontFamily: "'Outfit', sans-serif",
-              fontSize: 22,
+              fontSize: 26,
               fontWeight: 800,
-              letterSpacing: "-0.03em",
-              color: "hsl(var(--foreground))",
+              letterSpacing: "-0.05em",
+              color: "#f2f2ff",
               marginBottom: 2,
             }}
           >
             Dashboard
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: "rgba(242,242,255,0.28)" }}>
             Visão geral dos seus disparos
           </p>
         </div>
@@ -95,28 +111,29 @@ const Dashboard = () => {
             className="glass-card rounded-xl p-4 transition-colors hover:border-border/60"
           >
             <div className="flex items-start justify-between mb-3">
-              <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground">
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase" as const,
+                  color: "rgba(242,242,255,0.25)",
+                  fontFamily: "'Outfit', sans-serif",
+                }}
+              >
                 {s.label}
               </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <s.icon className="h-4 w-4 text-primary" />
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                style={{ background: "rgba(59,130,246,0.08)" }}
+              >
+                <s.icon className="h-4 w-4" style={{ color: "#60a5fa" }} />
               </div>
             </div>
-            <div
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 28,
-                fontWeight: 800,
-                letterSpacing: "-0.04em",
-                color: "hsl(var(--foreground))",
-                lineHeight: 1,
-                marginBottom: 5,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
+            <div style={metricNumberStyle}>
               {s.value}
             </div>
-            <div className="text-[10px] font-semibold text-muted-foreground">
+            <div style={{ fontSize: 10, fontWeight: 400, color: "rgba(242,242,255,0.28)" }}>
               {s.desc}
             </div>
           </div>
@@ -130,12 +147,12 @@ const Dashboard = () => {
           className="hidden sm:grid px-5 py-3 border-b border-border"
           style={{
             gridTemplateColumns: "1fr 90px 90px 100px",
-            background: "hsl(235 14% 7%)",
+            background: "rgba(255,255,255,0.02)",
             fontSize: 9,
             fontWeight: 700,
-            letterSpacing: "0.07em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: "rgba(242,242,255,0.22)",
+            color: "rgba(242,242,255,0.2)",
           }}
         >
           <div>Campanha</div>
@@ -156,7 +173,7 @@ const Dashboard = () => {
           </div>
         ) : (
           campaigns.map((campaign) => {
-            const status = statusConfig[campaign.status as keyof typeof statusConfig] || statusConfig.draft;
+            const status = statusConfig[campaign.status as string] || statusConfig.draft;
             return (
               <div
                 key={campaign.id}
@@ -185,26 +202,8 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <span
-                    className="inline-flex text-[10px] font-bold px-2.5 py-1 rounded-md"
-                    style={{
-                      ...(campaign.status === "completed"
-                        ? {
-                            background: "rgba(24,242,106,0.08)",
-                            color: "#18f26a",
-                            border: "1px solid rgba(24,242,106,0.18)",
-                          }
-                        : campaign.status === "running" || campaign.status === "scheduled"
-                        ? {
-                            background: "rgba(59,130,246,0.10)",
-                            color: "#60a5fa",
-                            border: "1px solid rgba(59,130,246,0.22)",
-                          }
-                        : {
-                            background: "rgba(255,255,255,0.04)",
-                            color: "rgba(242,242,255,0.22)",
-                            border: "1px solid rgba(255,255,255,0.06)",
-                          }),
-                    }}
+                    className={`inline-flex text-[10px] font-bold px-2.5 py-1 rounded-md ${status.className || ""}`}
+                    style={status.style}
                   >
                     {status.label}
                   </span>
