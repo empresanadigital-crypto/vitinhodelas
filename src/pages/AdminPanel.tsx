@@ -23,6 +23,18 @@ interface UserProfile {
   instance_count: number;
 }
 
+const metricNumberStyle: React.CSSProperties = {
+  fontFamily: "'Outfit', sans-serif",
+  fontSize: 38,
+  fontWeight: 900,
+  letterSpacing: "-0.05em",
+  background: "linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  fontVariantNumeric: "tabular-nums",
+  lineHeight: 1,
+};
+
 const AdminPanel = () => {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -46,7 +58,6 @@ const AdminPanel = () => {
     const allPlans = plansRes.data || [];
     setPlans(allPlans);
 
-    // Count instances per user
     const instanceCountMap: Record<string, number> = {};
     (instancesRes.data || []).forEach((inst: any) => {
       instanceCountMap[inst.user_id] = (instanceCountMap[inst.user_id] || 0) + 1;
@@ -131,12 +142,17 @@ const AdminPanel = () => {
       {/* Header */}
       <div>
         <h1
-          className="text-foreground"
-          style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}
+          style={{
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 26,
+            fontWeight: 800,
+            letterSpacing: "-0.05em",
+            color: "#f2f2ff",
+          }}
         >
           Painel Administrativo
         </h1>
-        <p className="text-xs text-muted-foreground">Gerencie usuários, planos e o sistema</p>
+        <p style={{ fontSize: 12, color: "rgba(242,242,255,0.28)" }}>Gerencie usuários, planos e o sistema</p>
       </div>
 
       {/* Stat cards */}
@@ -144,23 +160,25 @@ const AdminPanel = () => {
         {statCards.map((s, i) => (
           <div key={i} className="glass-card rounded-xl p-4 transition-colors hover:border-border/60">
             <div className="flex items-start justify-between mb-3">
-              <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground">{s.label}</span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <s.icon className="h-4 w-4 text-primary" />
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase" as const,
+                  color: "rgba(242,242,255,0.25)",
+                }}
+              >
+                {s.label}
+              </span>
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                style={{ background: "rgba(59,130,246,0.08)" }}
+              >
+                <s.icon className="h-4 w-4" style={{ color: "#60a5fa" }} />
               </div>
             </div>
-            <div
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 28,
-                fontWeight: 800,
-                letterSpacing: "-0.04em",
-                color: "hsl(var(--foreground))",
-                lineHeight: 1,
-                marginBottom: 5,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
+            <div style={metricNumberStyle}>
               {s.value.toLocaleString()}
             </div>
           </div>
@@ -187,12 +205,12 @@ const AdminPanel = () => {
           className="hidden lg:grid px-5 py-3 border-b border-border"
           style={{
             gridTemplateColumns: "1.5fr 1fr 0.7fr 0.7fr 0.5fr 0.6fr 1fr",
-            background: "hsl(235 14% 7%)",
+            background: "rgba(255,255,255,0.02)",
             fontSize: 9,
             fontWeight: 700,
-            letterSpacing: "0.07em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: "rgba(242,242,255,0.22)",
+            color: "rgba(242,242,255,0.2)",
           }}
         >
           <div>Email</div>
@@ -217,46 +235,38 @@ const AdminPanel = () => {
               className="flex flex-col lg:grid gap-2 lg:gap-0 px-5 py-4 border-b border-border transition-colors hover:bg-white/[0.02]"
               style={{ gridTemplateColumns: "1.5fr 1fr 0.7fr 0.7fr 0.5fr 0.6fr 1fr", alignItems: "center" }}
             >
-              {/* Email */}
               <div className="text-sm text-foreground font-medium truncate" title={profile.email || ""}>
                 {profile.email || "—"}
               </div>
-
-              {/* Nome */}
               <div className="text-sm text-muted-foreground truncate">
                 {profile.full_name || "—"}
               </div>
-
-              {/* Plano */}
               <div className="text-sm text-muted-foreground font-medium">
                 {profile.plan_name}
               </div>
-
-              {/* Msgs */}
               <div className="text-sm text-muted-foreground font-medium tabular-nums">
                 {profile.messages_sent_this_month.toLocaleString()}
               </div>
-
-              {/* Instâncias */}
               <div className="text-sm text-muted-foreground font-medium tabular-nums">
                 {profile.instance_count}
               </div>
-
-              {/* Status */}
               <div>
                 <span
-                  className="inline-flex text-[10px] font-bold px-2.5 py-1 rounded-md"
-                  style={
-                    profile.is_active
-                      ? { background: "rgba(24,242,106,0.08)", color: "#18f26a", border: "1px solid rgba(24,242,106,0.18)" }
-                      : { background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.18)" }
-                  }
+                  className="inline-flex font-bold rounded-[10px]"
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    ...(profile.is_active
+                      ? { background: "rgba(24,242,106,0.08)", color: "#18f26a", border: "1px solid rgba(24,242,106,0.12)" }
+                      : { background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.12)" }),
+                  }}
                 >
                   {profile.is_active ? "Ativo" : "Inativo"}
                 </span>
               </div>
-
-              {/* Ações */}
               <div className="flex items-center gap-3">
                 <Switch
                   checked={profile.is_active}
