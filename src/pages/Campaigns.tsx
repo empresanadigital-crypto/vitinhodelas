@@ -487,7 +487,7 @@ const Campaigns = () => {
 
             <TabsContent value="settings" className="space-y-5">
               <div>
-                <Label className="text-foreground">Instância WhatsApp</Label>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Instância WhatsApp</Label>
                 <Select value={selectedInstance} onValueChange={setSelectedInstance}>
                   <SelectTrigger className="bg-secondary border-border text-foreground">
                     <SelectValue placeholder="Selecione uma instância" />
