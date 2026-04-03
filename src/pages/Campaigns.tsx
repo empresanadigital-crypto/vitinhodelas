@@ -327,8 +327,8 @@ const Campaigns = () => {
   return (
     <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Nova Campanha</h1>
-        <p className="text-xs text-muted-foreground">Configure e dispare mensagens em massa</p>
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Nova Campanha</h1>
+        <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Configure e dispare mensagens em massa</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
