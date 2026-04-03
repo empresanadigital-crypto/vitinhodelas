@@ -640,7 +640,6 @@ const Campaigns = () => {
               >
                 <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)
               </Button>
-              </Button>
             ) : (
               <>
                 <Button onClick={handlePause} variant="outline" className="w-full border-border text-foreground">
