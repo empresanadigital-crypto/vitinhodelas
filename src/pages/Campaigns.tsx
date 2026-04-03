@@ -523,7 +523,7 @@ const Campaigns = () => {
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-foreground">Intervalo entre mensagens</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Intervalo entre mensagens</Label>
                   <span className="text-sm font-semibold text-primary">{interval[0]}s</span>
                 </div>
                 <Slider value={interval} onValueChange={setInterval} max={120} min={5} step={1} className="mt-2" />
