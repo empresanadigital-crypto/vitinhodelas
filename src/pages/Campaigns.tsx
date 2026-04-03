@@ -340,10 +340,10 @@ const Campaigns = () => {
         >
           <Tabs defaultValue="message" className="space-y-4">
             <TabsList className="bg-secondary">
-              <TabsTrigger value="message" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="message" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <MessageSquare className="mr-1.5 h-4 w-4" /> Mensagem
               </TabsTrigger>
-              <TabsTrigger value="contacts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="contacts" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Users className="mr-1.5 h-4 w-4" /> Contatos
                 {selectedContacts.size > 0 && (
                   <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 text-xs font-bold">
@@ -351,10 +351,10 @@ const Campaigns = () => {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="settings" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Settings2 className="mr-1.5 h-4 w-4" /> Config
               </TabsTrigger>
-              <TabsTrigger value="schedule" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="schedule" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Clock className="mr-1.5 h-4 w-4" /> Agendar
               </TabsTrigger>
             </TabsList>
