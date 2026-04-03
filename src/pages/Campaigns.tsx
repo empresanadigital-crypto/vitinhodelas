@@ -374,11 +374,12 @@ const Campaigns = () => {
                 <div className="flex items-center justify-between">
                   <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagem</Label>
                   <div className="flex gap-1">
-                    {variables.map((v) => (
+                     {variables.map((v) => (
                       <button
                         key={v}
                         onClick={() => setMessage((prev) => prev + " " + v)}
-                        className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                        className="rounded bg-primary/10 px-2 py-0.5 text-primary transition-colors hover:bg-primary/20"
+                        style={{ fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em' }}
                       >
                         {v}
                       </button>
