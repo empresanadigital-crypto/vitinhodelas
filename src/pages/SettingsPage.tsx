@@ -115,8 +115,6 @@ const SettingsPage = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   <SelectItem value="z-api">Z-API</SelectItem>
-                  <SelectItem value="evolution">Evolution API</SelectItem>
-                  <SelectItem value="codechat">CodeChat</SelectItem>
                   <SelectItem value="baileys">Disparo Pro</SelectItem>
                 </SelectContent>
               </Select>
