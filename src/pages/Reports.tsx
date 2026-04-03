@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { BarChart3, TrendingUp, CheckCircle, XCircle, Clock, Loader2, Pause, FileText, Calendar, Ban, Send, Plus } from "lucide-react";
-import StatCard from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -16,14 +15,27 @@ interface Campaign {
   status: string;
 }
 
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  completed: { label: "Concluída", icon: CheckCircle, className: "bg-success/10 text-success" },
-  sending: { label: "Enviando", icon: Clock, className: "bg-yellow-500/10 text-yellow-500" },
-  running: { label: "Enviando", icon: Clock, className: "bg-yellow-500/10 text-yellow-500" },
-  paused: { label: "Pausada", icon: Pause, className: "bg-orange-500/10 text-orange-500" },
-  draft: { label: "Rascunho", icon: FileText, className: "bg-muted text-muted-foreground" },
-  scheduled: { label: "Agendada", icon: Calendar, className: "bg-blue-500/10 text-blue-500" },
-  cancelled: { label: "Cancelada", icon: Ban, className: "bg-destructive/10 text-destructive" },
+const statusConfig: Record<string, { label: string; icon: React.ElementType; className?: string; style?: React.CSSProperties }> = {
+  completed: { label: "Concluída", icon: CheckCircle, className: "badge-ok" },
+  sending: { label: "Enviando", icon: Clock, className: "badge-info" },
+  running: { label: "Enviando", icon: Clock, className: "badge-info" },
+  paused: { label: "Pausada", icon: Pause, className: "badge-warning" },
+  draft: { label: "Rascunho", icon: FileText, style: { background: "rgba(255,255,255,0.04)", color: "rgba(242,242,255,0.3)", border: "1px solid rgba(255,255,255,0.06)" } },
+  scheduled: { label: "Agendada", icon: Calendar, className: "badge-info" },
+  cancelled: { label: "Cancelada", icon: Ban, className: "badge-error" },
+};
+
+const metricNumberStyle: React.CSSProperties = {
+  fontFamily: "'Outfit', sans-serif",
+  fontSize: 38,
+  fontWeight: 900,
+  letterSpacing: "-0.05em",
+  background: "linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  fontVariantNumeric: "tabular-nums",
+  lineHeight: 1,
+  marginBottom: 6,
 };
 
 const Reports = () => {
@@ -55,18 +67,34 @@ const Reports = () => {
   const totalFailed = campaigns.reduce((acc, c) => acc + c.failed_count, 0);
   const successRate = totalSent > 0 ? ((totalSent - totalFailed) / totalSent * 100).toFixed(1) : "0.0";
 
+  const statCards = [
+    { label: "Total Enviadas", value: totalSent.toLocaleString(), icon: CheckCircle },
+    { label: "Total Falhas", value: totalFailed.toLocaleString(), icon: XCircle },
+    { label: "Taxa de Sucesso", value: `${successRate}%`, icon: TrendingUp },
+    { label: "Campanhas", value: String(campaigns.length), icon: BarChart3 },
+  ];
+
   return (
     <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Relatórios</h1>
-        <p className="text-xs text-muted-foreground">Histórico e métricas dos disparos</p>
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Relatórios</h1>
+        <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Histórico e métricas dos disparos</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title="Total Enviadas" value={totalSent.toLocaleString()} icon={CheckCircle} />
-        <StatCard title="Total Falhas" value={totalFailed.toLocaleString()} icon={XCircle} />
-        <StatCard title="Taxa de Sucesso" value={`${successRate}%`} icon={TrendingUp} />
-        <StatCard title="Campanhas" value={campaigns.length} icon={BarChart3} />
+        {statCards.map((s, i) => (
+          <div key={i} className="glass-card rounded-xl p-4 transition-colors hover:border-border/60">
+            <div className="flex items-start justify-between mb-3">
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, color: 'rgba(242,242,255,0.25)' }}>
+                {s.label}
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'rgba(59,130,246,0.08)' }}>
+                <s.icon className="h-4 w-4" style={{ color: '#60a5fa' }} />
+              </div>
+            </div>
+            <div style={metricNumberStyle}>{s.value}</div>
+          </div>
+        ))}
       </div>
 
       <motion.div
@@ -76,11 +104,11 @@ const Reports = () => {
         className="glass-card overflow-hidden rounded-xl"
       >
         <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Histórico de Campanhas</h2>
+          <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: '-0.02em', color: '#f2f2ff' }}>Histórico de Campanhas</h2>
         </div>
 
-        {/* Desktop header */}
-        <div className="hidden md:grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 border-b border-border px-5 py-3 text-muted-foreground" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div className="hidden md:grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 border-b border-border px-5 py-3"
+          style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(242,242,255,0.2)', background: 'rgba(255,255,255,0.02)' }}>
           <span>Campanha</span>
           <span>Data</span>
           <span>Total</span>
@@ -90,11 +118,11 @@ const Reports = () => {
         </div>
         <div className="divide-y divide-border">
           {campaigns.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <BarChart3 className="mb-3 h-10 w-10" />
-              <p className="text-base font-medium mb-1">Nenhuma campanha ainda</p>
-              <p className="text-sm mb-4">Crie sua primeira campanha para ver os relatórios</p>
-              <Button onClick={() => navigate("/campanhas")} className="gradient-blue text-primary-foreground font-semibold">
+            <div className="flex flex-col items-center justify-center py-16">
+              <BarChart3 className="mb-3 h-10 w-10" style={{ color: 'rgba(242,242,255,0.2)' }} />
+              <p className="text-base font-medium mb-1" style={{ color: 'rgba(242,242,255,0.35)' }}>Nenhuma campanha ainda</p>
+              <p className="text-sm mb-4" style={{ color: 'rgba(242,242,255,0.35)' }}>Crie sua primeira campanha para ver os relatórios</p>
+              <Button onClick={() => navigate("/campanhas")} className="gradient-blue text-primary-foreground" style={{ fontSize: 12, fontWeight: 700 }}>
                 <Plus className="mr-2 h-4 w-4" /> Criar primeira campanha
               </Button>
             </div>
@@ -105,7 +133,7 @@ const Reports = () => {
               return (
                 <div
                   key={campaign.id}
-                  className="flex flex-col md:grid md:grid-cols-[1fr_auto_auto_auto_auto_auto] md:items-center gap-2 md:gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]"
+                  className="flex flex-col md:grid md:grid-cols-[1fr_auto_auto_auto_auto_auto] md:items-center gap-2 md:gap-4 px-5 py-3 transition-colors hover:bg-white/[0.02]"
                 >
                   <span className="font-medium text-foreground">{campaign.name}</span>
                   <span className="text-sm text-muted-foreground">
@@ -123,7 +151,13 @@ const Reports = () => {
                     <span className="md:hidden text-xs text-muted-foreground">Falhas: </span>
                     <span className="text-sm font-mono text-destructive">{campaign.failed_count}</span>
                   </div>
-                  <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 w-fit ${cfg.className}`} style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem' }}>
+                  <span
+                    className={`flex items-center gap-1.5 rounded-[10px] w-fit ${cfg.className || ''}`}
+                    style={{
+                      fontSize: 9, fontWeight: 700, padding: '2px 8px', textTransform: 'uppercase' as const, letterSpacing: '0.04em',
+                      ...cfg.style,
+                    }}
+                  >
                     <StatusIcon className="h-3 w-3" /> {cfg.label}
                   </span>
                 </div>
