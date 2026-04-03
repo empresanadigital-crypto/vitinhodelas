@@ -9,8 +9,10 @@ import {
   Zap,
   LogOut,
   Flame,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { useState } from "react";
 
 const navGroups = [
