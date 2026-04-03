@@ -504,8 +504,8 @@ const Instances = () => {
     <div className="p-6 md:p-7 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Instâncias WhatsApp</h1>
-          <p className="text-xs text-muted-foreground">Gerencie suas conexões de WhatsApp</p>
+          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Instâncias WhatsApp</h1>
+          <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Gerencie suas conexões de WhatsApp</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
