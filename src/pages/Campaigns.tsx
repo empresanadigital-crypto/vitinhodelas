@@ -509,7 +509,7 @@ const Campaigns = () => {
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
                 <Switch checked={rotateInstances} onCheckedChange={setRotateInstances} />
                 <div>
-                  <Label className="text-foreground">Rotacionar entre instâncias</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Rotacionar entre instâncias</Label>
                   <p className="text-xs text-muted-foreground">Alterna entre WhatsApps conectados</p>
                 </div>
               </div>
