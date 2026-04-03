@@ -58,15 +58,15 @@ serve(async (req) => {
         break;
       case 'pause':
         endpoint = '/campaign/pause';
-        body = { campaign_id };
+        body = { campaign_id, user_id: userId };
         break;
       case 'resume':
         endpoint = '/campaign/resume';
-        body = { campaign_id };
+        body = { campaign_id, user_id: userId };
         break;
       case 'stop':
         endpoint = '/campaign/stop';
-        body = { campaign_id };
+        body = { campaign_id, user_id: userId };
         break;
       case 'status':
         endpoint = `/campaign/status/${campaign_id}`;

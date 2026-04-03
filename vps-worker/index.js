@@ -673,13 +673,14 @@ app.post('/campaign/start', async (req, res) => {
 
 app.post('/campaign/pause', async (req, res) => {
   try {
-    const { campaign_id } = req.body;
-    if (!campaign_id) return res.status(400).json({ error: 'campaign_id obrigatório' });
+    const { campaign_id, user_id } = req.body;
+    if (!campaign_id || !user_id) return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
 
     const { error } = await supabase
       .from('campaigns')
       .update({ status: 'paused' })
       .eq('id', campaign_id)
+      .eq('user_id', user_id)
       .eq('status', 'sending');
 
     if (error) return res.status(500).json({ error: error.message });
@@ -693,13 +694,14 @@ app.post('/campaign/pause', async (req, res) => {
 
 app.post('/campaign/resume', async (req, res) => {
   try {
-    const { campaign_id } = req.body;
-    if (!campaign_id) return res.status(400).json({ error: 'campaign_id obrigatório' });
+    const { campaign_id, user_id } = req.body;
+    if (!campaign_id || !user_id) return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
 
     const { error } = await supabase
       .from('campaigns')
       .update({ status: 'sending' })
       .eq('id', campaign_id)
+      .eq('user_id', user_id)
       .eq('status', 'paused');
 
     if (error) return res.status(500).json({ error: error.message });
@@ -713,20 +715,22 @@ app.post('/campaign/resume', async (req, res) => {
 
 app.post('/campaign/stop', async (req, res) => {
   try {
-    const { campaign_id } = req.body;
-    if (!campaign_id) return res.status(400).json({ error: 'campaign_id obrigatório' });
+    const { campaign_id, user_id } = req.body;
+    if (!campaign_id || !user_id) return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
 
     const { data: cancelled } = await supabase
       .from('campaign_jobs')
       .update({ status: 'cancelled', finished_at: new Date().toISOString() })
       .eq('campaign_id', campaign_id)
+      .eq('user_id', user_id)
       .in('status', ['queued', 'retry_scheduled'])
       .select('id');
 
     await supabase
       .from('campaigns')
       .update({ status: 'cancelled', completed_at: new Date().toISOString() })
-      .eq('id', campaign_id);
+      .eq('id', campaign_id)
+      .eq('user_id', user_id);
 
     console.log(`🛑 Campanha ${campaign_id} cancelada — ${cancelled?.length || 0} jobs cancelados`);
     res.json({ success: true, status: 'cancelled', jobs_cancelled: cancelled?.length || 0 });

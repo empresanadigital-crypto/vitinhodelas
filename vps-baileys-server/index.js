@@ -25,19 +25,20 @@ const API_KEY = process.env.API_KEY || 'baileys_default_key_change_me';
 // Sessions storage
 const sessions = new Map();
 
-// Auth middleware
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  const key = req.headers['apikey'] || req.headers['authorization']?.replace('Bearer ', '');
-  if (key !== API_KEY) return res.status(401).json({ error: 'Unauthorized' });
-  next();
-});
-
-// CORS
+// CORS (must come before auth so error responses also have CORS headers)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'apikey, content-type, authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+// Auth middleware
+app.use((req, res, next) => {
+  if (req.path === '/health') return next();
+  const key = req.headers['apikey'] || req.headers['authorization']?.replace('Bearer ', '');
+  if (key !== API_KEY) return res.status(401).json({ error: 'Unauthorized' });
   next();
 });
 
