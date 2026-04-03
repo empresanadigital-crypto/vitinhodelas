@@ -167,6 +167,11 @@ const SettingsPage = () => {
           )}
           {saving ? "Salvando..." : "Salvar Configurações"}
         </Button>
+
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
+          <span>⚠️</span>
+          <span>Estas configurações são salvas no seu perfil mas ainda não afetam o comportamento do disparo. Use a seleção de instância na tela de Campanhas.</span>
+        </div>
       </motion.div>
     </div>
   );

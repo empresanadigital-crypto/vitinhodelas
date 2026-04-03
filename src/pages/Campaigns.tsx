@@ -317,7 +317,7 @@ const Campaigns = () => {
   };
 
   const progress = totalToSend > 0 ? Math.round(((sentCount + failedCount) / totalToSend) * 100) : 0;
-  const variables = ["{nome}", "{telefone}", "{empresa}", "{data}"];
+  const variables = ["{nome}", "{telefone}"];
 
   return (
     <div className="p-6 md:p-7 space-y-6">

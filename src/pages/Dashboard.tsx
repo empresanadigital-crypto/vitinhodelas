@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 
 const statusConfig = {
   completed: { label: "Concluída", badge: "badge-ok" },
-  running: { label: "Enviando", badge: "badge-running" },
+  sending: { label: "Enviando", badge: "badge-running" },
   paused: { label: "Pausada", badge: "badge-draft" },
   draft: { label: "Rascunho", badge: "badge-draft" },
   scheduled: { label: "Agendada", badge: "badge-running" },
+  cancelled: { label: "Cancelada", badge: "badge-draft" },
 };
 
 const Dashboard = () => {
