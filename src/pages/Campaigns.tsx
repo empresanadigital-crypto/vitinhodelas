@@ -574,7 +574,11 @@ const Campaigns = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Progresso</span>
-                  <span className="font-semibold text-primary">{progress}%</span>
+                  <span style={{
+                    fontSize: 22, fontWeight: 900,
+                    background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  }}>{progress}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-secondary">
                   <motion.div
@@ -585,16 +589,16 @@ const Campaigns = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-primary">{sentCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Enviadas</p>
+                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{sentCount}</p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Enviadas</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-destructive">{failedCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Falhas</p>
+                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{failedCount}</p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Falhas</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-foreground">{totalToSend - sentCount - failedCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Restantes</p>
+                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{totalToSend - sentCount - failedCount}</p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Restantes</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
