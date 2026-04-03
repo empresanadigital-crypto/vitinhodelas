@@ -627,7 +627,7 @@ const Instances = () => {
                   <span className="text-muted-foreground">Enviadas: </span>
                   <span className="font-semibold text-foreground">{(instance.messages_sent || 0).toLocaleString()}</span>
                 </div>
-                <span className={`rounded px-2 py-0.5 text-xs font-medium ${getProviderBadgeClass(instance.provider)}`}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(242,242,255,0.35)' }}>
                   {getProviderLabel(instance.provider)}
                 </span>
               </div>
