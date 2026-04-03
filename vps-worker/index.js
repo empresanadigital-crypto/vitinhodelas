@@ -715,20 +715,22 @@ app.post('/campaign/resume', async (req, res) => {
 
 app.post('/campaign/stop', async (req, res) => {
   try {
-    const { campaign_id } = req.body;
-    if (!campaign_id) return res.status(400).json({ error: 'campaign_id obrigatório' });
+    const { campaign_id, user_id } = req.body;
+    if (!campaign_id || !user_id) return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
 
     const { data: cancelled } = await supabase
       .from('campaign_jobs')
       .update({ status: 'cancelled', finished_at: new Date().toISOString() })
       .eq('campaign_id', campaign_id)
+      .eq('user_id', user_id)
       .in('status', ['queued', 'retry_scheduled'])
       .select('id');
 
     await supabase
       .from('campaigns')
       .update({ status: 'cancelled', completed_at: new Date().toISOString() })
-      .eq('id', campaign_id);
+      .eq('id', campaign_id)
+      .eq('user_id', user_id);
 
     console.log(`🛑 Campanha ${campaign_id} cancelada — ${cancelled?.length || 0} jobs cancelados`);
     res.json({ success: true, status: 'cancelled', jobs_cancelled: cancelled?.length || 0 });
