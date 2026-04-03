@@ -41,6 +41,7 @@ const App = () => (
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
           </Route>
+          <Route path="/sso" element={<Sso />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
