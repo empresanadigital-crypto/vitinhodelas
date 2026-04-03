@@ -396,7 +396,7 @@ const Campaigns = () => {
 
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
                 <Switch checked={useButtons} onCheckedChange={setUseButtons} />
-                <Label className="text-foreground">Enviar com botão (requer API compatível)</Label>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Enviar com botão (requer API compatível)</Label>
               </div>
 
               {useButtons && (
