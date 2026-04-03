@@ -406,7 +406,7 @@ const Campaigns = () => {
                   className="space-y-3 rounded-lg border border-border p-4"
                 >
                   <div>
-                    <Label className="text-foreground">Texto do Botão</Label>
+                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Texto do Botão</Label>
                     <Input placeholder="Saiba Mais" value={buttonText} onChange={(e) => setButtonText(e.target.value)} className="bg-secondary border-border text-foreground" />
                   </div>
                   <div>
