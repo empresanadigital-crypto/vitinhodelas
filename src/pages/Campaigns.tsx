@@ -372,7 +372,7 @@ const Campaigns = () => {
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-foreground">Mensagem</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagem</Label>
                   <div className="flex gap-1">
                     {variables.map((v) => (
                       <button
