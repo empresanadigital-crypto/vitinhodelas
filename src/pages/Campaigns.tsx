@@ -361,7 +361,7 @@ const Campaigns = () => {
 
             <TabsContent value="message" className="space-y-4">
               <div>
-                <Label className="text-foreground">Nome da Campanha</Label>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Nome da Campanha</Label>
                 <Input
                   placeholder="Ex: Promoção Janeiro"
                   value={campaignName}
