@@ -516,7 +516,7 @@ const Campaigns = () => {
 
               {rotateInstances && (
                 <div>
-                  <Label className="text-foreground">Mensagens por instância antes de alternar</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagens por instância antes de alternar</Label>
                   <Input type="number" min="1" value={messagesPerInstance} onChange={(e) => setMessagesPerInstance(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
               )}
