@@ -8,6 +8,7 @@ import {
   Settings,
   Zap,
   LogOut,
+  Flame,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -228,6 +229,37 @@ const AppSidebar = () => {
             >
               {user?.email || ""}
             </div>
+          </div>
+        </div>
+
+        {/* ReadyZap link */}
+        <div
+          onClick={() => window.open("https://app.readyzap.com.br/dashboard", "_blank")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 8px",
+            borderRadius: 7,
+            fontSize: 12,
+            color: "rgba(242,242,255,0.22)",
+            cursor: "pointer",
+            transition: "all .12s",
+            marginBottom: 4,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(251,146,60,0.08)";
+            e.currentTarget.style.color = "#fb923c";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "rgba(242,242,255,0.22)";
+          }}
+        >
+          <Flame style={{ width: 14, height: 14 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>ReadyZap</div>
+            <div style={{ fontSize: 9, opacity: 0.6 }}>Aquecedor de chips</div>
           </div>
         </div>
 
