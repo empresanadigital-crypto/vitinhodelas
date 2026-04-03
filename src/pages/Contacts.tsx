@@ -274,7 +274,8 @@ const Contacts = () => {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card overflow-hidden rounded-xl">
         {/* Desktop table header */}
-        <div className="hidden md:grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+        <div className="hidden md:grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3"
+          style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(242,242,255,0.2)', background: 'rgba(255,255,255,0.02)' }}>
           <span>Nome</span><span>Número</span><span>Tags</span><span></span>
         </div>
         <div className="divide-y divide-border">
