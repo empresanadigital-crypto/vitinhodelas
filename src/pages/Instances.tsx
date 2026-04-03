@@ -638,15 +638,15 @@ const Instances = () => {
                 </div>
               )}
               <div className="mt-3 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" onClick={() => getQrCode(instance)} disabled={instance.status === "connected"}>
+                <Button size="sm" className="flex-1 gradient-blue text-primary-foreground" style={{ fontSize: 11, fontWeight: 600 }} onClick={() => getQrCode(instance)} disabled={instance.status === "connected"}>
                   <QrCode className="mr-1.5 h-3.5 w-3.5" />
                   {instance.status === "connected" ? "Conectado" : "QR Code"}
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" onClick={() => checkStatus(instance)} disabled={verifyingId === instance.id}>
+                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" style={{ fontSize: 11 }} onClick={() => checkStatus(instance)} disabled={verifyingId === instance.id}>
                   {verifyingId === instance.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}
                   Status
                 </Button>
-                <Button variant="outline" size="sm" className="border-border text-destructive hover:bg-destructive/10" onClick={() => removeInstance(instance)}>
+                <Button variant="outline" size="sm" style={{ fontSize: 11, border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }} className="hover:bg-destructive/10" onClick={() => removeInstance(instance)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

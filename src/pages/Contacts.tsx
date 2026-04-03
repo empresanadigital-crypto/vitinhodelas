@@ -299,10 +299,10 @@ const Contacts = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Users className="mb-3 h-10 w-10" />
-              <p className="text-base font-medium mb-1">Nenhum contato encontrado</p>
-              <p className="text-sm mb-4">{contacts.length === 0 ? "Importe seus contatos para começar" : "Tente outro termo de busca"}</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <Users className="mb-3 h-10 w-10" style={{ color: 'rgba(242,242,255,0.2)' }} />
+              <p className="text-base font-medium mb-1" style={{ color: 'rgba(242,242,255,0.35)' }}>Nenhum contato encontrado</p>
+              <p className="text-sm mb-4" style={{ color: 'rgba(242,242,255,0.35)' }}>{contacts.length === 0 ? "Importe seus contatos para começar" : "Tente outro termo de busca"}</p>
               {contacts.length === 0 && (
                 <Button variant="outline" className="border-border text-foreground" onClick={() => setImportDialog(true)}>
                   <Plus className="mr-2 h-4 w-4" /> Importar contatos
