@@ -8,6 +8,7 @@ import {
   Settings,
   Zap,
   LogOut,
+  Flame,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
