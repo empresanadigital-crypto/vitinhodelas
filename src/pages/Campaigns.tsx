@@ -117,11 +117,16 @@ const Campaigns = () => {
         setTotalToSend(data.total_contacts);
         setCampaignStatus(data.status);
 
-        if (data.status === "completed" || data.status === "stopped") {
+        if (data.status === "completed" || data.status === "stopped" || data.status === "cancelled") {
           setIsRunning(false);
           setIsPaused(false);
+          const titleMap: Record<string, string> = {
+            completed: "Campanha concluída!",
+            stopped: "Campanha parada",
+            cancelled: "Campanha cancelada",
+          };
           toast({
-            title: data.status === "completed" ? "Campanha concluída!" : "Campanha parada",
+            title: titleMap[data.status] || "Campanha finalizada",
             description: `${data.sent_count} enviadas, ${data.failed_count} falhas de ${data.total_contacts} contatos.`,
           });
         } else if (data.status === "paused") {
