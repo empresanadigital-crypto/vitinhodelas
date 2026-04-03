@@ -9,6 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+const labelStyle: React.CSSProperties = {
+  fontSize: 11, fontWeight: 600, color: "rgba(242,242,255,0.4)",
+  letterSpacing: "0.05em", textTransform: "uppercase" as const,
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700,
+  letterSpacing: "-0.02em", color: "#f2f2ff",
+};
+
 const SettingsPage = () => {
   const [apiProvider, setApiProvider] = useState("z-api");
   const [defaultInterval, setDefaultInterval] = useState("15");
@@ -21,7 +31,6 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!user) return;
-
     const load = async () => {
       const { data, error } = await supabase
         .from("profiles")
@@ -45,7 +54,6 @@ const SettingsPage = () => {
 
       setLoading(false);
     };
-
     load();
   }, [user, toast]);
 
@@ -63,11 +71,7 @@ const SettingsPage = () => {
       const { data, error } = await supabase
         .from("profiles")
         .upsert(
-          {
-            id: user.id,
-            email: user.email ?? null,
-            settings: settings as any,
-          },
+          { id: user.id, email: user.email ?? null, settings: settings as any },
           { onConflict: "id" }
         )
         .select("settings")
@@ -95,8 +99,8 @@ const SettingsPage = () => {
   return (
     <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Configurações</h1>
-        <p className="text-xs text-muted-foreground">Configurações gerais do disparador</p>
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Configurações</h1>
+        <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Configurações gerais do disparador</p>
       </div>
 
       <motion.div
@@ -105,10 +109,10 @@ const SettingsPage = () => {
         className="glass-card max-w-2xl space-y-6 rounded-xl p-6"
       >
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>API WhatsApp</h2>
+          <h2 className="mb-4" style={sectionTitleStyle}>API WhatsApp</h2>
           <div className="space-y-4">
             <div>
-              <Label className="text-foreground">Provedor Padrão</Label>
+              <Label style={labelStyle}>Provedor Padrão</Label>
               <Select value={apiProvider} onValueChange={setApiProvider}>
                 <SelectTrigger className="bg-secondary border-border text-foreground">
                   <SelectValue />
@@ -120,7 +124,7 @@ const SettingsPage = () => {
               </Select>
             </div>
             <div>
-              <Label className="text-foreground">URL Base da API</Label>
+              <Label style={labelStyle}>URL Base da API</Label>
               <Input
                 placeholder="https://api.z-api.io/instances/"
                 value={apiBaseUrl}
@@ -129,7 +133,7 @@ const SettingsPage = () => {
               />
             </div>
             <div>
-              <Label className="text-foreground">Token / API Key</Label>
+              <Label style={labelStyle}>Token / API Key</Label>
               <Input
                 type="password"
                 placeholder="Seu token de acesso"
@@ -142,9 +146,9 @@ const SettingsPage = () => {
         </div>
 
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Disparos</h2>
+          <h2 className="mb-4" style={sectionTitleStyle}>Disparos</h2>
           <div>
-            <Label className="text-foreground">Intervalo padrão entre mensagens (segundos)</Label>
+            <Label style={labelStyle}>Intervalo padrão entre mensagens (segundos)</Label>
             <Input
               type="number"
               min="5"
@@ -158,7 +162,8 @@ const SettingsPage = () => {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="gradient-blue text-primary-foreground font-semibold"
+          className="gradient-blue text-primary-foreground"
+          style={{ fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em' }}
         >
           {saving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -168,9 +173,19 @@ const SettingsPage = () => {
           {saving ? "Salvando..." : "Salvar Configurações"}
         </Button>
 
-        <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
-          <span>⚠️</span>
-          <span>Estas configurações são salvas no seu perfil mas ainda não afetam o comportamento do disparo. Use a seleção de instância na tela de Campanhas.</span>
+        <div style={{
+          background: 'rgba(245,158,11,0.06)',
+          border: '1px solid rgba(245,158,11,0.12)',
+          borderRadius: 8,
+          padding: 12,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 8,
+        }}>
+          <span style={{ color: '#f59e0b' }}>⚠️</span>
+          <span style={{ fontSize: 11, color: 'rgba(242,242,255,0.4)' }}>
+            Estas configurações são salvas no seu perfil mas ainda não afetam o comportamento do disparo. Use a seleção de instância na tela de Campanhas.
+          </span>
         </div>
       </motion.div>
     </div>

@@ -78,12 +78,12 @@ const Auth = () => {
         }
       `}</style>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100vh' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100vh', background: '#08090e' }}>
         {/* LEFT — FORM */}
         <div style={{
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '60px 72px', background: '#0d0d11',
-          borderRight: '1px solid rgba(255,255,255,.07)',
+          padding: '60px 72px', background: '#08090e',
+          borderRight: '1px solid rgba(255,255,255,.05)',
           position: 'relative', overflow: 'hidden',
         }}>
           {/* subtle glow */}
@@ -94,20 +94,21 @@ const Auth = () => {
           }} />
 
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 9,
-              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(59,130,246,.3)',
+          <div style={{ marginBottom: 48, textAlign: 'center' }}>
+            <h2 style={{
+              fontFamily: "'Outfit', sans-serif", fontSize: 32, fontWeight: 900, letterSpacing: '-0.03em',
+              background: 'linear-gradient(135deg, #3b82f6, #18f26a)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              marginBottom: 4,
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-              </svg>
-            </div>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.04em' }}>
               ReadyZap
-            </span>
+            </h2>
+            <p style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase' as const, color: 'rgba(242,242,255,0.25)',
+            }}>
+              SENDER
+            </p>
           </div>
 
           {/* Title */}
@@ -118,12 +119,11 @@ const Auth = () => {
           }}>
             {isLogin ? <>Entre na<br/>sua conta</> : <>Crie sua<br/>conta grátis</>}
           </h1>
-          <p style={{ fontSize: 14, color: 'rgba(242,242,255,.52)', marginBottom: 36 }}>
+          <p style={{ fontSize: 14, color: 'rgba(242,242,255,.4)', marginBottom: 36 }}>
             {isLogin ? 'Acesse o painel e comece a disparar.' : 'Comece gratuitamente com 100 envios/mês.'}
           </p>
 
           <form onSubmit={handleSubmit}>
-            {/* Signup fields */}
             {!isLogin && (
               <>
                 <FieldInput label="NOME COMPLETO" icon="user" placeholder="Seu nome" value={name} onChange={setName} required maxLength={100} />
@@ -136,7 +136,7 @@ const Auth = () => {
 
             {isLogin && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -10, marginBottom: 28 }}>
-                <span style={{ fontSize: 12, color: '#60a5fa', cursor: 'pointer' }}>Esqueci minha senha</span>
+                <span style={{ fontSize: 12, color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}>Esqueci minha senha</span>
               </div>
             )}
 
@@ -145,12 +145,12 @@ const Auth = () => {
               type="submit"
               disabled={loading}
               style={{
-                width: '100%', height: 50, borderRadius: 100,
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                width: '100%', height: 50, borderRadius: 8,
+                background: 'linear-gradient(135deg, #3b82f6, #18f26a)',
                 color: '#fff', fontFamily: "'Outfit', sans-serif",
-                fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
                 letterSpacing: '-0.01em', position: 'relative', overflow: 'hidden',
-                boxShadow: '0 0 28px rgba(59,130,246,.35)',
+                boxShadow: '0 4px 16px rgba(59,130,246,0.25)',
                 opacity: loading ? 0.7 : 1, transition: 'all .2s',
               }}
             >
@@ -165,7 +165,7 @@ const Auth = () => {
             </button>
 
             {/* Toggle */}
-            <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: 'rgba(242,242,255,.22)' }}>
+            <p style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: 'rgba(242,242,255,.4)' }}>
               {isLogin ? "Não tem conta? " : "Já tem conta? "}
               <span
                 onClick={() => setIsLogin(!isLogin)}
@@ -181,7 +181,7 @@ const Auth = () => {
         <div style={{
           position: 'relative', overflow: 'hidden',
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '60px 72px',
+          padding: '60px 72px', background: '#08090e',
         }}>
           {/* gradient mesh */}
           <div style={{
@@ -211,7 +211,6 @@ const Auth = () => {
           }} />
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Kicker */}
             <div style={{
               fontSize: 11, fontWeight: 700, letterSpacing: '.12em',
               textTransform: 'uppercase' as const, color: '#60a5fa',
@@ -236,14 +235,14 @@ const Auth = () => {
               </span>
             </h2>
 
-            <p style={{ fontSize: 15, color: 'rgba(242,242,255,.52)', lineHeight: 1.75, maxWidth: 380, marginBottom: 40 }}>
+            <p style={{ fontSize: 15, color: 'rgba(242,242,255,.4)', lineHeight: 1.75, maxWidth: 380, marginBottom: 40 }}>
               Multi-chip, anti-ban inteligente e relatórios em tempo real. Tudo que você precisa para alcançar milhares de clientes com segurança.
             </p>
 
             {/* Stats */}
             <div style={{
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
-              background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.07)',
+              background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.06)',
               borderRadius: 12, overflow: 'hidden', marginBottom: 36,
             }}>
               {[
@@ -251,14 +250,16 @@ const Auth = () => {
                 { n: '99', em: '%', l: 'Taxa de entrega' },
                 { n: '500', em: '+', l: 'Clientes ativos' },
               ].map((s, i) => (
-                <div key={i} style={{ background: 'rgba(7,7,9,.6)', backdropFilter: 'blur(12px)', padding: '18px 16px' }}>
+                <div key={i} style={{ background: 'rgba(8,9,14,.7)', backdropFilter: 'blur(12px)', padding: '18px 16px' }}>
                   <div style={{
                     fontFamily: "'Outfit', sans-serif",
                     fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em',
-                    color: '#f2f2ff', lineHeight: 1, marginBottom: 4,
+                    background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                    lineHeight: 1, marginBottom: 4,
                     fontVariantNumeric: 'tabular-nums',
                   }}>
-                    {s.n}<span style={{ color: '#60a5fa' }}>{s.em}</span>
+                    {s.n}<span style={{ WebkitTextFillColor: '#60a5fa' }}>{s.em}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'rgba(242,242,255,.22)' }}>{s.l}</div>
                 </div>
@@ -267,11 +268,11 @@ const Auth = () => {
 
             {/* Testimonial */}
             <div style={{
-              background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.11)',
+              background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)',
               borderRadius: 12, padding: 20, backdropFilter: 'blur(8px)',
             }}>
               <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: 2, marginBottom: 10 }}>★★★★★</div>
-              <p style={{ fontSize: 14, color: 'rgba(242,242,255,.52)', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 14 }}>
+              <p style={{ fontSize: 14, color: 'rgba(242,242,255,.4)', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 14 }}>
                 "Triplicamos as vendas no primeiro mês. A personalização é impressionante e nunca mais perdemos um chip por banimento."
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -312,8 +313,8 @@ function FieldInput({ label, icon, placeholder, type = "text", value, onChange, 
   return (
     <div style={{ marginBottom: 18 }}>
       <label style={{
-        display: 'block', fontSize: 12, fontWeight: 600,
-        color: 'rgba(242,242,255,.52)', letterSpacing: '.04em',
+        display: 'block', fontSize: 11, fontWeight: 600,
+        color: 'rgba(242,242,255,.4)', letterSpacing: '.05em',
         textTransform: 'uppercase' as const, marginBottom: 7,
       }}>
         {label}
@@ -334,10 +335,10 @@ function FieldInput({ label, icon, placeholder, type = "text", value, onChange, 
           minLength={minLength}
           maxLength={maxLength}
           style={{
-            width: '100%', background: '#131318',
-            border: '1px solid rgba(255,255,255,.11)', borderRadius: 10,
-            padding: '13px 14px 13px 40px', fontSize: 14,
-            color: '#f2f2ff', fontFamily: "'Inter', sans-serif",
+            width: '100%', background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,.06)', borderRadius: 8,
+            padding: '13px 14px 13px 40px', fontSize: 13,
+            color: '#f2f2ff', fontFamily: "'Outfit', sans-serif",
             outline: 'none', transition: 'border-color .15s, box-shadow .15s',
           }}
           onFocus={(e) => {
@@ -345,7 +346,7 @@ function FieldInput({ label, icon, placeholder, type = "text", value, onChange, 
             e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,.1)';
           }}
           onBlur={(e) => {
-            e.target.style.borderColor = 'rgba(255,255,255,.11)';
+            e.target.style.borderColor = 'rgba(255,255,255,.06)';
             e.target.style.boxShadow = 'none';
           }}
         />
