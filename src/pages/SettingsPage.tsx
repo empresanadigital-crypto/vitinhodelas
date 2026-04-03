@@ -95,7 +95,7 @@ const SettingsPage = () => {
   return (
     <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Configurações</h1>
+        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Configurações</h1>
         <p className="text-xs text-muted-foreground">Configurações gerais do disparador</p>
       </div>
 
@@ -105,7 +105,7 @@ const SettingsPage = () => {
         className="glass-card max-w-2xl space-y-6 rounded-xl p-6"
       >
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>API WhatsApp</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>API WhatsApp</h2>
           <div className="space-y-4">
             <div>
               <Label className="text-foreground">Provedor Padrão</Label>
@@ -142,7 +142,7 @@ const SettingsPage = () => {
         </div>
 
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>Disparos</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Disparos</h2>
           <div>
             <Label className="text-foreground">Intervalo padrão entre mensagens (segundos)</Label>
             <Input

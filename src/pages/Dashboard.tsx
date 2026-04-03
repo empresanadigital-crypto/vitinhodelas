@@ -59,7 +59,7 @@ const Dashboard = () => {
         <div>
           <h1
             style={{
-              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontFamily: "'Outfit', sans-serif",
               fontSize: 22,
               fontWeight: 800,
               letterSpacing: "-0.03em",
@@ -104,7 +104,7 @@ const Dashboard = () => {
             </div>
             <div
               style={{
-                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontFamily: "'Outfit', sans-serif",
                 fontSize: 28,
                 fontWeight: 800,
                 letterSpacing: "-0.04em",

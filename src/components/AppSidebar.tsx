@@ -6,7 +6,6 @@ import {
   Send,
   BarChart3,
   Settings,
-  Zap,
   LogOut,
   Flame,
   ShieldCheck,
@@ -60,44 +59,44 @@ const AppSidebar = () => {
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "#0d0d11",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background: "#040408",
+        borderRight: "1px solid rgba(255,255,255,0.05)",
       }}
     >
       {/* Logo */}
       <div
         style={{
           padding: "20px 18px 18px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
         }}
       >
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 8,
-            background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 0 16px rgba(59,130,246,0.25)",
-          }}
-        >
-          <Zap style={{ width: 13, height: 13, color: "#fff" }} />
-        </div>
         <span
           style={{
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-            fontSize: 16,
-            fontWeight: 700,
-            letterSpacing: "-0.04em",
-            color: "#f2f2ff",
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 28,
+            fontWeight: 900,
+            letterSpacing: "-0.03em",
+            background: "linear-gradient(135deg, #3b82f6, #18f26a)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            display: "block",
+            lineHeight: 1.1,
           }}
         >
           ReadyZap
+        </span>
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase" as const,
+            color: "rgba(242,242,255,0.25)",
+            display: "block",
+            marginTop: 2,
+          }}
+        >
+          SENDER
         </span>
       </div>
 
@@ -134,33 +133,33 @@ const AppSidebar = () => {
                     borderRadius: 8,
                     fontSize: 13,
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#f2f2ff" : "rgba(242,242,255,0.22)",
+                    color: isActive ? "#f2f2ff" : "rgba(242,242,255,0.4)",
                     textDecoration: "none",
                     cursor: "pointer",
                     marginBottom: 1,
                     transition: "background .12s, color .12s",
-                    background: isActive ? "rgba(59,130,246,0.10)" : "transparent",
+                    background: isActive ? "rgba(59,130,246,0.08)" : "transparent",
                     borderLeft: isActive ? "2px solid #3b82f6" : "2px solid transparent",
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                      e.currentTarget.style.color = "rgba(242,242,255,0.50)";
+                      e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                      e.currentTarget.style.color = "rgba(242,242,255,0.7)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(242,242,255,0.22)";
+                      e.currentTarget.style.color = "rgba(242,242,255,0.4)";
                     }
                   }}
                 >
                   <item.icon
                     style={{
-                      width: 15,
-                      height: 15,
+                      width: 16,
+                      height: 16,
                       flexShrink: 0,
-                      color: isActive ? "#60a5fa" : undefined,
+                      color: isActive ? "#60a5fa" : "rgba(242,242,255,0.4)",
                     }}
                   />
                   {item.label}
@@ -176,7 +175,7 @@ const AppSidebar = () => {
             <div
               style={{
                 height: 1,
-                background: "rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.05)",
                 margin: "12px 8px 10px",
               }}
             />
@@ -190,32 +189,32 @@ const AppSidebar = () => {
                 borderRadius: 8,
                 fontSize: 13,
                 fontWeight: location.pathname === "/admin" ? 600 : 500,
-                color: location.pathname === "/admin" ? "#f2f2ff" : "rgba(242,242,255,0.22)",
+                color: location.pathname === "/admin" ? "#f2f2ff" : "rgba(242,242,255,0.4)",
                 textDecoration: "none",
                 cursor: "pointer",
                 transition: "background .12s, color .12s",
-                background: location.pathname === "/admin" ? "rgba(59,130,246,0.10)" : "transparent",
+                background: location.pathname === "/admin" ? "rgba(59,130,246,0.08)" : "transparent",
                 borderLeft: location.pathname === "/admin" ? "2px solid #3b82f6" : "2px solid transparent",
               }}
               onMouseEnter={(e) => {
                 if (location.pathname !== "/admin") {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                  e.currentTarget.style.color = "rgba(242,242,255,0.50)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.color = "rgba(242,242,255,0.7)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (location.pathname !== "/admin") {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "rgba(242,242,255,0.22)";
+                  e.currentTarget.style.color = "rgba(242,242,255,0.4)";
                 }
               }}
             >
               <ShieldCheck
                 style={{
-                  width: 15,
-                  height: 15,
+                  width: 16,
+                  height: 16,
                   flexShrink: 0,
-                  color: location.pathname === "/admin" ? "#60a5fa" : undefined,
+                  color: location.pathname === "/admin" ? "#60a5fa" : "rgba(242,242,255,0.4)",
                 }}
               />
               Admin
@@ -228,7 +227,7 @@ const AppSidebar = () => {
       <div
         style={{
           padding: "14px 12px",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderTop: "1px solid rgba(255,255,255,0.05)",
         }}
       >
         {/* User row */}
@@ -255,7 +254,7 @@ const AppSidebar = () => {
               fontSize: 10,
               fontWeight: 700,
               color: "#60a5fa",
-              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontFamily: "'Outfit', sans-serif",
               flexShrink: 0,
             }}
           >
@@ -298,7 +297,7 @@ const AppSidebar = () => {
             padding: "8px 8px",
             borderRadius: 7,
             fontSize: 12,
-            color: "rgba(242,242,255,0.22)",
+            color: "rgba(242,242,255,0.4)",
             cursor: "pointer",
             transition: "all .12s",
             marginBottom: 4,
@@ -309,7 +308,7 @@ const AppSidebar = () => {
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "rgba(242,242,255,0.22)";
+            e.currentTarget.style.color = "rgba(242,242,255,0.4)";
           }}
         >
           <Flame style={{ width: 14, height: 14 }} />
@@ -331,7 +330,7 @@ const AppSidebar = () => {
             padding: "8px 8px",
             borderRadius: 7,
             fontSize: 12,
-            color: exitHover ? "#ef4444" : "rgba(242,242,255,0.22)",
+            color: exitHover ? "#ef4444" : "rgba(242,242,255,0.4)",
             background: exitHover ? "rgba(239,68,68,0.06)" : "transparent",
             cursor: "pointer",
             transition: "all .12s",
