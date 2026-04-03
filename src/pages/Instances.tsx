@@ -176,7 +176,7 @@ const Instances = () => {
   const getProxyFunction = (provider: string) => {
     if (provider === "baileys") return "baileys-proxy";
     if (provider === "z-api") return "zapi-proxy";
-    return "evolution-proxy";
+    throw new Error(`Provider não suportado: ${provider}`);
   };
 
   const parseZapiConnected = (data: any): boolean => {
