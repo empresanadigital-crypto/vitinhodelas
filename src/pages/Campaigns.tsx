@@ -340,10 +340,10 @@ const Campaigns = () => {
         >
           <Tabs defaultValue="message" className="space-y-4">
             <TabsList className="bg-secondary">
-              <TabsTrigger value="message" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="message" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <MessageSquare className="mr-1.5 h-4 w-4" /> Mensagem
               </TabsTrigger>
-              <TabsTrigger value="contacts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="contacts" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Users className="mr-1.5 h-4 w-4" /> Contatos
                 {selectedContacts.size > 0 && (
                   <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 text-xs font-bold">
@@ -351,17 +351,17 @@ const Campaigns = () => {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="settings" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Settings2 className="mr-1.5 h-4 w-4" /> Config
               </TabsTrigger>
-              <TabsTrigger value="schedule" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="schedule" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Clock className="mr-1.5 h-4 w-4" /> Agendar
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="message" className="space-y-4">
               <div>
-                <Label className="text-foreground">Nome da Campanha</Label>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Nome da Campanha</Label>
                 <Input
                   placeholder="Ex: Promoção Janeiro"
                   value={campaignName}
@@ -372,13 +372,14 @@ const Campaigns = () => {
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-foreground">Mensagem</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagem</Label>
                   <div className="flex gap-1">
-                    {variables.map((v) => (
+                     {variables.map((v) => (
                       <button
                         key={v}
                         onClick={() => setMessage((prev) => prev + " " + v)}
-                        className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                        className="rounded bg-primary/10 px-2 py-0.5 text-primary transition-colors hover:bg-primary/20"
+                        style={{ fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em' }}
                       >
                         {v}
                       </button>
@@ -395,7 +396,7 @@ const Campaigns = () => {
 
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
                 <Switch checked={useButtons} onCheckedChange={setUseButtons} />
-                <Label className="text-foreground">Enviar com botão (requer API compatível)</Label>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Enviar com botão (requer API compatível)</Label>
               </div>
 
               {useButtons && (
@@ -405,11 +406,11 @@ const Campaigns = () => {
                   className="space-y-3 rounded-lg border border-border p-4"
                 >
                   <div>
-                    <Label className="text-foreground">Texto do Botão</Label>
+                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Texto do Botão</Label>
                     <Input placeholder="Saiba Mais" value={buttonText} onChange={(e) => setButtonText(e.target.value)} className="bg-secondary border-border text-foreground" />
                   </div>
                   <div>
-                    <Label className="text-foreground">URL do Botão</Label>
+                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>URL do Botão</Label>
                     <Input placeholder="https://seusite.com.br" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} className="bg-secondary border-border text-foreground" />
                   </div>
                 </motion.div>
@@ -475,7 +476,7 @@ const Campaigns = () => {
                       </div>
                       <div className="flex gap-1">
                         {(contact.tags || []).map((tag) => (
-                          <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{tag}</span>
+                          <span key={tag} className="rounded-[10px]" style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', background: 'rgba(59,130,246,0.08)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.12)' }}>{tag}</span>
                         ))}
                       </div>
                     </label>
@@ -486,7 +487,7 @@ const Campaigns = () => {
 
             <TabsContent value="settings" className="space-y-5">
               <div>
-                <Label className="text-foreground">Instância WhatsApp</Label>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Instância WhatsApp</Label>
                 <Select value={selectedInstance} onValueChange={setSelectedInstance}>
                   <SelectTrigger className="bg-secondary border-border text-foreground">
                     <SelectValue placeholder="Selecione uma instância" />
@@ -508,21 +509,21 @@ const Campaigns = () => {
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
                 <Switch checked={rotateInstances} onCheckedChange={setRotateInstances} />
                 <div>
-                  <Label className="text-foreground">Rotacionar entre instâncias</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Rotacionar entre instâncias</Label>
                   <p className="text-xs text-muted-foreground">Alterna entre WhatsApps conectados</p>
                 </div>
               </div>
 
               {rotateInstances && (
                 <div>
-                  <Label className="text-foreground">Mensagens por instância antes de alternar</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagens por instância antes de alternar</Label>
                   <Input type="number" min="1" value={messagesPerInstance} onChange={(e) => setMessagesPerInstance(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
               )}
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-foreground">Intervalo entre mensagens</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Intervalo entre mensagens</Label>
                   <span className="text-sm font-semibold text-primary">{interval[0]}s</span>
                 </div>
                 <Slider value={interval} onValueChange={setInterval} max={120} min={5} step={1} className="mt-2" />
@@ -541,11 +542,11 @@ const Campaigns = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-foreground">Data</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Data</Label>
                   <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
                 <div>
-                  <Label className="text-foreground">Hora</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Hora</Label>
                   <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
               </div>
@@ -573,7 +574,11 @@ const Campaigns = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Progresso</span>
-                  <span className="font-semibold text-primary">{progress}%</span>
+                  <span style={{
+                    fontSize: 22, fontWeight: 900,
+                    background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  }}>{progress}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-secondary">
                   <motion.div
@@ -584,16 +589,16 @@ const Campaigns = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-primary">{sentCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Enviadas</p>
+                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{sentCount}</p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Enviadas</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-destructive">{failedCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Falhas</p>
+                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{failedCount}</p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Falhas</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-2">
-                    <p className="text-lg font-bold text-foreground">{totalToSend - sentCount - failedCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Restantes</p>
+                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{totalToSend - sentCount - failedCount}</p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Restantes</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -629,7 +634,8 @@ const Campaigns = () => {
             {!isRunning ? (
               <Button
                 onClick={handleStart}
-                className="w-full gradient-blue text-primary-foreground font-semibold"
+                className="w-full gradient-blue text-primary-foreground"
+                style={{ fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em' }}
                 disabled={selectedContacts.size === 0 || !message.trim()}
               >
                 <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)

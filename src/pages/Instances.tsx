@@ -504,8 +504,8 @@ const Instances = () => {
     <div className="p-6 md:p-7 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Instâncias WhatsApp</h1>
-          <p className="text-xs text-muted-foreground">Gerencie suas conexões de WhatsApp</p>
+          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Instâncias WhatsApp</h1>
+          <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Gerencie suas conexões de WhatsApp</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -600,18 +600,24 @@ const Instances = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence>
           {instances.map((instance) => (
-            <motion.div key={instance.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-card rounded-xl p-5">
+            <motion.div key={instance.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="rounded-[10px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${instance.status === "connected" ? "bg-success/10" : "bg-muted"}`}>
-                    <Smartphone className={`h-5 w-5 ${instance.status === "connected" ? "text-success" : "text-muted-foreground"}`} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: instance.status === 'connected' ? 'rgba(24,242,106,0.08)' : 'rgba(255,255,255,0.04)' }}>
+                    <Smartphone className="h-5 w-5" style={{ color: instance.status === 'connected' ? '#18f26a' : 'rgba(242,242,255,0.3)' }} />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">{instance.name}</p>
-                    <p className="text-xs text-muted-foreground">{instance.phone || "Não conectado"}</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.02em' }}>{instance.name}</p>
+                    <p style={{ fontSize: 11, fontWeight: 400, color: 'rgba(242,242,255,0.5)' }}>{instance.phone || "Não conectado"}</p>
                   </div>
                 </div>
-                <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${instance.status === "connected" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+                <span className="flex items-center gap-1.5 rounded-[10px]" style={{
+                  padding: '2px 8px',
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em',
+                  ...(instance.status === 'connected'
+                    ? { background: 'rgba(24,242,106,0.08)', color: '#18f26a', border: '1px solid rgba(24,242,106,0.12)' }
+                    : { background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.12)' }),
+                }}>
                   {instance.status === "connected" ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                   {instance.status === "connected" ? "Online" : "Offline"}
                 </span>
@@ -621,7 +627,7 @@ const Instances = () => {
                   <span className="text-muted-foreground">Enviadas: </span>
                   <span className="font-semibold text-foreground">{(instance.messages_sent || 0).toLocaleString()}</span>
                 </div>
-                <span className={`rounded px-2 py-0.5 text-xs font-medium ${getProviderBadgeClass(instance.provider)}`}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(242,242,255,0.35)' }}>
                   {getProviderLabel(instance.provider)}
                 </span>
               </div>
@@ -632,15 +638,15 @@ const Instances = () => {
                 </div>
               )}
               <div className="mt-3 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" onClick={() => getQrCode(instance)} disabled={instance.status === "connected"}>
+                <Button size="sm" className="flex-1 gradient-blue text-primary-foreground" style={{ fontSize: 11, fontWeight: 600 }} onClick={() => getQrCode(instance)} disabled={instance.status === "connected"}>
                   <QrCode className="mr-1.5 h-3.5 w-3.5" />
                   {instance.status === "connected" ? "Conectado" : "QR Code"}
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" onClick={() => checkStatus(instance)} disabled={verifyingId === instance.id}>
+                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" style={{ fontSize: 11 }} onClick={() => checkStatus(instance)} disabled={verifyingId === instance.id}>
                   {verifyingId === instance.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}
                   Status
                 </Button>
-                <Button variant="outline" size="sm" className="border-border text-destructive hover:bg-destructive/10" onClick={() => removeInstance(instance)}>
+                <Button variant="outline" size="sm" style={{ fontSize: 11, border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }} className="hover:bg-destructive/10" onClick={() => removeInstance(instance)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

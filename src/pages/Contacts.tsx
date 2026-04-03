@@ -177,8 +177,8 @@ const Contacts = () => {
     <div className="p-6 md:p-7 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Contatos</h1>
-          <p className="text-xs text-muted-foreground">{contacts.length} contatos na base</p>
+          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Contatos</h1>
+          <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>{contacts.length} contatos na base</p>
         </div>
         <Dialog open={importDialog} onOpenChange={setImportDialog}>
           <DialogTrigger asChild>
@@ -274,7 +274,8 @@ const Contacts = () => {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card overflow-hidden rounded-xl">
         {/* Desktop table header */}
-        <div className="hidden md:grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+        <div className="hidden md:grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3"
+          style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(242,242,255,0.2)', background: 'rgba(255,255,255,0.02)' }}>
           <span>Nome</span><span>Número</span><span>Tags</span><span></span>
         </div>
         <div className="divide-y divide-border">
@@ -284,7 +285,7 @@ const Contacts = () => {
               <span className="font-mono text-sm text-muted-foreground">{contact.phone}</span>
               <div className="flex gap-1 flex-wrap">
                 {(contact.tags || []).map((tag) => (
-                  <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{tag}</span>
+                  <span key={tag} className="rounded-[10px]" style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', background: 'rgba(59,130,246,0.08)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.12)' }}>{tag}</span>
                 ))}
               </div>
               <div className="flex gap-1">
@@ -298,10 +299,10 @@ const Contacts = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Users className="mb-3 h-10 w-10" />
-              <p className="text-base font-medium mb-1">Nenhum contato encontrado</p>
-              <p className="text-sm mb-4">{contacts.length === 0 ? "Importe seus contatos para começar" : "Tente outro termo de busca"}</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <Users className="mb-3 h-10 w-10" style={{ color: 'rgba(242,242,255,0.2)' }} />
+              <p className="text-base font-medium mb-1" style={{ color: 'rgba(242,242,255,0.35)' }}>Nenhum contato encontrado</p>
+              <p className="text-sm mb-4" style={{ color: 'rgba(242,242,255,0.35)' }}>{contacts.length === 0 ? "Importe seus contatos para começar" : "Tente outro termo de busca"}</p>
               {contacts.length === 0 && (
                 <Button variant="outline" className="border-border text-foreground" onClick={() => setImportDialog(true)}>
                   <Plus className="mr-2 h-4 w-4" /> Importar contatos
