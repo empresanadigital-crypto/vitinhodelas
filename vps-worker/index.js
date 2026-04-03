@@ -434,7 +434,7 @@ async function pollLoop() {
         for (const [campaignId, campaignJobs] of Object.entries(byCampaign)) {
           const { data: campaign } = await supabase
             .from('campaigns')
-            .select('interval_seconds')
+            .select('interval_seconds, messages_per_instance')
             .eq('id', campaignId)
             .single();
 

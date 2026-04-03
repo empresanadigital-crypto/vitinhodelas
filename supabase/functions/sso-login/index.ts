@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const verifyUrl = `${SUPABASE_URL}/auth/v1/verify?token=${magicLink.properties.hashed_token}&type=magiclink&redirect_to=${encodeURIComponent("https://app.readysender.com/dashboard")}`;
+    const verifyUrl = `${SUPABASE_URL}/auth/v1/verify?token=${magicLink.properties.hashed_token}&type=magiclink&redirect_to=${encodeURIComponent("https://disparador.readyzap.com.br/dashboard")}`;
 
     console.log("[sso-login] Login gerado para:", email);
 
