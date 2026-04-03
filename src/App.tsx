@@ -13,6 +13,7 @@ import Reports from "./pages/Reports";
 import SettingsPage from "./pages/SettingsPage";
 import Auth from "./pages/Auth";
 import LandingPage from "./pages/LandingPage";
+import Sso from "./pages/Sso";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
