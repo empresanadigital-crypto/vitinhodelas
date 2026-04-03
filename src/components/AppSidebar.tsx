@@ -42,6 +42,7 @@ const navGroups = [
 const AppSidebar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [exitHover, setExitHover] = useState(false);
 
   const initials = user?.email
