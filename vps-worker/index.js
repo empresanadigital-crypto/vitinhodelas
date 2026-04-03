@@ -202,9 +202,11 @@ async function pickInstance(campaign, userId) {
   }
 
   const key = campaign.id;
-  const counter = (instanceRotationCounters.get(key) || 0) % instances.length;
-  instanceRotationCounters.set(key, counter + 1);
-  return instances[counter];
+  const messagesPerInstance = campaign.messages_per_instance || 10;
+  const totalSent = instanceRotationCounters.get(key) || 0;
+  const instanceIndex = Math.floor(totalSent / messagesPerInstance) % instances.length;
+  instanceRotationCounters.set(key, totalSent + 1);
+  return instances[instanceIndex];
 }
 
 // ─── CLAIM JOBS (via RPC atômico) ─────────────────
@@ -432,7 +434,7 @@ async function pollLoop() {
         for (const [campaignId, campaignJobs] of Object.entries(byCampaign)) {
           const { data: campaign } = await supabase
             .from('campaigns')
-            .select('interval_seconds')
+            .select('interval_seconds, messages_per_instance')
             .eq('id', campaignId)
             .single();
 

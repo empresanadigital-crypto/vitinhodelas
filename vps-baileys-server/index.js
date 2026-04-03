@@ -12,9 +12,12 @@
  */
 
 const express = require('express');
+const path = require('path');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const QRCode = require('qrcode');
 const pino = require('pino');
+
+const sessionsDir = process.env.SESSIONS_DIR || path.join(__dirname, 'sessions');
 
 const app = express();
 app.use(express.json());
@@ -57,7 +60,7 @@ async function createSession(instanceName) {
     sessions.delete(instanceName);
   }
 
-  const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${instanceName}`);
+  const { state, saveCreds } = await useMultiFileAuthState(path.join(sessionsDir, instanceName));
   const { version } = await fetchLatestBaileysVersion();
 
   const sessionData = {
@@ -109,8 +112,8 @@ async function createSession(instanceName) {
         sessions.delete(instanceName);
         // Clean auth files
         const fs = require('fs');
-        const path = `./sessions/${instanceName}`;
-        if (fs.existsSync(path)) fs.rmSync(path, { recursive: true });
+        const sessionPath = path.join(sessionsDir, instanceName);
+        if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true });
       } else {
         sessionData.status = 'disconnected';
         // Auto reconnect
@@ -236,8 +239,8 @@ app.delete('/instance/logout/:instanceName', async (req, res) => {
 
   // Clean auth files
   const fs = require('fs');
-  const path = `./sessions/${instanceName}`;
-  if (fs.existsSync(path)) fs.rmSync(path, { recursive: true });
+  const sessionPath = path.join(sessionsDir, instanceName);
+  if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true });
 
   res.json({ success: true, data: { message: 'Logged out' } });
 });
@@ -253,8 +256,8 @@ app.delete('/instance/delete/:instanceName', async (req, res) => {
   sessions.delete(instanceName);
 
   const fs = require('fs');
-  const path = `./sessions/${instanceName}`;
-  if (fs.existsSync(path)) fs.rmSync(path, { recursive: true });
+  const sessionPath = path.join(sessionsDir, instanceName);
+  if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true });
 
   res.json({ success: true, data: { message: 'Instance deleted' } });
 });
