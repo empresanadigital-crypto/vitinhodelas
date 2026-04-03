@@ -58,7 +58,7 @@ const Reports = () => {
   return (
     <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Relatórios</h1>
+        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Relatórios</h1>
         <p className="text-xs text-muted-foreground">Histórico e métricas dos disparos</p>
       </div>
 
@@ -76,7 +76,7 @@ const Reports = () => {
         className="glass-card overflow-hidden rounded-xl"
       >
         <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground" style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>Histórico de Campanhas</h2>
+          <h2 className="font-semibold text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Histórico de Campanhas</h2>
         </div>
 
         {/* Desktop header */}

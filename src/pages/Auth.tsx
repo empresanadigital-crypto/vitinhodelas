@@ -105,14 +105,14 @@ const Auth = () => {
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
               </svg>
             </div>
-            <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 20, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.04em' }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.04em' }}>
               ReadyZap
             </span>
           </div>
 
           {/* Title */}
           <h1 style={{
-            fontFamily: "'Bricolage Grotesque', sans-serif",
+            fontFamily: "'Outfit', sans-serif",
             fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 800,
             color: '#f2f2ff', letterSpacing: '-0.035em', lineHeight: 1.1, marginBottom: 8,
           }}>
@@ -147,7 +147,7 @@ const Auth = () => {
               style={{
                 width: '100%', height: 50, borderRadius: 100,
                 background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                color: '#fff', fontFamily: "'Bricolage Grotesque', sans-serif",
+                color: '#fff', fontFamily: "'Outfit', sans-serif",
                 fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
                 letterSpacing: '-0.01em', position: 'relative', overflow: 'hidden',
                 boxShadow: '0 0 28px rgba(59,130,246,.35)',
@@ -222,7 +222,7 @@ const Auth = () => {
             </div>
 
             <h2 style={{
-              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontFamily: "'Outfit', sans-serif",
               fontSize: 'clamp(36px, 3.5vw, 54px)', fontWeight: 800,
               letterSpacing: '-0.035em', lineHeight: 1.06,
               color: '#f2f2ff', marginBottom: 20,
@@ -253,7 +253,7 @@ const Auth = () => {
               ].map((s, i) => (
                 <div key={i} style={{ background: 'rgba(7,7,9,.6)', backdropFilter: 'blur(12px)', padding: '18px 16px' }}>
                   <div style={{
-                    fontFamily: "'Bricolage Grotesque', sans-serif",
+                    fontFamily: "'Outfit', sans-serif",
                     fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em',
                     color: '#f2f2ff', lineHeight: 1, marginBottom: 4,
                     fontVariantNumeric: 'tabular-nums',
@@ -280,12 +280,12 @@ const Auth = () => {
                   background: 'linear-gradient(135deg, rgba(59,130,246,.3), rgba(24,242,106,.2))',
                   border: '1px solid rgba(59,130,246,.3)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, fontFamily: "'Bricolage Grotesque', sans-serif", color: '#60a5fa',
+                  fontSize: 11, fontWeight: 700, fontFamily: "'Outfit', sans-serif", color: '#60a5fa',
                 }}>
                   CM
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f2f2ff', fontFamily: "'Bricolage Grotesque', sans-serif" }}>Carlos M.</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f2f2ff', fontFamily: "'Outfit', sans-serif" }}>Carlos M.</div>
                   <div style={{ fontSize: 11, color: 'rgba(242,242,255,.22)' }}>Consultor de Vendas</div>
                 </div>
               </div>

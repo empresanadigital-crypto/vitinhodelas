@@ -132,7 +132,7 @@ const AdminPanel = () => {
       <div>
         <h1
           className="text-foreground"
-          style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}
+          style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}
         >
           Painel Administrativo
         </h1>
@@ -151,7 +151,7 @@ const AdminPanel = () => {
             </div>
             <div
               style={{
-                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontFamily: "'Outfit', sans-serif",
                 fontSize: 28,
                 fontWeight: 800,
                 letterSpacing: "-0.04em",

@@ -90,7 +90,7 @@ const AppSidebar = () => {
         </div>
         <span
           style={{
-            fontFamily: "'Bricolage Grotesque', sans-serif",
+            fontFamily: "'Outfit', sans-serif",
             fontSize: 16,
             fontWeight: 700,
             letterSpacing: "-0.04em",
@@ -255,7 +255,7 @@ const AppSidebar = () => {
               fontSize: 10,
               fontWeight: 700,
               color: "#60a5fa",
-              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontFamily: "'Outfit', sans-serif",
               flexShrink: 0,
             }}
           >
