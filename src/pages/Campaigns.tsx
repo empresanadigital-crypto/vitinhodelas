@@ -476,7 +476,7 @@ const Campaigns = () => {
                       </div>
                       <div className="flex gap-1">
                         {(contact.tags || []).map((tag) => (
-                          <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{tag}</span>
+                          <span key={tag} className="rounded-[10px]" style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', background: 'rgba(59,130,246,0.08)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.12)' }}>{tag}</span>
                         ))}
                       </div>
                     </label>
