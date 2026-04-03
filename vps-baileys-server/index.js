@@ -239,8 +239,8 @@ app.delete('/instance/logout/:instanceName', async (req, res) => {
 
   // Clean auth files
   const fs = require('fs');
-  const path = `./sessions/${instanceName}`;
-  if (fs.existsSync(path)) fs.rmSync(path, { recursive: true });
+  const sessionPath = path.join(sessionsDir, instanceName);
+  if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true });
 
   res.json({ success: true, data: { message: 'Logged out' } });
 });
