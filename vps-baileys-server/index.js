@@ -112,8 +112,8 @@ async function createSession(instanceName) {
         sessions.delete(instanceName);
         // Clean auth files
         const fs = require('fs');
-        const path = `./sessions/${instanceName}`;
-        if (fs.existsSync(path)) fs.rmSync(path, { recursive: true });
+        const sessionPath = path.join(sessionsDir, instanceName);
+        if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true });
       } else {
         sessionData.status = 'disconnected';
         // Auto reconnect
