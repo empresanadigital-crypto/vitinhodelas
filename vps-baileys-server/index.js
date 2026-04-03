@@ -60,7 +60,7 @@ async function createSession(instanceName) {
     sessions.delete(instanceName);
   }
 
-  const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${instanceName}`);
+  const { state, saveCreds } = await useMultiFileAuthState(path.join(sessionsDir, instanceName));
   const { version } = await fetchLatestBaileysVersion();
 
   const sessionData = {
