@@ -673,13 +673,14 @@ app.post('/campaign/start', async (req, res) => {
 
 app.post('/campaign/pause', async (req, res) => {
   try {
-    const { campaign_id } = req.body;
-    if (!campaign_id) return res.status(400).json({ error: 'campaign_id obrigatório' });
+    const { campaign_id, user_id } = req.body;
+    if (!campaign_id || !user_id) return res.status(400).json({ error: 'campaign_id e user_id são obrigatórios' });
 
     const { error } = await supabase
       .from('campaigns')
       .update({ status: 'paused' })
       .eq('id', campaign_id)
+      .eq('user_id', user_id)
       .eq('status', 'sending');
 
     if (error) return res.status(500).json({ error: error.message });
