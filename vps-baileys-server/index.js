@@ -12,9 +12,12 @@
  */
 
 const express = require('express');
+const path = require('path');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const QRCode = require('qrcode');
 const pino = require('pino');
+
+const sessionsDir = process.env.SESSIONS_DIR || path.join(__dirname, 'sessions');
 
 const app = express();
 app.use(express.json());
