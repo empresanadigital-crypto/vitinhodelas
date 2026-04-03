@@ -58,7 +58,7 @@ const Reports = () => {
   return (
     <div className="p-6 md:p-7 space-y-6">
       <div>
-        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Relatórios</h1>
+        <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Relatórios</h1>
         <p className="text-xs text-muted-foreground">Histórico e métricas dos disparos</p>
       </div>
 

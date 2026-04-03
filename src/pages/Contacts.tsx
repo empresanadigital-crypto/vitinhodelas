@@ -177,7 +177,7 @@ const Contacts = () => {
     <div className="p-6 md:p-7 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>Contatos</h1>
+          <h1 className="text-foreground" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em' }}>Contatos</h1>
           <p className="text-xs text-muted-foreground">{contacts.length} contatos na base</p>
         </div>
         <Dialog open={importDialog} onOpenChange={setImportDialog}>
