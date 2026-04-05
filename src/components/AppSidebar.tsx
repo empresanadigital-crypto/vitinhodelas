@@ -44,6 +44,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { theme, toggleTheme } = useTheme();
   const [exitHover, setExitHover] = useState(false);
 
   const initials = user?.email
