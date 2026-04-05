@@ -125,6 +125,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  onClick={() => onNavigate?.()}
                   style={{
                     display: "flex",
                     alignItems: "center",
