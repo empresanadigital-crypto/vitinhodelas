@@ -294,7 +294,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
 
         {/* ReadyZap link */}
         <div
-          onClick={() => window.open("https://app.readyzap.com.br/dashboard", "_blank")}
+          onClick={() => window.open("https://app.readyzap.com.br", "_blank")}
           style={{
             display: "flex",
             alignItems: "center",
