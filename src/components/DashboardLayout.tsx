@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
+import SupportChat from "./SupportChat";
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
