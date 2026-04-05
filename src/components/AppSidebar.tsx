@@ -322,7 +322,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
 
         {/* Sair */}
         <div
-          onClick={signOut}
+          onClick={() => { signOut(); onNavigate?.(); }}
           onMouseEnter={() => setExitHover(true)}
           onMouseLeave={() => setExitHover(false)}
           style={{
