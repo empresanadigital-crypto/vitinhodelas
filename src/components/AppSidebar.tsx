@@ -9,6 +9,7 @@ import {
   LogOut,
   Flame,
   ShieldCheck,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -36,6 +37,7 @@ const navGroups = [
     label: "Sistema",
     items: [
       { to: "/configuracoes", icon: Settings, label: "Configurações" },
+      { to: "/treinamentos", icon: GraduationCap, label: "Treinamentos" },
     ],
   },
 ];
@@ -294,7 +296,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
 
         {/* ReadyZap link */}
         <div
-          onClick={() => window.open("https://app.readyzap.com.br/dashboard", "_blank")}
+          onClick={() => window.open("https://app.readyzap.com.br", "_blank")}
           style={{
             display: "flex",
             alignItems: "center",
@@ -319,7 +321,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           <Flame style={{ width: 14, height: 14 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>ReadyZap</div>
-            <div style={{ fontSize: 9, opacity: 0.6 }}>Aquecedor de chips</div>
+            <div style={{ fontSize: 9, opacity: 0.6 }}>Super App</div>
           </div>
         </div>
 
