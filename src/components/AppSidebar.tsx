@@ -182,6 +182,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
             />
             <NavLink
               to="/admin"
+              onClick={() => onNavigate?.()}
               style={{
                 display: "flex",
                 alignItems: "center",
