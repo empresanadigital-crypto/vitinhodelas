@@ -171,9 +171,20 @@ const Auth = () => {
                 onClick={() => setIsLogin(!isLogin)}
                 style={{ color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
               >
-                {isLogin ? "Cadastre-se grátis" : "Faça login"}
+            {isLogin ? "Cadastre-se grátis" : "Faça login"}
               </span>
             </p>
+
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <a
+                href="https://readysender.com.br/"
+                style={{ fontSize: 12, color: 'rgba(242,242,255,0.3)', textDecoration: 'none' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(242,242,255,0.5)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(242,242,255,0.3)'}
+              >
+                ← Voltar ao site
+              </a>
+            </div>
           </form>
         </div>
 
