@@ -12,6 +12,7 @@ import Contacts from "./pages/Contacts";
 import Campaigns from "./pages/Campaigns";
 import Reports from "./pages/Reports";
 import SettingsPage from "./pages/SettingsPage";
+import Training from "./pages/Training";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
 import Sso from "./pages/Sso";
