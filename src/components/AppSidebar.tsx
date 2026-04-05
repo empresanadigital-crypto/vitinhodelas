@@ -321,7 +321,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           <Flame style={{ width: 14, height: 14 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>ReadyZap</div>
-            <div style={{ fontSize: 9, opacity: 0.6 }}>Aquecedor de chips</div>
+            <div style={{ fontSize: 9, opacity: 0.6 }}>Super App</div>
           </div>
         </div>
 

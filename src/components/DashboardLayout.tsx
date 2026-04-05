@@ -70,6 +70,7 @@ const DashboardLayout = () => {
       {/* Main */}
       <main className="main-content flex-1 min-w-0" style={{ marginLeft: 220 }}>
         <Outlet />
+        <SupportChat />
       </main>
     </div>
   );
