@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ contacts: 0, instances: 0, campaigns: 0, totalSent: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
