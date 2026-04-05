@@ -356,7 +356,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
 
         {/* Sair */}
         <div
-          onClick={() => { signOut(); onNavigate?.(); }}
+          onClick={async () => { await signOut(); window.location.href = "https://readysender.com.br/"; }}
           onMouseEnter={() => setExitHover(true)}
           onMouseLeave={() => setExitHover(false)}
           style={{
