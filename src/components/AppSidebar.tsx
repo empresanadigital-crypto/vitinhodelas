@@ -323,6 +323,35 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           </div>
         </div>
 
+        {/* Theme toggle */}
+        <div
+          onClick={toggleTheme}
+          className="theme-toggle-btn"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 8px",
+            borderRadius: 7,
+            fontSize: 12,
+            color: "rgba(242,242,255,0.4)",
+            cursor: "pointer",
+            transition: "all .12s",
+            marginBottom: 4,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            e.currentTarget.style.color = "rgba(242,242,255,0.7)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "rgba(242,242,255,0.4)";
+          }}
+        >
+          {theme === "dark" ? <Sun style={{ width: 14, height: 14 }} /> : <Moon style={{ width: 14, height: 14 }} />}
+          {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+        </div>
+
         {/* Sair */}
         <div
           onClick={() => { signOut(); onNavigate?.(); }}
