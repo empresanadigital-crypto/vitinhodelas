@@ -38,7 +38,7 @@ const navGroups = [
   },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
@@ -125,6 +125,7 @@ const AppSidebar = () => {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  onClick={() => onNavigate?.()}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -181,6 +182,7 @@ const AppSidebar = () => {
             />
             <NavLink
               to="/admin"
+              onClick={() => onNavigate?.()}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -320,7 +322,7 @@ const AppSidebar = () => {
 
         {/* Sair */}
         <div
-          onClick={signOut}
+          onClick={() => { signOut(); onNavigate?.(); }}
           onMouseEnter={() => setExitHover(true)}
           onMouseLeave={() => setExitHover(false)}
           style={{
