@@ -127,7 +127,7 @@ const Auth = () => {
             {!isLogin && (
               <>
                 <FieldInput label="NOME COMPLETO" icon="user" placeholder="Seu nome" value={name} onChange={setName} required maxLength={100} />
-                <FieldInput label="WHATSAPP" icon="phone" placeholder="(11) 99999-9999" value={phone} onChange={(v) => setPhone(formatPhone(v))} required />
+                <FieldInput label="WHATSAPP" icon="phone" placeholder="(41) 99999-9999" value={phone} onChange={(v) => setPhone(formatPhone(v))} required />
               </>
             )}
 
