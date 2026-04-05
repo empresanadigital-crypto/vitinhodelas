@@ -58,6 +58,17 @@ const Dashboard = () => {
       });
       setCampaigns(recentCampaignsRes.data || []);
       setLoading(false);
+
+      // Check onboarding
+      const onboardingDone = localStorage.getItem("readyzap_onboarding_done");
+      if (!onboardingDone) {
+        const hasData = (contactsRes.count || 0) > 0 || activeInstances > 0 || allCampaigns.length > 0;
+        if (!hasData) {
+          setShowOnboarding(true);
+        } else {
+          localStorage.setItem("readyzap_onboarding_done", "true");
+        }
+      }
     };
     fetchData();
   }, []);
