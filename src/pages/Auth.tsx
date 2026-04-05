@@ -80,7 +80,7 @@ const Auth = () => {
 
       <div className="auth-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '100vh', background: '#08090e' }}>
         {/* LEFT — FORM */}
-        <div style={{
+        <div className="auth-form-panel" style={{
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: '60px 72px', background: '#08090e',
           borderRight: '1px solid rgba(255,255,255,.05)',
