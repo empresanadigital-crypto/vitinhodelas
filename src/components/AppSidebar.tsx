@@ -9,6 +9,7 @@ import {
   LogOut,
   Flame,
   ShieldCheck,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
