@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useTheme } from "@/hooks/useTheme";
 import { useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 const navGroups = [
   {
@@ -42,6 +44,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { theme, toggleTheme } = useTheme();
   const [exitHover, setExitHover] = useState(false);
 
   const initials = user?.email
@@ -318,6 +321,35 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
             <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>ReadyZap</div>
             <div style={{ fontSize: 9, opacity: 0.6 }}>Aquecedor de chips</div>
           </div>
+        </div>
+
+        {/* Theme toggle */}
+        <div
+          onClick={toggleTheme}
+          className="theme-toggle-btn"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 8px",
+            borderRadius: 7,
+            fontSize: 12,
+            color: "rgba(242,242,255,0.4)",
+            cursor: "pointer",
+            transition: "all .12s",
+            marginBottom: 4,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            e.currentTarget.style.color = "rgba(242,242,255,0.7)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "rgba(242,242,255,0.4)";
+          }}
+        >
+          {theme === "dark" ? <Sun style={{ width: 14, height: 14 }} /> : <Moon style={{ width: 14, height: 14 }} />}
+          {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
         </div>
 
         {/* Sair */}

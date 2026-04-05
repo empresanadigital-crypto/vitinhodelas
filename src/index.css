@@ -51,6 +51,114 @@
   }
 }
 
+/* Light theme */
+.light {
+  --background: 0 0% 98%;
+  --foreground: 230 20% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 230 20% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 230 20% 10%;
+  --primary: 217 91% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 94%;
+  --secondary-foreground: 230 20% 10%;
+  --muted: 220 14% 94%;
+  --muted-foreground: 220 10% 40%;
+  --accent: 217 91% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 87%;
+  --input: 220 13% 87%;
+  --ring: 217 91% 50%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 230 20% 10%;
+  --sidebar-primary: 217 91% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 94%;
+  --sidebar-accent-foreground: 230 20% 10%;
+  --sidebar-border: 220 13% 90%;
+  --success: 145 80% 40%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 45%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 45%;
+  --info-foreground: 0 0% 100%;
+}
+
+.light body,
+.light {
+  background: #f8f9fc !important;
+  color: #1a1a2e !important;
+}
+
+.light .glass-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.light .glass-card:hover {
+  border-color: #d1d5db !important;
+  background: #fafafa !important;
+}
+
+.light input,
+.light textarea,
+.light select,
+.light [role="combobox"] {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #1a1a2e !important;
+}
+
+.light input:focus,
+.light textarea:focus {
+  border-color: rgba(59,130,246,0.5) !important;
+}
+
+.light .badge-ok {
+  background: rgba(16,185,129,0.1) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16,185,129,0.2) !important;
+}
+
+.light .badge-error {
+  background: rgba(239,68,68,0.1) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(239,68,68,0.2) !important;
+}
+
+.light .badge-warning {
+  background: rgba(245,158,11,0.1) !important;
+  color: #d97706 !important;
+  border: 1px solid rgba(245,158,11,0.2) !important;
+}
+
+.light .badge-info {
+  background: rgba(59,130,246,0.1) !important;
+  color: #2563eb !important;
+  border: 1px solid rgba(59,130,246,0.2) !important;
+}
+
+.light .gradient-text {
+  background: linear-gradient(160deg, #1a1a2e 20%, #3b4a6b 60%, #6b7280) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Light sidebar */
+.light aside[style*="background: rgb(4, 4, 8)"],
+.light aside[style*="#040408"] {
+  background: #ffffff !important;
+  border-right-color: #e5e7eb !important;
+}
+
+.light .theme-toggle-btn,
+.light .theme-toggle-btn ~ div {
+  color: #64748b !important;
+}
+
 @layer base {
   * {
     @apply border-border;
