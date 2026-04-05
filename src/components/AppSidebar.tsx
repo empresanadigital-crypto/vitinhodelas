@@ -38,7 +38,7 @@ const navGroups = [
   },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
