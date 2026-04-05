@@ -32,7 +32,7 @@ const Auth = () => {
       } else {
         if (!name.trim()) throw new Error("Preencha seu nome");
         const phoneDigits = phone.replace(/\D/g, "");
-        if (phoneDigits.length < 10) throw new Error("WhatsApp inválido. Use DDD + número");
+        if (phoneDigits.length < 10) throw new Error("Informe seu número de WhatsApp com DDD");
 
         const { error } = await supabase.auth.signUp({
           email,
