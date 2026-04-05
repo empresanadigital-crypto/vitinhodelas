@@ -37,6 +37,7 @@ const navGroups = [
     label: "Sistema",
     items: [
       { to: "/configuracoes", icon: Settings, label: "Configurações" },
+      { to: "/treinamentos", icon: GraduationCap, label: "Treinamentos" },
     ],
   },
 ];
