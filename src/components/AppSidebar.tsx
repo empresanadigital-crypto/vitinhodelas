@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useTheme } from "@/hooks/useTheme";
 import { useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 const navGroups = [
   {
