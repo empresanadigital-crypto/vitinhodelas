@@ -178,7 +178,7 @@ const Auth = () => {
         </div>
 
         {/* RIGHT — BRAND */}
-        <div style={{
+        <div className="auth-brand-panel" style={{
           position: 'relative', overflow: 'hidden',
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: '60px 72px', background: '#08090e',
