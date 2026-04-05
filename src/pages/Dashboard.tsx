@@ -83,6 +83,17 @@ const Dashboard = () => {
 
   return (
     <div className="p-6 md:p-7 space-y-6">
+      {showOnboarding && (
+        <OnboardingTour
+          onClose={() => {
+            setShowOnboarding(false);
+            localStorage.setItem("readyzap_onboarding_done", "true");
+          }}
+          hasInstances={stats.instances > 0}
+          hasContacts={stats.contacts > 0}
+          hasCampaigns={stats.campaigns > 0}
+        />
+      )}
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
