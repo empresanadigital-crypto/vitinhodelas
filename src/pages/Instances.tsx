@@ -543,19 +543,37 @@ const Instances = () => {
   };
 
   const removeInstance = async (instance: Instance) => {
-    if ((instance.provider === "evolution" || instance.provider === "baileys") && instance.instance_id) {
-      try {
-        const proxyFn = getProxyFunction(instance.provider);
-        await supabase.functions.invoke(proxyFn, { body: { action: "delete-instance", instanceName: instance.instance_id } });
-      } catch { /* ignore */ }
-    }
-    const { error: delError } = await supabase.from("instances").delete().eq("id", instance.id);
-    if (delError) {
-      toast({ title: "Erro ao remover", description: delError.message, variant: "destructive" });
-      return;
+    try {
+      if (instance.instance_id) {
+        try {
+          if (instance.provider === "baileys") {
+            await supabase.functions.invoke("baileys-proxy", {
+              body: { action: "delete-instance", instanceName: instance.instance_id },
+            });
+          }
+        } catch (e) {
+          console.log("Erro ao deletar no servidor (ignorado):", e);
+        }
+      }
+      const { error: delError } = await supabase
+        .from("instances")
+        .delete()
+        .eq("id", instance.id);
+      if (delError) {
+        console.error("Erro ao deletar do banco:", delError);
+        await supabase
+          .from("instances")
+          .update({ status: "deleted" })
+          .eq("id", instance.id);
+        toast({ title: "Instância marcada para remoção", description: "Será removida automaticamente." });
+      } else {
+        toast({ title: "Instância removida", description: `"${instance.name}" foi deletada.` });
+      }
+    } catch (error: any) {
+      console.error("Erro geral ao remover:", error);
+      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
     }
     await fetchInstances();
-    toast({ title: "Instância removida", description: `"${instance.name}" foi deletada.` });
   };
 
   const getProviderLabel = (provider: string) => {
