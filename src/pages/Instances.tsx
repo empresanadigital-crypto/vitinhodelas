@@ -368,25 +368,40 @@ const Instances = () => {
     throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns segundos.");
   };
 
+  const pollingRef = useRef(false);
+
   const pollConnectionStatus = async (instance: Instance, provider: string) => {
+    pollingRef.current = true;
     const proxyFn = getProxyFunction(provider);
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
+      if (!pollingRef.current) return;
       await new Promise(r => setTimeout(r, 3000));
       try {
+        console.log(`[polling] attempt ${i + 1}/20 for ${instance.instance_id}`);
         const { data } = await supabase.functions.invoke(proxyFn, {
           body: { action: "status", instanceName: instance.instance_id },
         });
+        console.log(`[polling] response:`, JSON.stringify(data).substring(0, 200));
         const status = provider === "baileys" ? data?.data?.status : data?.data?.instance?.state;
         if (status === "connected" || status === "open") {
-          toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
+          pollingRef.current = false;
+          toast({ title: "✅ Conectado!", description: "WhatsApp conectado com sucesso!" });
           const phone = data?.data?.phone || null;
           const updateData: any = { status: "connected" };
           if (phone) updateData.phone = phone;
           await supabase.from("instances").update(updateData).eq("id", instance.id);
-          fetchInstances(); setQrDialogOpen(false); return;
+          setQrDialogOpen(false);
+          setQrImage(null);
+          setPairingCode(null);
+          fetchInstances();
+          return;
         }
-      } catch { /* continue */ }
+      } catch (err) {
+        console.log(`[polling] error on attempt ${i + 1}:`, err);
+        /* continue polling */
+      }
     }
+    pollingRef.current = false;
   };
 
   const extractQrImage = (payload: any) => {
