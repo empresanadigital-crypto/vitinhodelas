@@ -720,6 +720,7 @@ const Instances = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Dialog open={qrDialogOpen} onOpenChange={(open) => { setQrDialogOpen(open); if (!open) pollingRef.current = false; }}>
