@@ -314,18 +314,41 @@ const Instances = () => {
 
   const getQrCodeBaileys = async (instance: Instance) => {
     if (!instance.instance_id) throw new Error("Instance ID não configurado");
-    setQrStatus("Verificando status...");
-    const { data: statusData } = await supabase.functions.invoke("baileys-proxy", {
-      body: { action: "status", instanceName: instance.instance_id },
+    
+    // If disconnected, clean old session first then recreate
+    setQrStatus("Limpando sessão antiga...");
+    try {
+      await supabase.functions.invoke("baileys-proxy", {
+        body: { action: "delete-instance", instanceName: instance.instance_id },
+      });
+    } catch { /* ignore - instance may not exist on server */ }
+    await new Promise(r => setTimeout(r, 1500));
+
+    setQrStatus("Criando nova sessão...");
+    const { data: createData, error: createError } = await supabase.functions.invoke("baileys-proxy", {
+      body: { action: "create-instance", instanceName: instance.instance_id },
     });
-    if (statusData?.data?.status === "connected") {
-      toast({ title: "Já conectado!", description: "Esta instância já está conectada ao WhatsApp." });
-      await supabase.from("instances").update({ status: "connected", phone: statusData?.data?.phone }).eq("id", instance.id);
-      fetchInstances(); setQrDialogOpen(false); return;
+    if (createError) throw createError;
+    if (!createData?.success) throw new Error(createData?.error || "Erro ao criar instância");
+
+    // Check if already connected from create response
+    if (createData?.data?.status === "connected") {
+      toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
+      await supabase.from("instances").update({ status: "connected", phone: createData?.data?.phone }).eq("id", instance.id);
+      fetchInstances(); setQrDialogOpen(false); setQrImage(null); return;
     }
-    setQrStatus("Gerando QR Code...");
+
+    const qrBase64 = createData?.data?.qrBase64;
+    if (qrBase64) {
+      setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
+      pollConnectionStatus(instance, "baileys");
+      return;
+    }
+
+    // If no QR from create, poll for it
+    setQrStatus("Aguardando QR...");
     for (let attempt = 0; attempt < 15; attempt++) {
-      if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 2000));
       const { data, error } = await supabase.functions.invoke("baileys-proxy", {
         body: { action: "qr-code", instanceName: instance.instance_id },
       });
@@ -333,11 +356,11 @@ const Instances = () => {
       if (data?.data?.status === "connected") {
         toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
         await supabase.from("instances").update({ status: "connected", phone: data?.data?.phone }).eq("id", instance.id);
-        fetchInstances(); setQrDialogOpen(false); return;
+        fetchInstances(); setQrDialogOpen(false); setQrImage(null); return;
       }
-      const qrBase64 = data?.data?.qrBase64;
-      if (qrBase64) {
-        setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
+      const qr = data?.data?.qrBase64;
+      if (qr) {
+        setQrImage(qr.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`);
         pollConnectionStatus(instance, "baileys"); return;
       }
       setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/15`);
