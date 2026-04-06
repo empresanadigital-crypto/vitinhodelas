@@ -619,6 +619,41 @@ const Instances = () => {
           <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Instâncias WhatsApp</h1>
           <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Gerencie suas conexões de WhatsApp</p>
         </div>
+        <div className="flex items-center gap-2">
+          {instances.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              style={{ border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 11 }}
+              className="hover:bg-destructive/10"
+              onClick={async () => {
+                if (!confirm("Tem certeza que deseja remover TODAS as instâncias?")) return;
+                for (const inst of instances) {
+                  if (inst.instance_id && inst.provider === "baileys") {
+                    try {
+                      await supabase.functions.invoke("baileys-proxy", {
+                        body: { action: "delete-instance", instanceName: inst.instance_id },
+                      });
+                    } catch {}
+                  }
+                }
+                const { error } = await supabase
+                  .from("instances")
+                  .delete()
+                  .neq("id", "00000000-0000-0000-0000-000000000000");
+                if (error) {
+                  for (const inst of instances) {
+                    await supabase.from("instances").delete().eq("id", inst.id);
+                  }
+                }
+                toast({ title: "Todas as instâncias removidas" });
+                await fetchInstances();
+              }}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Limpar Tudo
+            </Button>
+          )}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gradient-blue text-primary-foreground font-semibold">
