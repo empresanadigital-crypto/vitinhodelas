@@ -159,6 +159,8 @@ const Instances = () => {
   const [zapiToken, setZapiToken] = useState("");
   const [zapiClientToken, setZapiClientToken] = useState("");
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Instance | null>(null);
+  const pollingRef = useRef(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
