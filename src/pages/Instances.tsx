@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Smartphone, QrCode, Trash2, RefreshCw, Wifi, WifiOff,
@@ -6,6 +6,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -155,6 +159,8 @@ const Instances = () => {
   const [zapiToken, setZapiToken] = useState("");
   const [zapiClientToken, setZapiClientToken] = useState("");
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Instance | null>(null);
+  const pollingRef = useRef(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -310,18 +316,41 @@ const Instances = () => {
 
   const getQrCodeBaileys = async (instance: Instance) => {
     if (!instance.instance_id) throw new Error("Instance ID não configurado");
-    setQrStatus("Verificando status...");
-    const { data: statusData } = await supabase.functions.invoke("baileys-proxy", {
-      body: { action: "status", instanceName: instance.instance_id },
+    
+    // If disconnected, clean old session first then recreate
+    setQrStatus("Limpando sessão antiga...");
+    try {
+      await supabase.functions.invoke("baileys-proxy", {
+        body: { action: "delete-instance", instanceName: instance.instance_id },
+      });
+    } catch { /* ignore - instance may not exist on server */ }
+    await new Promise(r => setTimeout(r, 1500));
+
+    setQrStatus("Criando nova sessão...");
+    const { data: createData, error: createError } = await supabase.functions.invoke("baileys-proxy", {
+      body: { action: "create-instance", instanceName: instance.instance_id },
     });
-    if (statusData?.data?.status === "connected") {
-      toast({ title: "Já conectado!", description: "Esta instância já está conectada ao WhatsApp." });
-      await supabase.from("instances").update({ status: "connected", phone: statusData?.data?.phone }).eq("id", instance.id);
-      fetchInstances(); setQrDialogOpen(false); return;
+    if (createError) throw createError;
+    if (!createData?.success) throw new Error(createData?.error || "Erro ao criar instância");
+
+    // Check if already connected from create response
+    if (createData?.data?.status === "connected") {
+      toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
+      await supabase.from("instances").update({ status: "connected", phone: createData?.data?.phone }).eq("id", instance.id);
+      fetchInstances(); setQrDialogOpen(false); setQrImage(null); return;
     }
-    setQrStatus("Gerando QR Code...");
+
+    const qrBase64 = createData?.data?.qrBase64;
+    if (qrBase64) {
+      setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
+      pollConnectionStatus(instance, "baileys");
+      return;
+    }
+
+    // If no QR from create, poll for it
+    setQrStatus("Aguardando QR...");
     for (let attempt = 0; attempt < 15; attempt++) {
-      if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 2000));
       const { data, error } = await supabase.functions.invoke("baileys-proxy", {
         body: { action: "qr-code", instanceName: instance.instance_id },
       });
@@ -329,11 +358,11 @@ const Instances = () => {
       if (data?.data?.status === "connected") {
         toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
         await supabase.from("instances").update({ status: "connected", phone: data?.data?.phone }).eq("id", instance.id);
-        fetchInstances(); setQrDialogOpen(false); return;
+        fetchInstances(); setQrDialogOpen(false); setQrImage(null); return;
       }
-      const qrBase64 = data?.data?.qrBase64;
-      if (qrBase64) {
-        setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
+      const qr = data?.data?.qrBase64;
+      if (qr) {
+        setQrImage(qr.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`);
         pollConnectionStatus(instance, "baileys"); return;
       }
       setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/15`);
@@ -341,25 +370,39 @@ const Instances = () => {
     throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns segundos.");
   };
 
+
   const pollConnectionStatus = async (instance: Instance, provider: string) => {
+    pollingRef.current = true;
     const proxyFn = getProxyFunction(provider);
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
+      if (!pollingRef.current) return;
       await new Promise(r => setTimeout(r, 3000));
       try {
+        console.log(`[polling] attempt ${i + 1}/20 for ${instance.instance_id}`);
         const { data } = await supabase.functions.invoke(proxyFn, {
           body: { action: "status", instanceName: instance.instance_id },
         });
+        console.log(`[polling] response:`, JSON.stringify(data).substring(0, 200));
         const status = provider === "baileys" ? data?.data?.status : data?.data?.instance?.state;
         if (status === "connected" || status === "open") {
-          toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
+          pollingRef.current = false;
+          toast({ title: "✅ Conectado!", description: "WhatsApp conectado com sucesso!" });
           const phone = data?.data?.phone || null;
           const updateData: any = { status: "connected" };
           if (phone) updateData.phone = phone;
           await supabase.from("instances").update(updateData).eq("id", instance.id);
-          fetchInstances(); setQrDialogOpen(false); return;
+          setQrDialogOpen(false);
+          setQrImage(null);
+          setPairingCode(null);
+          fetchInstances();
+          return;
         }
-      } catch { /* continue */ }
+      } catch (err) {
+        console.log(`[polling] error on attempt ${i + 1}:`, err);
+        /* continue polling */
+      }
     }
+    pollingRef.current = false;
   };
 
   const extractQrImage = (payload: any) => {
@@ -460,8 +503,43 @@ const Instances = () => {
 
   const handleVerifyAfterQr = async () => {
     if (!activeQrInstance) return;
-    setQrDialogOpen(false);
-    await checkStatus(activeQrInstance);
+    pollingRef.current = false; // stop any running poll
+    setVerifyingId(activeQrInstance.id);
+    try {
+      let connected = false;
+      let phone: string | null = null;
+      if (activeQrInstance.provider === "baileys") {
+        console.log("[verify] checking baileys status for", activeQrInstance.instance_id);
+        const { data } = await supabase.functions.invoke("baileys-proxy", {
+          body: { action: "status", instanceName: activeQrInstance.instance_id },
+        });
+        console.log("[verify] response:", JSON.stringify(data).substring(0, 300));
+        connected = data?.data?.status === "connected";
+        phone = data?.data?.phone || null;
+      } else if (activeQrInstance.provider === "z-api") {
+        const { data } = await supabase.functions.invoke("zapi-proxy", {
+          body: { action: "status", instanceId: activeQrInstance.instance_id, token: activeQrInstance.token, clientToken: activeQrInstance.client_token },
+        });
+        connected = parseZapiConnected(data);
+      }
+
+      if (connected) {
+        const updateData: any = { status: "connected" };
+        if (phone) updateData.phone = phone;
+        await supabase.from("instances").update(updateData).eq("id", activeQrInstance.id);
+        setQrDialogOpen(false);
+        setQrImage(null);
+        setPairingCode(null);
+        fetchInstances();
+        toast({ title: "✅ WhatsApp conectado com sucesso!" });
+      } else {
+        toast({ title: "Ainda não conectado", description: "Escaneie o QR Code e tente novamente.", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Erro ao verificar", description: error.message, variant: "destructive" });
+    } finally {
+      setVerifyingId(null);
+    }
   };
 
   const removeInstance = async (instance: Instance) => {
@@ -575,7 +653,7 @@ const Instances = () => {
         </Dialog>
       </div>
 
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+      <Dialog open={qrDialogOpen} onOpenChange={(open) => { setQrDialogOpen(open); if (!open) pollingRef.current = false; }}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
@@ -646,7 +724,7 @@ const Instances = () => {
                   {verifyingId === instance.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}
                   Status
                 </Button>
-                <Button variant="outline" size="sm" style={{ fontSize: 11, border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }} className="hover:bg-destructive/10" onClick={() => removeInstance(instance)}>
+                <Button variant="outline" size="sm" style={{ fontSize: 11, border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }} className="hover:bg-destructive/10" onClick={() => setDeleteTarget(instance)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -664,6 +742,26 @@ const Instances = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Remover instância</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover a instância <strong>&quot;{deleteTarget?.name}&quot;</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTarget) { removeInstance(deleteTarget); setDeleteTarget(null); } }}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
