@@ -503,59 +503,93 @@ const Instances = () => {
 
   const handleVerifyAfterQr = async () => {
     if (!activeQrInstance) return;
-    pollingRef.current = false; // stop any running poll
+    pollingRef.current = false;
     setVerifyingId(activeQrInstance.id);
+    setQrStatus("Verificando conexão...");
     try {
-      let connected = false;
-      let phone: string | null = null;
-      if (activeQrInstance.provider === "baileys") {
-        console.log("[verify] checking baileys status for", activeQrInstance.instance_id);
-        const { data } = await supabase.functions.invoke("baileys-proxy", {
-          body: { action: "status", instanceName: activeQrInstance.instance_id },
-        });
-        console.log("[verify] response:", JSON.stringify(data).substring(0, 300));
-        connected = data?.data?.status === "connected";
-        phone = data?.data?.phone || null;
-      } else if (activeQrInstance.provider === "z-api") {
-        const { data } = await supabase.functions.invoke("zapi-proxy", {
-          body: { action: "status", instanceId: activeQrInstance.instance_id, token: activeQrInstance.token, clientToken: activeQrInstance.client_token },
-        });
-        connected = parseZapiConnected(data);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (attempt > 0) {
+          setQrStatus(`Verificando... tentativa ${attempt + 1}/5`);
+          await new Promise(r => setTimeout(r, 2000));
+        }
+        let connected = false;
+        let phone: string | null = null;
+        try {
+          if (activeQrInstance.provider === "baileys") {
+            const { data } = await supabase.functions.invoke("baileys-proxy", {
+              body: { action: "status", instanceName: activeQrInstance.instance_id },
+            });
+            console.log(`[verify attempt ${attempt + 1}]`, JSON.stringify(data));
+            connected = data?.data?.status === "connected";
+            phone = data?.data?.phone || null;
+          } else if (activeQrInstance.provider === "z-api") {
+            const { data } = await supabase.functions.invoke("zapi-proxy", {
+              body: { action: "status", instanceId: activeQrInstance.instance_id, token: activeQrInstance.token, clientToken: activeQrInstance.client_token },
+            });
+            connected = parseZapiConnected(data);
+          }
+        } catch (networkError) {
+          console.error(`[verify attempt ${attempt + 1}] Network error:`, networkError);
+          continue;
+        }
+        if (connected) {
+          const updateData: any = { status: "connected" };
+          if (phone) updateData.phone = phone;
+          await supabase.from("instances").update(updateData).eq("id", activeQrInstance.id);
+          setQrDialogOpen(false);
+          setQrImage(null);
+          setPairingCode(null);
+          setQrStatus("");
+          fetchInstances();
+          toast({ title: "✅ WhatsApp conectado com sucesso!" });
+          return;
+        }
       }
-
-      if (connected) {
-        const updateData: any = { status: "connected" };
-        if (phone) updateData.phone = phone;
-        await supabase.from("instances").update(updateData).eq("id", activeQrInstance.id);
-        setQrDialogOpen(false);
-        setQrImage(null);
-        setPairingCode(null);
-        fetchInstances();
-        toast({ title: "✅ WhatsApp conectado com sucesso!" });
-      } else {
-        toast({ title: "Ainda não conectado", description: "Escaneie o QR Code e tente novamente.", variant: "destructive" });
-      }
+      toast({
+        title: "Ainda não conectado",
+        description: "Escaneie o QR Code e clique novamente. Se expirou, feche e clique em QR Code de novo.",
+        variant: "destructive",
+      });
     } catch (error: any) {
       toast({ title: "Erro ao verificar", description: error.message, variant: "destructive" });
     } finally {
       setVerifyingId(null);
+      setQrStatus("");
     }
   };
 
   const removeInstance = async (instance: Instance) => {
-    if ((instance.provider === "evolution" || instance.provider === "baileys") && instance.instance_id) {
-      try {
-        const proxyFn = getProxyFunction(instance.provider);
-        await supabase.functions.invoke(proxyFn, { body: { action: "delete-instance", instanceName: instance.instance_id } });
-      } catch { /* ignore */ }
-    }
-    const { error: delError } = await supabase.from("instances").delete().eq("id", instance.id);
-    if (delError) {
-      toast({ title: "Erro ao remover", description: delError.message, variant: "destructive" });
-      return;
+    try {
+      if (instance.instance_id) {
+        try {
+          if (instance.provider === "baileys") {
+            await supabase.functions.invoke("baileys-proxy", {
+              body: { action: "delete-instance", instanceName: instance.instance_id },
+            });
+          }
+        } catch (e) {
+          console.log("Erro ao deletar no servidor (ignorado):", e);
+        }
+      }
+      const { error: delError } = await supabase
+        .from("instances")
+        .delete()
+        .eq("id", instance.id);
+      if (delError) {
+        console.error("Erro ao deletar do banco:", delError);
+        await supabase
+          .from("instances")
+          .update({ status: "deleted" })
+          .eq("id", instance.id);
+        toast({ title: "Instância marcada para remoção", description: "Será removida automaticamente." });
+      } else {
+        toast({ title: "Instância removida", description: `"${instance.name}" foi deletada.` });
+      }
+    } catch (error: any) {
+      console.error("Erro geral ao remover:", error);
+      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
     }
     await fetchInstances();
-    toast({ title: "Instância removida", description: `"${instance.name}" foi deletada.` });
   };
 
   const getProviderLabel = (provider: string) => {
