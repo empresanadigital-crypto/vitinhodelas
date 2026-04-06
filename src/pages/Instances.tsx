@@ -653,7 +653,7 @@ const Instances = () => {
         </Dialog>
       </div>
 
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+      <Dialog open={qrDialogOpen} onOpenChange={(open) => { setQrDialogOpen(open); if (!open) pollingRef.current = false; }}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
