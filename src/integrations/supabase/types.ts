@@ -513,6 +513,7 @@ export type Database = {
           reaped_id: string
         }[]
       }
+      reset_monthly_message_counts: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "client"

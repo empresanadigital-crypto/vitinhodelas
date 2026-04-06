@@ -116,7 +116,7 @@ const SupportChat = () => {
           {/* Footer buttons */}
           <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: 8 }}>
             <button
-              onClick={() => window.open("https://wa.me/5541999999999?text=Preciso de ajuda com o ReadyZap Sender", "_blank")}
+              onClick={() => window.open("https://wa.me/5571997034392?text=Preciso de ajuda com o ReadyZap Sender", "_blank")}
               style={{
                 width: "100%",
                 padding: "10px",
