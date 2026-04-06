@@ -503,8 +503,43 @@ const Instances = () => {
 
   const handleVerifyAfterQr = async () => {
     if (!activeQrInstance) return;
-    setQrDialogOpen(false);
-    await checkStatus(activeQrInstance);
+    pollingRef.current = false; // stop any running poll
+    setVerifyingId(activeQrInstance.id);
+    try {
+      let connected = false;
+      let phone: string | null = null;
+      if (activeQrInstance.provider === "baileys") {
+        console.log("[verify] checking baileys status for", activeQrInstance.instance_id);
+        const { data } = await supabase.functions.invoke("baileys-proxy", {
+          body: { action: "status", instanceName: activeQrInstance.instance_id },
+        });
+        console.log("[verify] response:", JSON.stringify(data).substring(0, 300));
+        connected = data?.data?.status === "connected";
+        phone = data?.data?.phone || null;
+      } else if (activeQrInstance.provider === "z-api") {
+        const { data } = await supabase.functions.invoke("zapi-proxy", {
+          body: { action: "status", instanceId: activeQrInstance.instance_id, token: activeQrInstance.token, clientToken: activeQrInstance.client_token },
+        });
+        connected = parseZapiConnected(data);
+      }
+
+      if (connected) {
+        const updateData: any = { status: "connected" };
+        if (phone) updateData.phone = phone;
+        await supabase.from("instances").update(updateData).eq("id", activeQrInstance.id);
+        setQrDialogOpen(false);
+        setQrImage(null);
+        setPairingCode(null);
+        fetchInstances();
+        toast({ title: "✅ WhatsApp conectado com sucesso!" });
+      } else {
+        toast({ title: "Ainda não conectado", description: "Escaneie o QR Code e tente novamente.", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Erro ao verificar", description: error.message, variant: "destructive" });
+    } finally {
+      setVerifyingId(null);
+    }
   };
 
   const removeInstance = async (instance: Instance) => {
