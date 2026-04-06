@@ -370,7 +370,6 @@ const Instances = () => {
     throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns segundos.");
   };
 
-  const pollingRef = useRef(false);
 
   const pollConnectionStatus = async (instance: Instance, provider: string) => {
     pollingRef.current = true;
