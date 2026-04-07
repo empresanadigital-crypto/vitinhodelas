@@ -102,10 +102,20 @@ const Campaigns = () => {
     setInstances(data || []);
   }, []);
 
+  const fetchPastCampaigns = useCallback(async () => {
+    const { data } = await supabase
+      .from("campaigns")
+      .select("id, name, status, total_contacts, sent_count, failed_count, created_at, completed_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setPastCampaigns(data || []);
+  }, []);
+
   useEffect(() => {
     fetchContacts();
     fetchInstances();
-  }, [fetchContacts, fetchInstances]);
+    fetchPastCampaigns();
+  }, [fetchContacts, fetchInstances, fetchPastCampaigns]);
 
   // Poll campaign progress when running
   useEffect(() => {
