@@ -14,12 +14,14 @@ import {
   Square,
   StopCircle,
   RefreshCw,
+  Shield,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
+
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,7 +48,7 @@ interface Instance {
 const Campaigns = () => {
   const [campaignName, setCampaignName] = useState("");
   const [message, setMessage] = useState("");
-  const [interval, setInterval] = useState([15]);
+  
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [useButtons, setUseButtons] = useState(false);
@@ -222,7 +224,7 @@ const Campaigns = () => {
       name: campaignName || "Campanha sem nome",
       message,
       total_contacts: contactIds.length,
-      interval_seconds: interval[0],
+      interval_seconds: 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
       use_buttons: useButtons,
@@ -392,6 +394,12 @@ const Campaigns = () => {
                   onChange={(e) => setMessage(e.target.value)}
                   className="mt-1 min-h-[180px] bg-secondary border-border text-foreground"
                 />
+                <div className="flex items-start gap-2 mt-2 px-1">
+                  <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Dica anti-ban: use <code className="rounded bg-secondary px-1 py-0.5 text-[10px] font-mono text-primary">{"{opção1|opção2|opção3}"}</code> para variar a mensagem automaticamente. Ex: <code className="rounded bg-secondary px-1 py-0.5 text-[10px] font-mono text-primary">{"{Olá|Oi|E aí}"}</code> → cada contato recebe uma versão diferente.
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
@@ -521,15 +529,11 @@ const Campaigns = () => {
                 </div>
               )}
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Intervalo entre mensagens</Label>
-                  <span className="text-sm font-semibold text-primary">{interval[0]}s</span>
-                </div>
-                <Slider value={interval} onValueChange={setInterval} max={120} min={5} step={1} className="mt-2" />
-                <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                  <span>5s</span><span>120s</span>
-                </div>
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
+                <Shield className="mt-0.5 h-5 w-5 text-primary shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  O intervalo entre mensagens é controlado automaticamente pelo sistema anti-ban no servidor. Delay aleatório de 12-45s + pausas automáticas a cada 25 mensagens.
+                </p>
               </div>
             </TabsContent>
 
