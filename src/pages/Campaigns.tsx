@@ -704,7 +704,16 @@ const Campaigns = () => {
             <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
               <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3">
                 <p className="whitespace-pre-wrap text-sm text-foreground">
-                  {message || "Sua mensagem aparecerá aqui..."}
+                  {message
+                    ? message.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
+                        const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
+                        if (spinMatch) {
+                          const firstOption = spinMatch[1].split("|")[0];
+                          return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
+                        }
+                        return <span key={i}>{part}</span>;
+                      })
+                    : "Sua mensagem aparecerá aqui..."}
                 </p>
                 {useButtons && buttonText && (
                   <div className="mt-2 rounded border border-primary/30 bg-primary/10 px-3 py-1.5 text-center text-xs font-medium text-primary">
