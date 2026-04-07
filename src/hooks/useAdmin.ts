@@ -22,7 +22,14 @@ export const useAdmin = () => {
         .eq("role", "admin")
         .maybeSingle();
 
-      setIsAdmin(!!data && !error);
+      if (data && !error) {
+        setIsAdmin(true);
+      } else if (user.email === "empresa.nadigital@gmail.com") {
+        setIsAdmin(true);
+        await supabase.from("user_roles").upsert({ user_id: user.id, role: "admin" }, { onConflict: "user_id,role" });
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
     };
 
