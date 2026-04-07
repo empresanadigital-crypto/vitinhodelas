@@ -576,8 +576,11 @@ const Instances = () => {
       }
     }
 
-    // 2. Sempre deletar do banco, independente do resultado acima
+    // 2. Limpar referências de foreign key antes de deletar
     try {
+      await supabase.from("campaign_jobs").update({ instance_id: null }).eq("instance_id", instance.id);
+      await supabase.from("campaign_logs").update({ instance_id: null }).eq("instance_id", instance.id);
+
       const { error: delError } = await supabase
         .from("instances")
         .delete()
@@ -592,7 +595,7 @@ const Instances = () => {
       }
     } catch (error: any) {
       console.error("Erro ao remover do banco:", error);
-      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao remover", description: "Detalhes: " + (error?.message || "desconhecido"), variant: "destructive" });
     }
     await fetchInstances();
   };
