@@ -529,15 +529,11 @@ const Campaigns = () => {
                 </div>
               )}
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Intervalo entre mensagens</Label>
-                  <span className="text-sm font-semibold text-primary">{interval[0]}s</span>
-                </div>
-                <Slider value={interval} onValueChange={setInterval} max={120} min={5} step={1} className="mt-2" />
-                <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                  <span>5s</span><span>120s</span>
-                </div>
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
+                <Shield className="mt-0.5 h-5 w-5 text-primary shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  O intervalo entre mensagens é controlado automaticamente pelo sistema anti-ban no servidor. Delay aleatório de 12-45s + pausas automáticas a cada 25 mensagens.
+                </p>
               </div>
             </TabsContent>
 
