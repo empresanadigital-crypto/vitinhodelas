@@ -80,6 +80,7 @@ const Campaigns = () => {
   const [totalToSend, setTotalToSend] = useState(0);
   const [dispatchLog, setDispatchLog] = useState<string[]>([]);
   const [campaignStatus, setCampaignStatus] = useState<string>("idle");
+  const [pastCampaigns, setPastCampaigns] = useState<any[]>([]);
 
   const { user } = useAuth();
   const { toast } = useToast();
