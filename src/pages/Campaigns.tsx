@@ -292,6 +292,10 @@ const Campaigns = () => {
 
       addLog(`🚀 Campanha iniciada no worker: ${result?.jobs_created || contactIds.length} jobs criados`);
       toast({ title: "Campanha iniciada!", description: "O worker está processando os envios em segundo plano." });
+      if (result?.invalid_skipped > 0) {
+        toast({ title: "Atenção", description: `${result.invalid_skipped} contatos com telefone inválido foram ignorados.`, variant: "destructive" });
+      }
+      fetchPastCampaigns();
     } catch (err: any) {
       addLog(`❌ Erro ao iniciar: ${err.message}`);
       toast({ title: "Erro ao iniciar", description: err.message, variant: "destructive" });
