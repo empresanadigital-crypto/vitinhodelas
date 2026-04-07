@@ -48,7 +48,7 @@ interface Instance {
 const Campaigns = () => {
   const [campaignName, setCampaignName] = useState("");
   const [message, setMessage] = useState("");
-  const [interval, setInterval] = useState([15]);
+  
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [useButtons, setUseButtons] = useState(false);
