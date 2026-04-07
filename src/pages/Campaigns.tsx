@@ -17,6 +17,7 @@ import {
   Shield,
   Info,
   History,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,11 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Contact {
   id: string;
@@ -286,6 +292,10 @@ const Campaigns = () => {
 
       addLog(`🚀 Campanha iniciada no worker: ${result?.jobs_created || contactIds.length} jobs criados`);
       toast({ title: "Campanha iniciada!", description: "O worker está processando os envios em segundo plano." });
+      if (result?.invalid_skipped > 0) {
+        toast({ title: "Atenção", description: `${result.invalid_skipped} contatos com telefone inválido foram ignorados.`, variant: "destructive" });
+      }
+      fetchPastCampaigns();
     } catch (err: any) {
       addLog(`❌ Erro ao iniciar: ${err.message}`);
       toast({ title: "Erro ao iniciar", description: err.message, variant: "destructive" });
@@ -694,7 +704,16 @@ const Campaigns = () => {
             <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
               <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3">
                 <p className="whitespace-pre-wrap text-sm text-foreground">
-                  {message || "Sua mensagem aparecerá aqui..."}
+                  {message
+                    ? message.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
+                        const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
+                        if (spinMatch) {
+                          const firstOption = spinMatch[1].split("|")[0];
+                          return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
+                        }
+                        return <span key={i}>{part}</span>;
+                      })
+                    : "Sua mensagem aparecerá aqui..."}
                 </p>
                 {useButtons && buttonText && (
                   <div className="mt-2 rounded border border-primary/30 bg-primary/10 px-3 py-1.5 text-center text-xs font-medium text-primary">
@@ -797,6 +816,42 @@ const Campaigns = () => {
                           >
                             <Pause className="h-3.5 w-3.5 text-yellow-400" />
                           </Button>
+                        )}
+                        {["completed", "cancelled", "failed", "stopped", "draft"].includes(c.status) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir campanha</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir esta campanha? Os registros de envio também serão removidos.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from("campaign_jobs").delete().eq("campaign_id", c.id);
+                                      await supabase.from("campaign_logs").delete().eq("campaign_id", c.id);
+                                      await supabase.from("campaigns").delete().eq("id", c.id);
+                                      fetchPastCampaigns();
+                                      toast({ title: "Campanha excluída" });
+                                    } catch (err: any) {
+                                      toast({ title: "Erro", description: err.message, variant: "destructive" });
+                                    }
+                                  }}
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </TableCell>
                     </TableRow>
