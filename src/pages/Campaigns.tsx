@@ -817,6 +817,42 @@ const Campaigns = () => {
                             <Pause className="h-3.5 w-3.5 text-yellow-400" />
                           </Button>
                         )}
+                        {["completed", "cancelled", "failed", "stopped", "draft"].includes(c.status) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir campanha</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir esta campanha? Os registros de envio também serão removidos.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from("campaign_jobs").delete().eq("campaign_id", c.id);
+                                      await supabase.from("campaign_logs").delete().eq("campaign_id", c.id);
+                                      await supabase.from("campaigns").delete().eq("id", c.id);
+                                      fetchPastCampaigns();
+                                      toast({ title: "Campanha excluída" });
+                                    } catch (err: any) {
+                                      toast({ title: "Erro", description: err.message, variant: "destructive" });
+                                    }
+                                  }}
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
