@@ -156,7 +156,7 @@ const Campaigns = () => {
     }, 3000);
 
     return () => window.clearInterval(pollInterval);
-  }, [activeCampaignId, isRunning, toast]);
+  }, [activeCampaignId, isRunning, toast, fetchPastCampaigns]);
 
   // Get unique tags
   const allTags = Array.from(
