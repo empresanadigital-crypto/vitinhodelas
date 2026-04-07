@@ -559,34 +559,39 @@ const Instances = () => {
   };
 
   const removeInstance = async (instance: Instance) => {
-    try {
-      if (instance.instance_id) {
-        try {
-          if (instance.provider === "baileys") {
-            await supabase.functions.invoke("baileys-proxy", {
-              body: { action: "delete-instance", instanceName: instance.instance_id },
-            });
-          }
-        } catch (e) {
-          console.log("Erro ao deletar no servidor (ignorado):", e);
+    // 1. Tentar desconectar no servidor (ignorar qualquer erro)
+    if (instance.instance_id) {
+      try {
+        if (instance.provider === "baileys") {
+          await supabase.functions.invoke("baileys-proxy", {
+            body: { action: "delete-instance", instanceName: instance.instance_id },
+          });
+        } else if (instance.provider === "z-api" && instance.token) {
+          await supabase.functions.invoke("zapi-proxy", {
+            body: { action: "disconnect", instanceId: instance.instance_id, token: instance.token, clientToken: instance.client_token },
+          });
         }
+      } catch (e) {
+        console.log("Erro ao desconectar no servidor (ignorado):", e);
       }
+    }
+
+    // 2. Sempre deletar do banco, independente do resultado acima
+    try {
       const { error: delError } = await supabase
         .from("instances")
         .delete()
         .eq("id", instance.id);
       if (delError) {
         console.error("Erro ao deletar do banco:", delError);
-        await supabase
-          .from("instances")
-          .update({ status: "deleted" })
-          .eq("id", instance.id);
+        // Fallback: marcar como deleted
+        await supabase.from("instances").update({ status: "deleted" }).eq("id", instance.id);
         toast({ title: "Instância marcada para remoção", description: "Será removida automaticamente." });
       } else {
         toast({ title: "Instância removida", description: `"${instance.name}" foi deletada.` });
       }
     } catch (error: any) {
-      console.error("Erro geral ao remover:", error);
+      console.error("Erro ao remover do banco:", error);
       toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
     }
     await fetchInstances();
