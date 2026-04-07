@@ -224,7 +224,7 @@ const Campaigns = () => {
       name: campaignName || "Campanha sem nome",
       message,
       total_contacts: contactIds.length,
-      interval_seconds: interval[0],
+      interval_seconds: 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
       use_buttons: useButtons,
