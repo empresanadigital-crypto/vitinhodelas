@@ -137,6 +137,7 @@ const Campaigns = () => {
         if (data.status === "completed" || data.status === "stopped" || data.status === "cancelled") {
           setIsRunning(false);
           setIsPaused(false);
+          fetchPastCampaigns();
           const titleMap: Record<string, string> = {
             completed: "Campanha concluída!",
             stopped: "Campanha parada",
