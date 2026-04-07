@@ -3,11 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 export const useAdmin = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     if (!user) {
       setIsAdmin(false);
       setLoading(false);
@@ -15,6 +20,7 @@ export const useAdmin = () => {
     }
 
     const checkAdmin = async () => {
+      setLoading(true);
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -26,7 +32,10 @@ export const useAdmin = () => {
         setIsAdmin(true);
       } else if (user.email === "empresa.nadigital@gmail.com") {
         setIsAdmin(true);
-        await supabase.from("user_roles").upsert({ user_id: user.id, role: "admin" }, { onConflict: "user_id,role" });
+        await supabase.from("user_roles").upsert(
+          { user_id: user.id, role: "admin" },
+          { onConflict: "user_id,role" }
+        ).then(() => {}).catch(() => {});
       } else {
         setIsAdmin(false);
       }
@@ -34,7 +43,7 @@ export const useAdmin = () => {
     };
 
     checkAdmin();
-  }, [user]);
+  }, [user, authLoading]);
 
   return { isAdmin, loading };
 };
