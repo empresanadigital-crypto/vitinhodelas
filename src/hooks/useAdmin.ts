@@ -32,10 +32,12 @@ export const useAdmin = () => {
         setIsAdmin(true);
       } else if (user.email === "empresa.nadigital@gmail.com") {
         setIsAdmin(true);
-        await supabase.from("user_roles").upsert(
-          { user_id: user.id, role: "admin" },
-          { onConflict: "user_id,role" }
-        ).then(() => {}).catch(() => {});
+        try {
+          await supabase.from("user_roles").upsert(
+            { user_id: user.id, role: "admin" },
+            { onConflict: "user_id,role" }
+          );
+        } catch {}
       } else {
         setIsAdmin(false);
       }
