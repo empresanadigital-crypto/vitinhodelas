@@ -707,6 +707,106 @@ const Campaigns = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Histórico de Campanhas */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="glass-card rounded-xl p-5"
+      >
+        <h3 className="flex items-center gap-2 mb-4 font-semibold text-foreground">
+          <History className="h-4 w-4" /> Histórico de Campanhas
+        </h3>
+        {pastCampaigns.length === 0 ? (
+          <div className="flex flex-col items-center py-8 text-muted-foreground">
+            <History className="mb-2 h-6 w-6" />
+            <p className="text-sm">Nenhuma campanha ainda</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead style={{ fontSize: 11 }}>Nome</TableHead>
+                  <TableHead style={{ fontSize: 11 }}>Status</TableHead>
+                  <TableHead style={{ fontSize: 11 }}>Enviadas</TableHead>
+                  <TableHead style={{ fontSize: 11 }}>Falhas</TableHead>
+                  <TableHead style={{ fontSize: 11 }}>Data</TableHead>
+                  <TableHead style={{ fontSize: 11 }}>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pastCampaigns.map((c) => {
+                  const statusConfig: Record<string, { color: string; label: string }> = {
+                    sending: { color: "bg-blue-500 animate-pulse", label: "Enviando" },
+                    completed: { color: "bg-green-500", label: "Concluída" },
+                    paused: { color: "bg-yellow-500", label: "Pausada" },
+                    cancelled: { color: "bg-red-500", label: "Cancelada" },
+                    failed: { color: "bg-red-500", label: "Falhou" },
+                    stopped: { color: "bg-red-500", label: "Parada" },
+                    draft: { color: "bg-gray-500", label: "Rascunho" },
+                    scheduled: { color: "bg-purple-500", label: "Agendada" },
+                  };
+                  const st = statusConfig[c.status] || { color: "bg-gray-400", label: c.status };
+                  return (
+                    <TableRow key={c.id}>
+                      <TableCell className="text-sm font-medium">{c.name}</TableCell>
+                      <TableCell>
+                        <span className="flex items-center gap-1.5 text-xs">
+                          <span className={`inline-block h-2 w-2 rounded-full ${st.color}`} />
+                          {st.label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs font-mono">{c.sent_count}/{c.total_contacts}</TableCell>
+                      <TableCell className="text-xs font-mono">{c.failed_count}</TableCell>
+                      <TableCell className="text-xs">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell>
+                        {c.status === "paused" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={async () => {
+                              try {
+                                await invokeWorker("resume", { campaign_id: c.id });
+                                toast({ title: "Campanha retomada" });
+                                fetchPastCampaigns();
+                              } catch (err: any) {
+                                toast({ title: "Erro", description: err.message, variant: "destructive" });
+                              }
+                            }}
+                          >
+                            <Play className="h-3.5 w-3.5 text-green-400" />
+                          </Button>
+                        )}
+                        {c.status === "sending" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={async () => {
+                              try {
+                                await invokeWorker("pause", { campaign_id: c.id });
+                                toast({ title: "Campanha pausada" });
+                                fetchPastCampaigns();
+                              } catch (err: any) {
+                                toast({ title: "Erro", description: err.message, variant: "destructive" });
+                              }
+                            }}
+                          >
+                            <Pause className="h-3.5 w-3.5 text-yellow-400" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 };
