@@ -394,6 +394,12 @@ const Campaigns = () => {
                   onChange={(e) => setMessage(e.target.value)}
                   className="mt-1 min-h-[180px] bg-secondary border-border text-foreground"
                 />
+                <div className="flex items-start gap-2 mt-2 px-1">
+                  <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Dica anti-ban: use <code className="rounded bg-secondary px-1 py-0.5 text-[10px] font-mono text-primary">{"{opção1|opção2|opção3}"}</code> para variar a mensagem automaticamente. Ex: <code className="rounded bg-secondary px-1 py-0.5 text-[10px] font-mono text-primary">{"{Olá|Oi|E aí}"}</code> → cada contato recebe uma versão diferente.
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
