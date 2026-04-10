@@ -212,8 +212,8 @@ const Campaigns = () => {
       toast({ title: "Erro", description: "Selecione pelo menos 1 contato na aba Contatos", variant: "destructive" });
       return;
     }
-    if (!message.trim()) {
-      toast({ title: "Erro", description: "Escreva a mensagem", variant: "destructive" });
+    if (!messages.some(m => m.trim())) {
+      toast({ title: "Erro", description: "Escreva pelo menos uma mensagem", variant: "destructive" });
       return;
     }
     if (instances.length === 0) {
@@ -247,7 +247,7 @@ const Campaigns = () => {
     const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
       user_id: user!.id,
       name: campaignName || "Campanha sem nome",
-      message,
+      message: messages.filter(m => m.trim()).join("|||"),
       total_contacts: contactIds.length,
       interval_seconds: 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
@@ -403,12 +403,18 @@ const Campaigns = () => {
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagem</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagens</Label>
                   <div className="flex gap-1">
                      {variables.map((v) => (
                       <button
                         key={v}
-                        onClick={() => setMessage((prev) => prev + " " + v)}
+                        onClick={() => {
+                          setMessages((prev) => {
+                            const updated = [...prev];
+                            updated[activeMessageIndex] = (updated[activeMessageIndex] || "") + " " + v;
+                            return updated;
+                          });
+                        }}
                         className="rounded bg-primary/10 px-2 py-0.5 text-primary transition-colors hover:bg-primary/20"
                         style={{ fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em' }}
                       >
@@ -417,12 +423,52 @@ const Campaigns = () => {
                     ))}
                   </div>
                 </div>
-                <Textarea
-                  placeholder={"Olá {nome}! 👋\n\nTemos uma oferta especial para você..."}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="mt-1 min-h-[180px] bg-secondary border-border text-foreground"
-                />
+                <div className="space-y-3 mt-1">
+                  {messages.map((msg, index) => (
+                    <div key={index} className="relative">
+                      <div className="flex items-center justify-between mb-1">
+                        <Label style={{ fontSize: 10, fontWeight: 600, color: 'rgba(242,242,255,0.3)' }}>Mensagem {index + 1}</Label>
+                        {messages.length > 1 && (
+                          <button
+                            onClick={() => {
+                              setMessages((prev) => prev.filter((_, i) => i !== index));
+                              setActiveMessageIndex((prev) => Math.min(prev, messages.length - 2));
+                            }}
+                            className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <Textarea
+                        placeholder={"Olá {nome}! 👋\n\nTemos uma oferta especial para você..."}
+                        value={msg}
+                        onChange={(e) => {
+                          setMessages((prev) => {
+                            const updated = [...prev];
+                            updated[index] = e.target.value;
+                            return updated;
+                          });
+                        }}
+                        onFocus={() => setActiveMessageIndex(index)}
+                        className="min-h-[140px] bg-secondary border-border text-foreground"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {messages.length < 5 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 border-border text-muted-foreground hover:text-foreground"
+                    onClick={() => setMessages((prev) => [...prev, ""])}
+                  >
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar variação
+                  </Button>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1.5 ml-0.5">
+                  O sistema escolhe uma mensagem aleatória para cada contato, reduzindo risco de ban.
+                </p>
                 <div className="flex items-start gap-2 mt-2 px-1">
                   <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
                   <p className="text-xs text-muted-foreground">
