@@ -715,7 +715,7 @@ const Campaigns = () => {
                 onClick={handleStart}
                 className="w-full gradient-blue text-primary-foreground"
                 style={{ fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em' }}
-                disabled={selectedContacts.size === 0 || !message.trim()}
+                disabled={selectedContacts.size === 0 || !messages.some(m => m.trim())}
               >
                 <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)
               </Button>
