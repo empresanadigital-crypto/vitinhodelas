@@ -750,19 +750,39 @@ const Campaigns = () => {
           {/* Preview */}
           <div className="glass-card rounded-xl p-5">
             <h3 className="mb-3 font-semibold text-foreground">Pré-visualização</h3>
+            {messages.filter(m => m.trim()).length > 1 && (
+              <div className="flex gap-1 mb-2 flex-wrap">
+                {messages.map((m, i) => m.trim() ? (
+                  <button
+                    key={i}
+                    onClick={() => setPreviewVariation(i)}
+                    className={`rounded px-2 py-0.5 text-[10px] font-semibold transition-colors ${
+                      previewVariation === i
+                        ? "bg-primary/20 text-primary"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Variação {i + 1}
+                  </button>
+                ) : null)}
+              </div>
+            )}
             <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
               <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3">
                 <p className="whitespace-pre-wrap text-sm text-foreground">
-                  {message
-                    ? message.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
-                        const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
-                        if (spinMatch) {
-                          const firstOption = spinMatch[1].split("|")[0];
-                          return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
-                        }
-                        return <span key={i}>{part}</span>;
-                      })
-                    : "Sua mensagem aparecerá aqui..."}
+                  {(() => {
+                    const currentMsg = messages[previewVariation] || messages.find(m => m.trim()) || "";
+                    return currentMsg.trim()
+                      ? currentMsg.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
+                          const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
+                          if (spinMatch) {
+                            const firstOption = spinMatch[1].split("|")[0];
+                            return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        })
+                      : "Sua mensagem aparecerá aqui...";
+                  })()}
                 </p>
                 {useButtons && buttonText && (
                   <div className="mt-2 rounded border border-primary/30 bg-primary/10 px-3 py-1.5 text-center text-xs font-medium text-primary">
