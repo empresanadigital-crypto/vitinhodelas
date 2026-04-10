@@ -370,7 +370,7 @@ const Campaigns = () => {
           className="glass-card rounded-xl p-5 lg:col-span-2"
         >
           <Tabs defaultValue="message" className="space-y-4">
-            <TabsList className="bg-muted">
+            <TabsList className="bg-secondary">
               <TabsTrigger value="message" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <MessageSquare className="mr-1.5 h-4 w-4" /> Mensagem
               </TabsTrigger>
