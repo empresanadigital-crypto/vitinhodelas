@@ -18,6 +18,7 @@ import {
   Info,
   History,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,9 @@ interface Instance {
 
 const Campaigns = () => {
   const [campaignName, setCampaignName] = useState("");
-  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<string[]>([""]);
+  const [activeMessageIndex, setActiveMessageIndex] = useState(0);
+  const [previewVariation, setPreviewVariation] = useState(0);
   
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -209,8 +212,8 @@ const Campaigns = () => {
       toast({ title: "Erro", description: "Selecione pelo menos 1 contato na aba Contatos", variant: "destructive" });
       return;
     }
-    if (!message.trim()) {
-      toast({ title: "Erro", description: "Escreva a mensagem", variant: "destructive" });
+    if (!messages.some(m => m.trim())) {
+      toast({ title: "Erro", description: "Escreva pelo menos uma mensagem", variant: "destructive" });
       return;
     }
     if (instances.length === 0) {
@@ -244,7 +247,7 @@ const Campaigns = () => {
     const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
       user_id: user!.id,
       name: campaignName || "Campanha sem nome",
-      message,
+      message: messages.filter(m => m.trim()).join("|||"),
       total_contacts: contactIds.length,
       interval_seconds: 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
@@ -400,12 +403,18 @@ const Campaigns = () => {
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagem</Label>
+                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagens</Label>
                   <div className="flex gap-1">
                      {variables.map((v) => (
                       <button
                         key={v}
-                        onClick={() => setMessage((prev) => prev + " " + v)}
+                        onClick={() => {
+                          setMessages((prev) => {
+                            const updated = [...prev];
+                            updated[activeMessageIndex] = (updated[activeMessageIndex] || "") + " " + v;
+                            return updated;
+                          });
+                        }}
                         className="rounded bg-primary/10 px-2 py-0.5 text-primary transition-colors hover:bg-primary/20"
                         style={{ fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em' }}
                       >
@@ -414,12 +423,52 @@ const Campaigns = () => {
                     ))}
                   </div>
                 </div>
-                <Textarea
-                  placeholder={"Olá {nome}! 👋\n\nTemos uma oferta especial para você..."}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="mt-1 min-h-[180px] bg-secondary border-border text-foreground"
-                />
+                <div className="space-y-3 mt-1">
+                  {messages.map((msg, index) => (
+                    <div key={index} className="relative">
+                      <div className="flex items-center justify-between mb-1">
+                        <Label style={{ fontSize: 10, fontWeight: 600, color: 'rgba(242,242,255,0.3)' }}>Mensagem {index + 1}</Label>
+                        {messages.length > 1 && (
+                          <button
+                            onClick={() => {
+                              setMessages((prev) => prev.filter((_, i) => i !== index));
+                              setActiveMessageIndex((prev) => Math.min(prev, messages.length - 2));
+                            }}
+                            className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <Textarea
+                        placeholder={"Olá {nome}! 👋\n\nTemos uma oferta especial para você..."}
+                        value={msg}
+                        onChange={(e) => {
+                          setMessages((prev) => {
+                            const updated = [...prev];
+                            updated[index] = e.target.value;
+                            return updated;
+                          });
+                        }}
+                        onFocus={() => setActiveMessageIndex(index)}
+                        className="min-h-[140px] bg-secondary border-border text-foreground"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {messages.length < 5 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 border-border text-muted-foreground hover:text-foreground"
+                    onClick={() => setMessages((prev) => [...prev, ""])}
+                  >
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar variação
+                  </Button>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1.5 ml-0.5">
+                  O sistema escolhe uma mensagem aleatória para cada contato, reduzindo risco de ban.
+                </p>
                 <div className="flex items-start gap-2 mt-2 px-1">
                   <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
                   <p className="text-xs text-muted-foreground">
@@ -666,7 +715,7 @@ const Campaigns = () => {
                 onClick={handleStart}
                 className="w-full gradient-blue text-primary-foreground"
                 style={{ fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em' }}
-                disabled={selectedContacts.size === 0 || !message.trim()}
+                disabled={selectedContacts.size === 0 || !messages.some(m => m.trim())}
               >
                 <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)
               </Button>
@@ -701,19 +750,39 @@ const Campaigns = () => {
           {/* Preview */}
           <div className="glass-card rounded-xl p-5">
             <h3 className="mb-3 font-semibold text-foreground">Pré-visualização</h3>
+            {messages.filter(m => m.trim()).length > 1 && (
+              <div className="flex gap-1 mb-2 flex-wrap">
+                {messages.map((m, i) => m.trim() ? (
+                  <button
+                    key={i}
+                    onClick={() => setPreviewVariation(i)}
+                    className={`rounded px-2 py-0.5 text-[10px] font-semibold transition-colors ${
+                      previewVariation === i
+                        ? "bg-primary/20 text-primary"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Variação {i + 1}
+                  </button>
+                ) : null)}
+              </div>
+            )}
             <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
               <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3">
                 <p className="whitespace-pre-wrap text-sm text-foreground">
-                  {message
-                    ? message.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
-                        const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
-                        if (spinMatch) {
-                          const firstOption = spinMatch[1].split("|")[0];
-                          return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
-                        }
-                        return <span key={i}>{part}</span>;
-                      })
-                    : "Sua mensagem aparecerá aqui..."}
+                  {(() => {
+                    const currentMsg = messages[previewVariation] || messages.find(m => m.trim()) || "";
+                    return currentMsg.trim()
+                      ? currentMsg.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
+                          const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
+                          if (spinMatch) {
+                            const firstOption = spinMatch[1].split("|")[0];
+                            return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        })
+                      : "Sua mensagem aparecerá aqui...";
+                  })()}
                 </p>
                 {useButtons && buttonText && (
                   <div className="mt-2 rounded border border-primary/30 bg-primary/10 px-3 py-1.5 text-center text-xs font-medium text-primary">
