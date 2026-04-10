@@ -18,6 +18,7 @@ import {
   Info,
   History,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,9 @@ interface Instance {
 
 const Campaigns = () => {
   const [campaignName, setCampaignName] = useState("");
-  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<string[]>([""]);
+  const [activeMessageIndex, setActiveMessageIndex] = useState(0);
+  const [previewVariation, setPreviewVariation] = useState(0);
   
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
