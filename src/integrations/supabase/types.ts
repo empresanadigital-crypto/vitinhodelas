@@ -264,6 +264,7 @@ export type Database = {
           token: string | null
           updated_at: string
           user_id: string
+          vps_url: string | null
         }
         Insert: {
           client_token?: string | null
@@ -278,6 +279,7 @@ export type Database = {
           token?: string | null
           updated_at?: string
           user_id: string
+          vps_url?: string | null
         }
         Update: {
           client_token?: string | null
@@ -292,6 +294,7 @@ export type Database = {
           token?: string | null
           updated_at?: string
           user_id?: string
+          vps_url?: string | null
         }
         Relationships: []
       }

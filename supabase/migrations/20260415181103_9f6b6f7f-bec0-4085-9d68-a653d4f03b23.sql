@@ -1,0 +1,1 @@
+ALTER TABLE public.instances ADD COLUMN IF NOT EXISTS vps_url TEXT DEFAULT NULL;

@@ -24,6 +24,7 @@ interface Instance {
   provider: string;
   messages_sent: number;
   instance_id: string | null;
+  vps_url: string | null;
 }
 
 interface QrDialogBodyProps {
@@ -127,6 +128,7 @@ const Instances = () => {
   const [qrStatus, setQrStatus] = useState("");
   const [activeQrInstance, setActiveQrInstance] = useState<Instance | null>(null);
   const [newName, setNewName] = useState("");
+  const [newVpsUrl, setNewVpsUrl] = useState("");
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Instance | null>(null);
   const pollingRef = useRef(false);
@@ -194,7 +196,8 @@ const Instances = () => {
         provider: "baileys",
         instance_id: instanceName,
         status: "disconnected",
-      });
+        vps_url: newVpsUrl.trim() || null,
+      } as any);
       toast({ title: "Instância criada!", description: "Clique em QR Code para conectar." });
       const qrBase64 = createData?.data?.qrBase64 || createData?.data?.qrcode?.base64;
       if (qrBase64) {
@@ -205,6 +208,7 @@ const Instances = () => {
         setQrDialogOpen(true);
       }
       setNewName("");
+      setNewVpsUrl("");
       setDialogOpen(false);
       fetchInstances();
     } catch (error: any) {
@@ -482,6 +486,11 @@ const Instances = () => {
                   <Label className="text-foreground">Nome da Instância</Label>
                   <Input placeholder="Ex: WhatsApp Marketing" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
+                <div>
+                  <Label className="text-foreground">URL da VPS (servidor Baileys)</Label>
+                  <Input placeholder="http://157.230.13.129:3100" value={newVpsUrl} onChange={(e) => setNewVpsUrl(e.target.value)} className="bg-secondary border-border text-foreground" />
+                  <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Endereço do servidor Baileys nesta VPS. Formato: http://IP:3100</p>
+                </div>
                 <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-muted-foreground">
                   ✅ Pronto para usar. Basta criar a instância e escanear o QR Code pelo WhatsApp.
                 </div>
@@ -527,6 +536,7 @@ const Instances = () => {
                   <div>
                     <p style={{ fontSize: 13, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.02em' }}>{instance.name}</p>
                     <p style={{ fontSize: 11, fontWeight: 400, color: 'rgba(242,242,255,0.5)' }}>{instance.phone || "Não conectado"}</p>
+                    {instance.vps_url && <p style={{ fontSize: 10, fontWeight: 400, color: 'rgba(242,242,255,0.3)' }}>{instance.vps_url}</p>}
                   </div>
                 </div>
                 <span className="flex items-center gap-1.5 rounded-[10px]" style={{
