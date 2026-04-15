@@ -157,6 +157,7 @@ const Instances = () => {
         const { data } = await supabase.functions.invoke("baileys-proxy", {
           body: { action: "status", instanceName: inst.instance_id },
         });
+        console.log("Auto-poll response:", JSON.stringify(data));
         const isConnected = data?.data?.status === "connected";
         const phone: string | null = data?.data?.phone || null;
         if (isConnected) {
@@ -351,6 +352,7 @@ const Instances = () => {
           const { data } = await supabase.functions.invoke("baileys-proxy", {
             body: { action: "status", instanceName: activeQrInstance.instance_id },
           });
+          console.log("Verify response:", JSON.stringify(data));
           const connected = data?.data?.status === "connected";
           const phone = data?.data?.phone || null;
           if (connected) {
@@ -370,9 +372,12 @@ const Instances = () => {
           continue;
         }
       }
+      const { data: lastCheck } = await supabase.functions.invoke("baileys-proxy", {
+        body: { action: "status", instanceName: activeQrInstance.instance_id },
+      });
       toast({
         title: "Ainda não conectado",
-        description: "Escaneie o QR Code e clique novamente. Se expirou, feche e clique em QR Code de novo.",
+        description: `Resposta: ${JSON.stringify(lastCheck?.data || lastCheck?.error || 'sem dados')}. Escaneie o QR e clique novamente.`,
         variant: "destructive",
       });
     } catch (error: any) {
