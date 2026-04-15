@@ -12,7 +12,7 @@ import {
   Square,
   StopCircle,
   RefreshCw,
-  Shield,
+  Info,
   Info,
   History,
   Trash2,
