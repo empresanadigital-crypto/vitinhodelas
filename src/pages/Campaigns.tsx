@@ -4,11 +4,9 @@ import {
   Send,
   Pause,
   Play,
-  Clock,
   MessageSquare,
   Settings2,
   Zap,
-  AlertCircle,
   Users,
   CheckSquare,
   Square,
@@ -19,13 +17,15 @@ import {
   History,
   Trash2,
   Plus,
+  ImageIcon,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Switch } from "@/components/ui/switch";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,17 +61,15 @@ const Campaigns = () => {
   const [messages, setMessages] = useState<string[]>([""]);
   const [activeMessageIndex, setActiveMessageIndex] = useState(0);
   const [previewVariation, setPreviewVariation] = useState(0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [useButtons, setUseButtons] = useState(false);
-  const [buttonText, setButtonText] = useState("");
-  const [buttonUrl, setButtonUrl] = useState("");
   const [selectedInstance, setSelectedInstance] = useState("all");
   const [rotateInstances, setRotateInstances] = useState(true);
   const [messagesPerInstance, setMessagesPerInstance] = useState("10");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
 
   // Contacts
   const [contacts, setContacts] = useState<Contact[]>([]);
