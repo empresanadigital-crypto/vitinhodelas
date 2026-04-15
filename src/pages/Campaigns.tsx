@@ -220,28 +220,22 @@ const Campaigns = () => {
     }
 
     const contactIds = Array.from(selectedContacts);
-
-    // Get selected tags for filtering
     const selectedTags = filterTag !== "all" ? [filterTag] : undefined;
 
-    // Scheduling logic
-    const isScheduled = !!(scheduleDate && scheduleTime);
-    const scheduledAt = isScheduled ? new Date(`${scheduleDate}T${scheduleTime}`).toISOString() : null;
-    if (isScheduled && new Date(scheduledAt!) < new Date()) {
-      toast({ title: "Erro", description: "A data/hora de agendamento deve ser no futuro.", variant: "destructive" });
-      return;
-    }
-
-    // Validação: botão só funciona com Z-API
-    if (useButtons && selectedInstance !== "all") {
-      const chosenInstance = instances.find(i => i.id === selectedInstance);
-      if (chosenInstance && chosenInstance.provider !== "z-api") {
-        toast({ title: "Atenção", description: `Botões nativos só funcionam com Z-API. A instância "${chosenInstance.name}" usa ${chosenInstance.provider} e vai enviar texto simples.`, variant: "destructive" });
+    // Upload image if present
+    let uploadedImageUrl: string | null = null;
+    if (imageFile) {
+      const filePath = `${user!.id}/${Date.now()}-${imageFile.name}`;
+      const { error: uploadError } = await supabase.storage.from('campaign-images').upload(filePath, imageFile);
+      if (uploadError) {
+        toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
         return;
       }
+      const { data: urlData } = supabase.storage.from('campaign-images').getPublicUrl(filePath);
+      uploadedImageUrl = urlData.publicUrl;
     }
 
-    // Save campaign to DB first
+    // Save campaign to DB
     const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
       user_id: user!.id,
       name: campaignName || "Campanha sem nome",
@@ -250,13 +244,10 @@ const Campaigns = () => {
       interval_seconds: 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
-      use_buttons: useButtons,
-      button_text: useButtons ? buttonText : null,
-      button_url: useButtons ? buttonUrl : null,
       selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
       contact_ids: contactIds,
-      status: isScheduled ? "scheduled" : "draft",
-      scheduled_at: scheduledAt,
+      status: "draft",
+      image_url: uploadedImageUrl,
       started_at: null,
     } as any).select("id").single();
 
@@ -271,14 +262,7 @@ const Campaigns = () => {
     setFailedCount(0);
     setTotalToSend(contactIds.length);
     setDispatchLog([]);
-    setCampaignStatus(isScheduled ? "scheduled" : "draft");
-
-    if (isScheduled) {
-      addLog(`📅 Campanha agendada para ${new Date(scheduledAt!).toLocaleString("pt-BR")}`);
-      toast({ title: "Campanha agendada!", description: `Será disparada em ${new Date(scheduledAt!).toLocaleString("pt-BR")}` });
-      setIsRunning(false);
-      return;
-    }
+    setCampaignStatus("draft");
 
     setIsRunning(true);
     setIsPaused(false);
