@@ -149,6 +149,7 @@ export type Database = {
           created_at: string
           failed_count: number
           id: string
+          image_url: string | null
           interval_seconds: number
           message: string
           messages_per_instance: number
@@ -172,6 +173,7 @@ export type Database = {
           created_at?: string
           failed_count?: number
           id?: string
+          image_url?: string | null
           interval_seconds?: number
           message: string
           messages_per_instance?: number
@@ -195,6 +197,7 @@ export type Database = {
           created_at?: string
           failed_count?: number
           id?: string
+          image_url?: string | null
           interval_seconds?: number
           message?: string
           messages_per_instance?: number
