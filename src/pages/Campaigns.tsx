@@ -1,14 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Send,
   Pause,
   Play,
-  Clock,
   MessageSquare,
   Settings2,
   Zap,
-  AlertCircle,
   Users,
   CheckSquare,
   Square,
@@ -19,11 +17,14 @@ import {
   History,
   Trash2,
   Plus,
+  ImageIcon,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,17 +62,15 @@ const Campaigns = () => {
   const [messages, setMessages] = useState<string[]>([""]);
   const [activeMessageIndex, setActiveMessageIndex] = useState(0);
   const [previewVariation, setPreviewVariation] = useState(0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [useButtons, setUseButtons] = useState(false);
-  const [buttonText, setButtonText] = useState("");
-  const [buttonUrl, setButtonUrl] = useState("");
   const [selectedInstance, setSelectedInstance] = useState("all");
   const [rotateInstances, setRotateInstances] = useState(true);
   const [messagesPerInstance, setMessagesPerInstance] = useState("10");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
 
   // Contacts
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -222,28 +221,22 @@ const Campaigns = () => {
     }
 
     const contactIds = Array.from(selectedContacts);
-
-    // Get selected tags for filtering
     const selectedTags = filterTag !== "all" ? [filterTag] : undefined;
 
-    // Scheduling logic
-    const isScheduled = !!(scheduleDate && scheduleTime);
-    const scheduledAt = isScheduled ? new Date(`${scheduleDate}T${scheduleTime}`).toISOString() : null;
-    if (isScheduled && new Date(scheduledAt!) < new Date()) {
-      toast({ title: "Erro", description: "A data/hora de agendamento deve ser no futuro.", variant: "destructive" });
-      return;
-    }
-
-    // Validação: botão só funciona com Z-API
-    if (useButtons && selectedInstance !== "all") {
-      const chosenInstance = instances.find(i => i.id === selectedInstance);
-      if (chosenInstance && chosenInstance.provider !== "z-api") {
-        toast({ title: "Atenção", description: `Botões nativos só funcionam com Z-API. A instância "${chosenInstance.name}" usa ${chosenInstance.provider} e vai enviar texto simples.`, variant: "destructive" });
+    // Upload image if present
+    let uploadedImageUrl: string | null = null;
+    if (imageFile) {
+      const filePath = `${user!.id}/${Date.now()}-${imageFile.name}`;
+      const { error: uploadError } = await supabase.storage.from('campaign-images').upload(filePath, imageFile);
+      if (uploadError) {
+        toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
         return;
       }
+      const { data: urlData } = supabase.storage.from('campaign-images').getPublicUrl(filePath);
+      uploadedImageUrl = urlData.publicUrl;
     }
 
-    // Save campaign to DB first
+    // Save campaign to DB
     const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
       user_id: user!.id,
       name: campaignName || "Campanha sem nome",
@@ -252,13 +245,10 @@ const Campaigns = () => {
       interval_seconds: 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
-      use_buttons: useButtons,
-      button_text: useButtons ? buttonText : null,
-      button_url: useButtons ? buttonUrl : null,
       selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
       contact_ids: contactIds,
-      status: isScheduled ? "scheduled" : "draft",
-      scheduled_at: scheduledAt,
+      status: "draft",
+      image_url: uploadedImageUrl,
       started_at: null,
     } as any).select("id").single();
 
@@ -273,14 +263,7 @@ const Campaigns = () => {
     setFailedCount(0);
     setTotalToSend(contactIds.length);
     setDispatchLog([]);
-    setCampaignStatus(isScheduled ? "scheduled" : "draft");
-
-    if (isScheduled) {
-      addLog(`📅 Campanha agendada para ${new Date(scheduledAt!).toLocaleString("pt-BR")}`);
-      toast({ title: "Campanha agendada!", description: `Será disparada em ${new Date(scheduledAt!).toLocaleString("pt-BR")}` });
-      setIsRunning(false);
-      return;
-    }
+    setCampaignStatus("draft");
 
     setIsRunning(true);
     setIsPaused(false);
@@ -385,12 +368,52 @@ const Campaigns = () => {
               <TabsTrigger value="settings" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Settings2 className="mr-1.5 h-4 w-4" /> Config
               </TabsTrigger>
-              <TabsTrigger value="schedule" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
-                <Clock className="mr-1.5 h-4 w-4" /> Agendar
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="message" className="space-y-4">
+              {/* Image upload */}
+              <div>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Imagem (opcional)</Label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setImageFile(file);
+                      setImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                {imagePreview ? (
+                  <div className="flex items-center gap-3 mt-1 rounded-lg border border-border bg-secondary/30 p-3">
+                    <img src={imagePreview} alt="Preview" className="h-20 rounded-lg object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground font-medium truncate">{imageFile?.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{imageFile ? (imageFile.size / 1024).toFixed(0) + " KB" : ""}</p>
+                    </div>
+                    <button
+                      onClick={() => { setImageFile(null); setImagePreview(null); }}
+                      className="rounded p-1.5 text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-1 border-border text-muted-foreground hover:text-foreground"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <ImageIcon className="mr-1.5 h-4 w-4" /> Anexar Imagem
+                  </Button>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Quando há imagem, o texto da mensagem vira o caption.</p>
+              </div>
+
               <div>
                 <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Nome da Campanha</Label>
                 <Input
@@ -477,27 +500,6 @@ const Campaigns = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
-                <Switch checked={useButtons} onCheckedChange={setUseButtons} />
-                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Enviar com botão (requer API compatível)</Label>
-              </div>
-
-              {useButtons && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="space-y-3 rounded-lg border border-border p-4"
-                >
-                  <div>
-                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Texto do Botão</Label>
-                    <Input placeholder="Saiba Mais" value={buttonText} onChange={(e) => setButtonText(e.target.value)} className="bg-secondary border-border text-foreground" />
-                  </div>
-                  <div>
-                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>URL do Botão</Label>
-                    <Input placeholder="https://seusite.com.br" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} className="bg-secondary border-border text-foreground" />
-                  </div>
-                </motion.div>
-              )}
             </TabsContent>
 
             {/* CONTACTS TAB */}
@@ -612,24 +614,6 @@ const Campaigns = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="schedule" className="space-y-4">
-              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
-                <AlertCircle className="mt-0.5 h-5 w-5 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  Agende o disparo para uma data e hora específica. A campanha será iniciada automaticamente.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Data</Label>
-                  <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="bg-secondary border-border text-foreground" />
-                </div>
-                <div>
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Hora</Label>
-                  <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="bg-secondary border-border text-foreground" />
-                </div>
-              </div>
-            </TabsContent>
           </Tabs>
         </motion.div>
 
@@ -768,7 +752,10 @@ const Campaigns = () => {
               </div>
             )}
             <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
-              <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3">
+              <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3 overflow-hidden">
+                {imagePreview && (
+                  <img src={imagePreview} alt="Preview" className="w-full rounded-lg mb-2" />
+                )}
                 <p className="whitespace-pre-wrap text-sm text-foreground">
                   {(() => {
                     const currentMsg = messages[previewVariation] || messages.find(m => m.trim()) || "";
@@ -784,11 +771,6 @@ const Campaigns = () => {
                       : "Sua mensagem aparecerá aqui...";
                   })()}
                 </p>
-                {useButtons && buttonText && (
-                  <div className="mt-2 rounded border border-primary/30 bg-primary/10 px-3 py-1.5 text-center text-xs font-medium text-primary">
-                    {buttonText}
-                  </div>
-                )}
               </div>
               <p className="mt-1 text-right text-[10px] text-muted-foreground">12:00 ✓✓</p>
             </div>
