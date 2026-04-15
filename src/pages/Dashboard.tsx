@@ -3,7 +3,7 @@ import { Plus, Loader2, Send, Users, Smartphone, BarChart3 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import OnboardingTour from "@/components/OnboardingTour";
+
 
 const statusConfig: Record<string, { label: string; className?: string; style?: React.CSSProperties }> = {
   completed: { label: "Concluída", className: "badge-ok" },
@@ -34,7 +34,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ contacts: 0, instances: 0, campaigns: 0, totalSent: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,16 +59,6 @@ const Dashboard = () => {
       setCampaigns(recentCampaignsRes.data || []);
       setLoading(false);
 
-      // Check onboarding
-      const onboardingDone = localStorage.getItem("readyzap_onboarding_done");
-      if (!onboardingDone) {
-        const hasData = (contactsRes.count || 0) > 0 || activeInstances > 0 || allCampaigns.length > 0;
-        if (!hasData) {
-          setShowOnboarding(true);
-        } else {
-          localStorage.setItem("readyzap_onboarding_done", "true");
-        }
-      }
     };
     fetchData();
   }, []);
@@ -83,17 +73,6 @@ const Dashboard = () => {
 
   return (
     <div className="p-6 md:p-7 space-y-6">
-      {showOnboarding && (
-        <OnboardingTour
-          onClose={() => {
-            setShowOnboarding(false);
-            localStorage.setItem("readyzap_onboarding_done", "true");
-          }}
-          hasInstances={stats.instances > 0}
-          hasContacts={stats.contacts > 0}
-          hasCampaigns={stats.campaigns > 0}
-        />
-      )}
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
