@@ -752,7 +752,10 @@ const Campaigns = () => {
               </div>
             )}
             <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
-              <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3">
+              <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3 overflow-hidden">
+                {imagePreview && (
+                  <img src={imagePreview} alt="Preview" className="w-full rounded-lg mb-2" />
+                )}
                 <p className="whitespace-pre-wrap text-sm text-foreground">
                   {(() => {
                     const currentMsg = messages[previewVariation] || messages.find(m => m.trim()) || "";
