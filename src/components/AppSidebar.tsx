@@ -1,18 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   Smartphone,
   Users,
   Send,
-  BarChart3,
-  Settings,
   LogOut,
   Flame,
-  ShieldCheck,
-  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdmin } from "@/hooks/useAdmin";
 import { useTheme } from "@/hooks/useTheme";
 import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
@@ -21,23 +15,9 @@ const navGroups = [
   {
     label: "Menu",
     items: [
-      { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/instancias", icon: Smartphone, label: "Instâncias" },
       { to: "/contatos", icon: Users, label: "Contatos" },
       { to: "/campanhas", icon: Send, label: "Campanhas" },
-    ],
-  },
-  {
-    label: "Análise",
-    items: [
-      { to: "/relatorios", icon: BarChart3, label: "Relatórios" },
-    ],
-  },
-  {
-    label: "Sistema",
-    items: [
-      { to: "/configuracoes", icon: Settings, label: "Configurações" },
-      { to: "/treinamentos", icon: GraduationCap, label: "Treinamentos" },
     ],
   },
 ];

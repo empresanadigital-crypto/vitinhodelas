@@ -10,7 +10,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && session) {
-      navigate("/dashboard", { replace: true });
+      navigate("/campanhas", { replace: true });
     }
   }, [session, authLoading, navigate]);
   const [isLogin, setIsLogin] = useState(true);
