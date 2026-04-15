@@ -499,27 +499,6 @@ const Campaigns = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
-                <Switch checked={useButtons} onCheckedChange={setUseButtons} />
-                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Enviar com botão (requer API compatível)</Label>
-              </div>
-
-              {useButtons && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="space-y-3 rounded-lg border border-border p-4"
-                >
-                  <div>
-                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Texto do Botão</Label>
-                    <Input placeholder="Saiba Mais" value={buttonText} onChange={(e) => setButtonText(e.target.value)} className="bg-secondary border-border text-foreground" />
-                  </div>
-                  <div>
-                    <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>URL do Botão</Label>
-                    <Input placeholder="https://seusite.com.br" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} className="bg-secondary border-border text-foreground" />
-                  </div>
-                </motion.div>
-              )}
             </TabsContent>
 
             {/* CONTACTS TAB */}
@@ -634,24 +613,6 @@ const Campaigns = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="schedule" className="space-y-4">
-              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
-                <AlertCircle className="mt-0.5 h-5 w-5 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  Agende o disparo para uma data e hora específica. A campanha será iniciada automaticamente.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Data</Label>
-                  <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="bg-secondary border-border text-foreground" />
-                </div>
-                <div>
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Hora</Label>
-                  <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="bg-secondary border-border text-foreground" />
-                </div>
-              </div>
-            </TabsContent>
           </Tabs>
         </motion.div>
 
@@ -806,11 +767,6 @@ const Campaigns = () => {
                       : "Sua mensagem aparecerá aqui...";
                   })()}
                 </p>
-                {useButtons && buttonText && (
-                  <div className="mt-2 rounded border border-primary/30 bg-primary/10 px-3 py-1.5 text-center text-xs font-medium text-primary">
-                    {buttonText}
-                  </div>
-                )}
               </div>
               <p className="mt-1 text-right text-[10px] text-muted-foreground">12:00 ✓✓</p>
             </div>
