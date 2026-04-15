@@ -179,6 +179,48 @@ const Instances = () => {
 
   useEffect(() => { fetchInstances(); }, [fetchInstances]);
 
+  // Auto-poll connection status while QR dialog is open
+  useEffect(() => {
+    if (!qrDialogOpen || !activeQrInstance) return;
+    const interval = window.setInterval(async () => {
+      try {
+        const inst = activeQrInstance;
+        const proxyFn = getProxyFunction(inst.provider);
+        const body: Record<string, any> = { action: "status" };
+        if (inst.provider === "z-api") {
+          body.instanceId = inst.instance_id;
+          body.token = inst.token;
+          body.clientToken = inst.client_token;
+        } else {
+          body.instanceName = inst.instance_id;
+        }
+        const { data } = await supabase.functions.invoke(proxyFn, { body });
+        let isConnected = false;
+        let phone: string | null = null;
+        if (inst.provider === "z-api") {
+          isConnected = parseZapiConnected(data);
+        } else if (inst.provider === "baileys") {
+          isConnected = data?.data?.status === "connected";
+          phone = data?.data?.phone || null;
+        } else {
+          isConnected = data?.data?.instance?.state === "open";
+        }
+        if (isConnected) {
+          const updateData: Record<string, any> = { status: "connected" };
+          if (phone) updateData.phone = phone;
+          await supabase.from("instances").update(updateData).eq("id", inst.id);
+          toast({ title: "✅ Conectado!", description: "WhatsApp conectado com sucesso!" });
+          setQrDialogOpen(false);
+          setQrImage(null);
+          setPairingCode(null);
+          setActiveQrInstance(null);
+          fetchInstances();
+        }
+      } catch { /* silent */ }
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, [qrDialogOpen, activeQrInstance]);
+
   const getProxyFunction = (provider: string) => {
     if (provider === "baileys") return "baileys-proxy";
     if (provider === "z-api") return "zapi-proxy";
