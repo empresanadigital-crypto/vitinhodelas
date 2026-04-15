@@ -102,9 +102,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
               {group.label}
             </div>
             {group.items.map((item) => {
-              const isActive =
-                location.pathname === item.to ||
-                (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
+              const isActive = location.pathname === item.to || location.pathname.startsWith(item.to);
               return (
                 <NavLink
                   key={item.to}
