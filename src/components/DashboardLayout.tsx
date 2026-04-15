@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
-import SupportChat from "./SupportChat";
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -70,7 +69,6 @@ const DashboardLayout = () => {
       {/* Main */}
       <main className="main-content flex-1 min-w-0" style={{ marginLeft: 220 }}>
         <Outlet />
-        <SupportChat />
       </main>
     </div>
   );

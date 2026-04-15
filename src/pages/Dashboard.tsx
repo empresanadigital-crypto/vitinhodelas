@@ -3,7 +3,7 @@ import { Plus, Loader2, Send, Users, Smartphone, BarChart3 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import OnboardingTour from "@/components/OnboardingTour";
+
 
 const statusConfig: Record<string, { label: string; className?: string; style?: React.CSSProperties }> = {
   completed: { label: "Concluída", className: "badge-ok" },
