@@ -12,7 +12,6 @@ import {
   Square,
   StopCircle,
   RefreshCw,
-  Shield,
   Info,
   History,
   Trash2,
@@ -71,6 +70,7 @@ const Campaigns = () => {
   const [selectedInstance, setSelectedInstance] = useState("all");
   const [rotateInstances, setRotateInstances] = useState(true);
   const [messagesPerInstance, setMessagesPerInstance] = useState("10");
+  const [intervalSeconds, setIntervalSeconds] = useState("15");
 
   // Contacts
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -242,7 +242,7 @@ const Campaigns = () => {
       name: campaignName || "Campanha sem nome",
       message: messages.filter(m => m.trim()).join("|||"),
       total_contacts: contactIds.length,
-      interval_seconds: 15,
+      interval_seconds: parseInt(intervalSeconds) || 15,
       rotate_instances: selectedInstance === "all" ? rotateInstances : false,
       messages_per_instance: parseInt(messagesPerInstance) || 10,
       selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
@@ -591,6 +591,12 @@ const Campaigns = () => {
                 )}
               </div>
 
+              <div>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Intervalo entre mensagens (segundos)</Label>
+                <Input type="number" min="10" max="120" value={intervalSeconds} onChange={(e) => setIntervalSeconds(e.target.value)} className="bg-secondary border-border text-foreground" />
+                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Tempo de espera entre cada envio. Mínimo 10s. Recomendado: 15-30s para contas novas, 10-15s para contas antigas. O sistema adiciona variação aleatória de ±5s automaticamente.</p>
+              </div>
+
               <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
                 <Switch checked={rotateInstances} onCheckedChange={setRotateInstances} />
                 <div>
@@ -605,13 +611,6 @@ const Campaigns = () => {
                   <Input type="number" min="1" value={messagesPerInstance} onChange={(e) => setMessagesPerInstance(e.target.value)} className="bg-secondary border-border text-foreground" />
                 </div>
               )}
-
-              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
-                <Shield className="mt-0.5 h-5 w-5 text-primary shrink-0" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  O intervalo entre mensagens é controlado automaticamente pelo sistema anti-ban no servidor. Delay aleatório de 12-45s + pausas automáticas a cada 25 mensagens.
-                </p>
-              </div>
             </TabsContent>
 
           </Tabs>
@@ -717,6 +716,7 @@ const Campaigns = () => {
                 </Button>
               </>
             )}
+            <p className="text-[10px] text-muted-foreground text-center mt-1">Intervalo: {intervalSeconds}s ±5s entre envios</p>
           </div>
 
           {/* Log */}
