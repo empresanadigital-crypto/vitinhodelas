@@ -13,7 +13,6 @@ import {
   StopCircle,
   RefreshCw,
   Info,
-  Info,
   History,
   Trash2,
   Plus,
