@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Smartphone, QrCode, Trash2, RefreshCw, Wifi, WifiOff,
-  Loader2, CheckCircle, ExternalLink, Copy, ChevronRight, AlertCircle, Info,
+  Loader2, AlertCircle, Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,44 +24,18 @@ interface Instance {
   provider: string;
   messages_sent: number;
   instance_id: string | null;
-  token: string | null;
-  client_token: string | null;
 }
-
-const ZapiGuide = () => (
-  <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
-    <div className="flex items-center gap-2">
-      <Info className="h-4 w-4 text-blue-400 flex-shrink-0" />
-      <p className="text-sm font-medium text-blue-400">Como obter suas credenciais Z-API</p>
-    </div>
-    <ol className="space-y-2 pl-1">
-      {[
-        <span key={0}>Acesse <a href="https://z-api.io" target="_blank" rel="noreferrer" className="text-primary underline inline-flex items-center gap-1">z-api.io <ExternalLink className="h-3 w-3" /></a> e faça login</span>,
-        <span key={1}>No painel, clique em <strong className="text-foreground">"Criar Instância"</strong></span>,
-        <span key={2}>Copie o <strong className="text-foreground">Instance ID</strong> e o <strong className="text-foreground">Token</strong> da instância criada</span>,
-        <span key={3}>Cole os dados abaixo e clique em <strong className="text-foreground">"Adicionar Instância"</strong></span>,
-        <span key={4}>Depois clique em <strong className="text-foreground">"QR Code"</strong> e escaneie pelo WhatsApp</span>,
-      ].map((step, i) => (
-        <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground list-none">
-          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/20 text-[11px] font-bold text-primary">{i + 1}</span>
-          <span className="pt-0.5">{step}</span>
-        </li>
-      ))}
-    </ol>
-  </div>
-);
 
 interface QrDialogBodyProps {
   qrLoading: boolean;
   qrStatus: string;
   qrImage: string | null;
   pairingCode: string | null;
-  provider: string;
   onVerify: () => void;
   onCopyCode: () => void;
 }
 
-const QrDialogBody = ({ qrLoading, qrStatus, qrImage, pairingCode, provider, onVerify, onCopyCode }: QrDialogBodyProps) => {
+const QrDialogBody = ({ qrLoading, qrStatus, qrImage, pairingCode, onVerify, onCopyCode }: QrDialogBodyProps) => {
   if (qrLoading && !qrImage && !pairingCode) {
     return (
       <div className="flex flex-col items-center gap-3 py-8">
@@ -84,8 +57,8 @@ const QrDialogBody = ({ qrLoading, qrStatus, qrImage, pairingCode, provider, onV
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Como escanear</p>
           {[
             "Abra o WhatsApp no seu celular",
-            provider === "z-api" ? "Toque nos 3 pontos (⋮) no canto superior direito" : "Vá em Configurações (ícone da engrenagem)",
-            provider === "z-api" ? <span key="zapi">Selecione <strong className="text-foreground">"Dispositivos conectados"</strong></span> : <span key="other">Toque em <strong className="text-foreground">"Aparelhos conectados"</strong></span>,
+            "Vá em Configurações (ícone da engrenagem)",
+            <span key="dev">Toque em <strong className="text-foreground">"Aparelhos conectados"</strong></span>,
             <span key="scan">Toque em <strong className="text-foreground">"Conectar aparelho"</strong> e escaneie o QR acima</span>,
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -138,7 +111,7 @@ const QrDialogBody = ({ qrLoading, qrStatus, qrImage, pairingCode, provider, onV
   return (
     <div className="flex flex-col items-center py-8 gap-3 text-muted-foreground">
       <AlertCircle className="h-10 w-10" />
-      <p className="text-sm text-center">Nenhum QR Code disponível.<br />Verifique suas credenciais e tente novamente.</p>
+      <p className="text-sm text-center">Nenhum QR Code disponível.<br />Tente novamente.</p>
     </div>
   );
 };
@@ -154,10 +127,6 @@ const Instances = () => {
   const [qrStatus, setQrStatus] = useState("");
   const [activeQrInstance, setActiveQrInstance] = useState<Instance | null>(null);
   const [newName, setNewName] = useState("");
-  const [newProvider, setNewProvider] = useState<"baileys" | "z-api">("z-api");
-  const [zapiInstanceId, setZapiInstanceId] = useState("");
-  const [zapiToken, setZapiToken] = useState("");
-  const [zapiClientToken, setZapiClientToken] = useState("");
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Instance | null>(null);
   const pollingRef = useRef(false);
@@ -185,26 +154,11 @@ const Instances = () => {
     const interval = window.setInterval(async () => {
       try {
         const inst = activeQrInstance;
-        const proxyFn = getProxyFunction(inst.provider);
-        const body: Record<string, any> = { action: "status" };
-        if (inst.provider === "z-api") {
-          body.instanceId = inst.instance_id;
-          body.token = inst.token;
-          body.clientToken = inst.client_token;
-        } else {
-          body.instanceName = inst.instance_id;
-        }
-        const { data } = await supabase.functions.invoke(proxyFn, { body });
-        let isConnected = false;
-        let phone: string | null = null;
-        if (inst.provider === "z-api") {
-          isConnected = parseZapiConnected(data);
-        } else if (inst.provider === "baileys") {
-          isConnected = data?.data?.status === "connected";
-          phone = data?.data?.phone || null;
-        } else {
-          isConnected = data?.data?.instance?.state === "open";
-        }
+        const { data } = await supabase.functions.invoke("baileys-proxy", {
+          body: { action: "status", instanceName: inst.instance_id },
+        });
+        const isConnected = data?.data?.status === "connected";
+        const phone: string | null = data?.data?.phone || null;
         if (isConnected) {
           const updateData: Record<string, any> = { status: "connected" };
           if (phone) updateData.phone = phone;
@@ -221,66 +175,35 @@ const Instances = () => {
     return () => window.clearInterval(interval);
   }, [qrDialogOpen, activeQrInstance]);
 
-  const getProxyFunction = (provider: string) => {
-    if (provider === "baileys") return "baileys-proxy";
-    if (provider === "z-api") return "zapi-proxy";
-    throw new Error(`Provider não suportado: ${provider}`);
-  };
-
-  const parseZapiConnected = (data: any): boolean => {
-    return (
-      data?.data?.connected === true ||
-      data?.data?.value?.isConnected === true ||
-      data?.data?.value?.connected === true ||
-      data?.data?.isConnected === true
-    );
-  };
-
   const addInstance = async () => {
     if (!newName.trim()) {
       toast({ title: "Erro", description: "Preencha o nome da instância", variant: "destructive" });
       return;
     }
     try {
-      if (newProvider === "baileys") {
-        const instanceName = newName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-        const proxyFn = getProxyFunction(newProvider);
-        const { data: createData, error: createError } = await supabase.functions.invoke(proxyFn, {
-          body: { action: "create-instance", instanceName },
-        });
-        if (createError) throw createError;
-        if (!createData?.success) throw new Error(createData?.error || "Erro ao criar instância");
-        await supabase.from("instances").insert({
-          user_id: user!.id,
-          name: newName.trim(),
-          provider: newProvider,
-          instance_id: instanceName,
-          status: "disconnected",
-        });
-        toast({ title: "Instância criada!", description: "Clique em QR Code para conectar." });
-        const qrBase64 = createData?.data?.qrBase64 || createData?.data?.qrcode?.base64;
-        if (qrBase64) {
-          setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
-          setQrDialogOpen(true);
-        }
-      } else {
-        if (!zapiInstanceId.trim() || !zapiToken.trim()) {
-          toast({ title: "Erro", description: "Preencha Instance ID e Token da Z-API", variant: "destructive" });
-          return;
-        }
-        const { error: insertError } = await supabase.from("instances").insert({
-          user_id: user!.id,
-          name: newName.trim(),
-          provider: "z-api",
-          instance_id: zapiInstanceId.trim(),
-          token: zapiToken.trim(),
-          client_token: zapiClientToken.trim() || null,
-          status: "disconnected",
-        });
-        if (insertError) throw insertError;
-        toast({ title: "Instância Z-API adicionada!", description: "Clique em QR Code para conectar." });
+      const instanceName = newName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const { data: createData, error: createError } = await supabase.functions.invoke("baileys-proxy", {
+        body: { action: "create-instance", instanceName },
+      });
+      if (createError) throw createError;
+      if (!createData?.success) throw new Error(createData?.error || "Erro ao criar instância");
+      await supabase.from("instances").insert({
+        user_id: user!.id,
+        name: newName.trim(),
+        provider: "baileys",
+        instance_id: instanceName,
+        status: "disconnected",
+      });
+      toast({ title: "Instância criada!", description: "Clique em QR Code para conectar." });
+      const qrBase64 = createData?.data?.qrBase64 || createData?.data?.qrcode?.base64;
+      if (qrBase64) {
+        setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
+        // Set activeQrInstance for polling
+        const { data: newInstances } = await supabase.from("instances").select("*").eq("instance_id", instanceName).single();
+        if (newInstances) setActiveQrInstance(newInstances);
+        setQrDialogOpen(true);
       }
-      setNewName(""); setZapiInstanceId(""); setZapiToken(""); setZapiClientToken("");
+      setNewName("");
       setDialogOpen(false);
       fetchInstances();
     } catch (error: any) {
@@ -296,13 +219,7 @@ const Instances = () => {
     setQrStatus("Conectando...");
     setActiveQrInstance(instance);
     try {
-      if (instance.provider === "z-api") {
-        await getQrCodeZapi(instance);
-      } else if (instance.provider === "baileys") {
-        await getQrCodeBaileys(instance);
-      } else {
-        await getQrCodeEvolution(instance);
-      }
+      await getQrCodeBaileys(instance);
     } catch (error: any) {
       toast({ title: "Erro ao gerar QR", description: error.message, variant: "destructive" });
       setQrDialogOpen(false);
@@ -311,61 +228,15 @@ const Instances = () => {
     }
   };
 
-  const getQrCodeZapi = async (instance: Instance) => {
-    if (!instance.instance_id || !instance.token) throw new Error("Instance ID ou Token não configurados");
-    setQrStatus("Verificando se já está conectado...");
-    const { data: statusData } = await supabase.functions.invoke("zapi-proxy", {
-      body: { action: "status", instanceId: instance.instance_id, token: instance.token, clientToken: instance.client_token },
-    });
-    if (parseZapiConnected(statusData)) {
-      toast({ title: "Já conectado!", description: "Esta instância Z-API já está conectada ao WhatsApp." });
-      await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
-      fetchInstances();
-      setQrDialogOpen(false);
-      return;
-    }
-    setQrStatus("Gerando QR Code...");
-    const { data, error } = await supabase.functions.invoke("zapi-proxy", {
-      body: { action: "qr-code", instanceId: instance.instance_id, token: instance.token, clientToken: instance.client_token },
-    });
-    if (error) throw new Error(error.message);
-    const qr = data?.data?.base64 || data?.data?.value;
-    if (qr) {
-      setQrImage(qr.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`);
-      pollZapiConnection(instance);
-    } else {
-      throw new Error("QR Code não disponível. Verifique se a instância existe no painel da Z-API e tente novamente.");
-    }
-  };
-
-  const pollZapiConnection = async (instance: Instance) => {
-    for (let i = 0; i < 20; i++) {
-      await new Promise(r => setTimeout(r, 3000));
-      try {
-        const { data } = await supabase.functions.invoke("zapi-proxy", {
-          body: { action: "status", instanceId: instance.instance_id, token: instance.token, clientToken: instance.client_token },
-        });
-        if (parseZapiConnected(data)) {
-          toast({ title: "✅ Conectado!", description: "WhatsApp Z-API conectado com sucesso!" });
-          await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
-          fetchInstances();
-          setQrDialogOpen(false);
-          return;
-        }
-      } catch { /* continue */ }
-    }
-  };
-
   const getQrCodeBaileys = async (instance: Instance) => {
     if (!instance.instance_id) throw new Error("Instance ID não configurado");
-    
-    // If disconnected, clean old session first then recreate
+
     setQrStatus("Limpando sessão antiga...");
     try {
       await supabase.functions.invoke("baileys-proxy", {
         body: { action: "delete-instance", instanceName: instance.instance_id },
       });
-    } catch { /* ignore - instance may not exist on server */ }
+    } catch { /* ignore */ }
     await new Promise(r => setTimeout(r, 1500));
 
     setQrStatus("Criando nova sessão...");
@@ -375,7 +246,6 @@ const Instances = () => {
     if (createError) throw createError;
     if (!createData?.success) throw new Error(createData?.error || "Erro ao criar instância");
 
-    // Check if already connected from create response
     if (createData?.data?.status === "connected") {
       toast({ title: "Conectado!", description: "WhatsApp conectado com sucesso!" });
       await supabase.from("instances").update({ status: "connected", phone: createData?.data?.phone }).eq("id", instance.id);
@@ -385,11 +255,10 @@ const Instances = () => {
     const qrBase64 = createData?.data?.qrBase64;
     if (qrBase64) {
       setQrImage(qrBase64.startsWith("data:image") ? qrBase64 : `data:image/png;base64,${qrBase64}`);
-      pollConnectionStatus(instance, "baileys");
+      pollConnectionStatus(instance);
       return;
     }
 
-    // If no QR from create, poll for it
     setQrStatus("Aguardando QR...");
     for (let attempt = 0; attempt < 15; attempt++) {
       await new Promise(r => setTimeout(r, 2000));
@@ -405,28 +274,23 @@ const Instances = () => {
       const qr = data?.data?.qrBase64;
       if (qr) {
         setQrImage(qr.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`);
-        pollConnectionStatus(instance, "baileys"); return;
+        pollConnectionStatus(instance); return;
       }
       setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/15`);
     }
     throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns segundos.");
   };
 
-
-  const pollConnectionStatus = async (instance: Instance, provider: string) => {
+  const pollConnectionStatus = async (instance: Instance) => {
     pollingRef.current = true;
-    const proxyFn = getProxyFunction(provider);
     for (let i = 0; i < 20; i++) {
       if (!pollingRef.current) return;
       await new Promise(r => setTimeout(r, 3000));
       try {
-        console.log(`[polling] attempt ${i + 1}/20 for ${instance.instance_id}`);
-        const { data } = await supabase.functions.invoke(proxyFn, {
+        const { data } = await supabase.functions.invoke("baileys-proxy", {
           body: { action: "status", instanceName: instance.instance_id },
         });
-        console.log(`[polling] response:`, JSON.stringify(data).substring(0, 200));
-        const status = provider === "baileys" ? data?.data?.status : data?.data?.instance?.state;
-        if (status === "connected" || status === "open") {
+        if (data?.data?.status === "connected") {
           pollingRef.current = false;
           toast({ title: "✅ Conectado!", description: "WhatsApp conectado com sucesso!" });
           const phone = data?.data?.phone || null;
@@ -441,92 +305,21 @@ const Instances = () => {
         }
       } catch (err) {
         console.log(`[polling] error on attempt ${i + 1}:`, err);
-        /* continue polling */
       }
     }
     pollingRef.current = false;
   };
 
-  const extractQrImage = (payload: any) => {
-    const rawQr = payload?.data?.base64 ?? payload?.data?.code ?? payload?.data?.qrcode?.base64 ?? payload?.data?.qrcode?.code ?? payload?.data?.instance?.qrcode?.base64;
-    if (!rawQr || typeof rawQr !== "string") return null;
-    if (rawQr.startsWith("data:image")) return rawQr;
-    if (rawQr.length < 100) return null;
-    return `data:image/png;base64,${rawQr}`;
-  };
-
-  const extractPairingCode = (payload: any) => {
-    const rawCode = payload?.data?.pairingCode;
-    if (!rawCode || typeof rawCode !== "string") return null;
-    return rawCode.trim() || null;
-  };
-
-  const getQrCodeEvolution = async (instance: Instance) => {
-    if (!instance.instance_id) throw new Error("Instance ID não configurado");
-    setQrStatus("Verificando status...");
-    const { data: statusData } = await supabase.functions.invoke("evolution-proxy", {
-      body: { action: "status", instanceName: instance.instance_id },
-    });
-    const state = statusData?.data?.instance?.state ?? statusData?.data?.state;
-    if (state === "open") {
-      toast({ title: "Já conectado!" }); await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
-      fetchInstances(); setQrDialogOpen(false); return;
-    }
-    if (state === "connecting" || !statusData?.success || statusData?.error === "not_found") {
-      setQrStatus("Reiniciando instância...");
-      try { await supabase.functions.invoke("evolution-proxy", { body: { action: "delete-instance", instanceName: instance.instance_id } }); } catch { /* ignore */ }
-      await new Promise((r) => setTimeout(r, 2000));
-      setQrStatus("Criando nova sessão...");
-      const { data: createData } = await supabase.functions.invoke("evolution-proxy", { body: { action: "create-instance", instanceName: instance.instance_id } });
-      const qrFromCreate = extractQrImage(createData);
-      if (qrFromCreate) { setQrImage(qrFromCreate); return; }
-      const pairingFromCreate = extractPairingCode(createData);
-      if (pairingFromCreate) { setPairingCode(pairingFromCreate); return; }
-    }
-    setQrStatus("Aguardando QR...");
-    await new Promise((r) => setTimeout(r, 4000));
-    for (let attempt = 0; attempt < 25; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 2500));
-      const { data, error } = await supabase.functions.invoke("evolution-proxy", { body: { action: "qr-code", instanceName: instance.instance_id } });
-      if (error) throw error;
-      const qrImageData = extractQrImage(data);
-      if (qrImageData) { setQrImage(qrImageData); return; }
-      const pairing = extractPairingCode(data);
-      if (pairing) { setPairingCode(pairing); return; }
-      const s = data?.data?.instance?.state ?? data?.data?.state;
-      if (s === "open") {
-        toast({ title: "Conectado!" }); await supabase.from("instances").update({ status: "connected" }).eq("id", instance.id);
-        fetchInstances(); setQrDialogOpen(false); return;
-      }
-      setQrStatus(`Aguardando QR... tentativa ${attempt + 1}/25`);
-    }
-    throw new Error("A sessão ainda não retornou QR. Tente novamente em 30s.");
-  };
-
   const checkStatus = async (instance: Instance) => {
     setVerifyingId(instance.id);
     try {
-      let connected = false;
-      let phone: string | null = null;
-      if (instance.provider === "z-api") {
-        if (!instance.instance_id || !instance.token) return;
-        const { data, error } = await supabase.functions.invoke("zapi-proxy", {
-          body: { action: "status", instanceId: instance.instance_id, token: instance.token, clientToken: instance.client_token },
-        });
-        if (error) throw error;
-        connected = parseZapiConnected(data);
-      } else if (instance.provider === "baileys") {
-        if (!instance.instance_id) return;
-        const { data, error } = await supabase.functions.invoke("baileys-proxy", { body: { action: "status", instanceName: instance.instance_id } });
-        if (error) throw error;
-        connected = data?.data?.status === "connected";
-        phone = data?.data?.phone || null;
-      } else {
-        if (!instance.instance_id) return;
-        const { data, error } = await supabase.functions.invoke("evolution-proxy", { body: { action: "status", instanceName: instance.instance_id } });
-        if (error) throw error;
-        connected = data?.data?.instance?.state === "open";
-      }
+      if (!instance.instance_id) return;
+      const { data, error } = await supabase.functions.invoke("baileys-proxy", {
+        body: { action: "status", instanceName: instance.instance_id },
+      });
+      if (error) throw error;
+      const connected = data?.data?.status === "connected";
+      const phone = data?.data?.phone || null;
       const newStatus = connected ? "connected" : "disconnected";
       const updateData: any = { status: newStatus };
       if (phone) updateData.phone = phone;
@@ -554,37 +347,27 @@ const Instances = () => {
           setQrStatus(`Verificando... tentativa ${attempt + 1}/5`);
           await new Promise(r => setTimeout(r, 2000));
         }
-        let connected = false;
-        let phone: string | null = null;
         try {
-          if (activeQrInstance.provider === "baileys") {
-            const { data } = await supabase.functions.invoke("baileys-proxy", {
-              body: { action: "status", instanceName: activeQrInstance.instance_id },
-            });
-            console.log(`[verify attempt ${attempt + 1}]`, JSON.stringify(data));
-            connected = data?.data?.status === "connected";
-            phone = data?.data?.phone || null;
-          } else if (activeQrInstance.provider === "z-api") {
-            const { data } = await supabase.functions.invoke("zapi-proxy", {
-              body: { action: "status", instanceId: activeQrInstance.instance_id, token: activeQrInstance.token, clientToken: activeQrInstance.client_token },
-            });
-            connected = parseZapiConnected(data);
+          const { data } = await supabase.functions.invoke("baileys-proxy", {
+            body: { action: "status", instanceName: activeQrInstance.instance_id },
+          });
+          const connected = data?.data?.status === "connected";
+          const phone = data?.data?.phone || null;
+          if (connected) {
+            const updateData: any = { status: "connected" };
+            if (phone) updateData.phone = phone;
+            await supabase.from("instances").update(updateData).eq("id", activeQrInstance.id);
+            setQrDialogOpen(false);
+            setQrImage(null);
+            setPairingCode(null);
+            setQrStatus("");
+            fetchInstances();
+            toast({ title: "✅ WhatsApp conectado com sucesso!" });
+            return;
           }
         } catch (networkError) {
           console.error(`[verify attempt ${attempt + 1}] Network error:`, networkError);
           continue;
-        }
-        if (connected) {
-          const updateData: any = { status: "connected" };
-          if (phone) updateData.phone = phone;
-          await supabase.from("instances").update(updateData).eq("id", activeQrInstance.id);
-          setQrDialogOpen(false);
-          setQrImage(null);
-          setPairingCode(null);
-          setQrStatus("");
-          fetchInstances();
-          toast({ title: "✅ WhatsApp conectado com sucesso!" });
-          return;
         }
       }
       toast({
@@ -601,24 +384,16 @@ const Instances = () => {
   };
 
   const removeInstance = async (instance: Instance) => {
-    // 1. Tentar desconectar no servidor (ignorar qualquer erro)
     if (instance.instance_id) {
       try {
-        if (instance.provider === "baileys") {
-          await supabase.functions.invoke("baileys-proxy", {
-            body: { action: "delete-instance", instanceName: instance.instance_id },
-          });
-        } else if (instance.provider === "z-api" && instance.token) {
-          await supabase.functions.invoke("zapi-proxy", {
-            body: { action: "disconnect", instanceId: instance.instance_id, token: instance.token, clientToken: instance.client_token },
-          });
-        }
+        await supabase.functions.invoke("baileys-proxy", {
+          body: { action: "delete-instance", instanceName: instance.instance_id },
+        });
       } catch (e) {
         console.log("Erro ao desconectar no servidor (ignorado):", e);
       }
     }
 
-    // 2. Limpar referências de foreign key antes de deletar
     try {
       await supabase.from("campaign_jobs").update({ instance_id: null }).eq("instance_id", instance.id);
       await supabase.from("campaign_logs").update({ instance_id: null }).eq("instance_id", instance.id);
@@ -629,7 +404,6 @@ const Instances = () => {
         .eq("id", instance.id);
       if (delError) {
         console.error("Erro ao deletar do banco:", delError);
-        // Fallback: marcar como deleted
         await supabase.from("instances").update({ status: "deleted" }).eq("id", instance.id);
         toast({ title: "Instância marcada para remoção", description: "Será removida automaticamente." });
       } else {
@@ -640,22 +414,6 @@ const Instances = () => {
       toast({ title: "Erro ao remover", description: "Detalhes: " + (error?.message || "desconhecido"), variant: "destructive" });
     }
     await fetchInstances();
-  };
-
-  const getProviderLabel = (provider: string) => {
-    switch (provider) {
-      case "baileys": return "Disparo Pro";
-      case "z-api": return "Z-API";
-      default: return provider;
-    }
-  };
-
-  const getProviderBadgeClass = (provider: string) => {
-    switch (provider) {
-      case "baileys": return "bg-orange-500/10 text-orange-400";
-      case "z-api": return "bg-blue-500/10 text-blue-400";
-      default: return "bg-muted text-muted-foreground";
-    }
   };
 
   if (loading) {
@@ -679,7 +437,7 @@ const Instances = () => {
               onClick={async () => {
                 if (!confirm("Tem certeza que deseja remover TODAS as instâncias?")) return;
                 for (const inst of instances) {
-                  if (inst.instance_id && inst.provider === "baileys") {
+                  if (inst.instance_id) {
                     try {
                       await supabase.functions.invoke("baileys-proxy", {
                         body: { action: "delete-instance", instanceName: inst.instance_id },
@@ -704,72 +462,30 @@ const Instances = () => {
               Limpar Tudo
             </Button>
           )}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gradient-blue text-primary-foreground font-semibold">
-              <Plus className="mr-2 h-4 w-4" /> Nova Instância
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">Criar Nova Instância</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div>
-                <Label className="text-foreground">Provedor</Label>
-                <Select value={newProvider} onValueChange={(v) => setNewProvider(v as "baileys" | "z-api")}>
-                  <SelectTrigger className="bg-secondary border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="z-api">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded px-1.5 py-0.5 text-xs bg-blue-500/10 text-blue-400 font-medium">Z-API</span>
-                        <span>Com botões clicáveis</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="baileys">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 font-medium">Disparo Pro</span>
-                        <span>Envio de texto</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-foreground">Nome da Instância</Label>
-                <Input placeholder="Ex: WhatsApp Marketing" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-secondary border-border text-foreground" />
-              </div>
-              {newProvider === "z-api" && (
-                <>
-                  <ZapiGuide />
-                  <div>
-                    <Label className="text-foreground">Instance ID <span className="text-destructive">*</span></Label>
-                    <Input placeholder="Ex: 3C2A7F9B1E4D5F6A..." value={zapiInstanceId} onChange={(e) => setZapiInstanceId(e.target.value)} className="bg-secondary border-border text-foreground font-mono text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Token <span className="text-destructive">*</span></Label>
-                    <Input type="password" placeholder="Seu token Z-API" value={zapiToken} onChange={(e) => setZapiToken(e.target.value)} className="bg-secondary border-border text-foreground" />
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Client Token <span className="ml-1.5 text-xs text-muted-foreground">(opcional — plano Business)</span></Label>
-                    <Input type="password" placeholder="Client token se tiver" value={zapiClientToken} onChange={(e) => setZapiClientToken(e.target.value)} className="bg-secondary border-border text-foreground" />
-                  </div>
-                </>
-              )}
-              {newProvider === "baileys" && (
-                <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 text-sm text-muted-foreground">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gradient-blue text-primary-foreground font-semibold">
+                <Plus className="mr-2 h-4 w-4" /> Nova Instância
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="text-foreground">Criar Nova Instância</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div>
+                  <Label className="text-foreground">Nome da Instância</Label>
+                  <Input placeholder="Ex: WhatsApp Marketing" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-secondary border-border text-foreground" />
+                </div>
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-muted-foreground">
                   ✅ Pronto para usar. Basta criar a instância e escanear o QR Code pelo WhatsApp.
                 </div>
-              )}
-              <Button onClick={addInstance} className="w-full gradient-blue text-primary-foreground font-semibold" disabled={!newName.trim() || (newProvider === "z-api" && (!zapiInstanceId.trim() || !zapiToken.trim()))}>
-                <ChevronRight className="mr-2 h-4 w-4" />
-                {newProvider === "z-api" ? "Adicionar Instância Z-API" : "Criar Instância"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                <Button onClick={addInstance} className="w-full gradient-blue text-primary-foreground font-semibold" disabled={!newName.trim()}>
+                  Criar Instância
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -778,7 +494,7 @@ const Instances = () => {
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
               <QrCode className="h-5 w-5 text-primary" />
-              {activeQrInstance?.provider === "z-api" ? "Conectar Z-API" : "Escanear QR Code"}
+              Escanear QR Code
             </DialogTitle>
           </DialogHeader>
           <QrDialogBody
@@ -786,7 +502,6 @@ const Instances = () => {
             qrStatus={qrStatus}
             qrImage={qrImage}
             pairingCode={pairingCode}
-            provider={activeQrInstance?.provider || ""}
             onVerify={handleVerifyAfterQr}
             onCopyCode={() => {
               if (pairingCode) { navigator.clipboard.writeText(pairingCode); toast({ title: "Código copiado!" }); }
@@ -825,16 +540,7 @@ const Instances = () => {
                   <span className="text-muted-foreground">Enviadas: </span>
                   <span className="font-semibold text-foreground">{(instance.messages_sent || 0).toLocaleString()}</span>
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(242,242,255,0.35)' }}>
-                  {getProviderLabel(instance.provider)}
-                </span>
               </div>
-              {instance.provider === "z-api" && instance.status === "connected" && (
-                <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-blue-500/5 px-3 py-1.5 text-xs text-blue-400 border border-blue-500/10">
-                  <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                  Botões nativos habilitados nesta instância
-                </div>
-              )}
               <div className="mt-3 flex gap-2">
                 <Button size="sm" className="flex-1 gradient-blue text-primary-foreground" style={{ fontSize: 11, fontWeight: 600 }} onClick={() => getQrCode(instance)} disabled={instance.status === "connected"}>
                   <QrCode className="mr-1.5 h-3.5 w-3.5" />
