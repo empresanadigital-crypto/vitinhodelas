@@ -10,7 +10,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && session) {
-      navigate("/dashboard", { replace: true });
+      navigate("/campanhas", { replace: true });
     }
   }, [session, authLoading, navigate]);
   const [isLogin, setIsLogin] = useState(true);
@@ -40,7 +40,7 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/dashboard");
+        navigate("/campanhas");
       } else {
         if (!name.trim()) throw new Error("Preencha seu nome");
         const phoneDigits = phone.replace(/\D/g, "");
@@ -65,7 +65,7 @@ const Auth = () => {
           title: "Conta criada! 🎉",
           description: "Você já pode começar a usar o ReadyZap gratuitamente.",
         });
-        navigate("/dashboard");
+        navigate("/campanhas");
       }
     } catch (error: any) {
       toast({

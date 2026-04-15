@@ -1,18 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   Smartphone,
   Users,
   Send,
-  BarChart3,
-  Settings,
   LogOut,
   Flame,
-  ShieldCheck,
-  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdmin } from "@/hooks/useAdmin";
 import { useTheme } from "@/hooks/useTheme";
 import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
@@ -21,23 +15,9 @@ const navGroups = [
   {
     label: "Menu",
     items: [
-      { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/instancias", icon: Smartphone, label: "Instâncias" },
       { to: "/contatos", icon: Users, label: "Contatos" },
       { to: "/campanhas", icon: Send, label: "Campanhas" },
-    ],
-  },
-  {
-    label: "Análise",
-    items: [
-      { to: "/relatorios", icon: BarChart3, label: "Relatórios" },
-    ],
-  },
-  {
-    label: "Sistema",
-    items: [
-      { to: "/configuracoes", icon: Settings, label: "Configurações" },
-      { to: "/treinamentos", icon: GraduationCap, label: "Treinamentos" },
     ],
   },
 ];
@@ -45,7 +25,6 @@ const navGroups = [
 const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
   const { theme, toggleTheme } = useTheme();
   const [exitHover, setExitHover] = useState(false);
 
@@ -123,9 +102,7 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
               {group.label}
             </div>
             {group.items.map((item) => {
-              const isActive =
-                location.pathname === item.to ||
-                (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
+              const isActive = location.pathname === item.to || location.pathname.startsWith(item.to);
               return (
                 <NavLink
                   key={item.to}
@@ -175,59 +152,6 @@ const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           </div>
         ))}
 
-        {/* Admin link */}
-        {isAdmin && (
-          <div>
-            <div
-              style={{
-                height: 1,
-                background: "rgba(255,255,255,0.05)",
-                margin: "12px 8px 10px",
-              }}
-            />
-            <NavLink
-              to="/admin"
-              onClick={() => onNavigate?.()}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: location.pathname === "/admin" ? "9px 10px 9px 8px" : "9px 10px",
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: location.pathname === "/admin" ? 600 : 500,
-                color: location.pathname === "/admin" ? "#f2f2ff" : "rgba(242,242,255,0.4)",
-                textDecoration: "none",
-                cursor: "pointer",
-                transition: "background .12s, color .12s",
-                background: location.pathname === "/admin" ? "rgba(59,130,246,0.08)" : "transparent",
-                borderLeft: location.pathname === "/admin" ? "2px solid #3b82f6" : "2px solid transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (location.pathname !== "/admin") {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                  e.currentTarget.style.color = "rgba(242,242,255,0.7)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (location.pathname !== "/admin") {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "rgba(242,242,255,0.4)";
-                }
-              }}
-            >
-              <ShieldCheck
-                style={{
-                  width: 16,
-                  height: 16,
-                  flexShrink: 0,
-                  color: location.pathname === "/admin" ? "#60a5fa" : "rgba(242,242,255,0.4)",
-                }}
-              />
-              Admin
-            </NavLink>
-          </div>
-        )}
       </nav>
 
       {/* Footer */}
