@@ -367,12 +367,52 @@ const Campaigns = () => {
               <TabsTrigger value="settings" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
                 <Settings2 className="mr-1.5 h-4 w-4" /> Config
               </TabsTrigger>
-              <TabsTrigger value="schedule" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
-                <Clock className="mr-1.5 h-4 w-4" /> Agendar
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="message" className="space-y-4">
+              {/* Image upload */}
+              <div>
+                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Imagem (opcional)</Label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setImageFile(file);
+                      setImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                {imagePreview ? (
+                  <div className="flex items-center gap-3 mt-1 rounded-lg border border-border bg-secondary/30 p-3">
+                    <img src={imagePreview} alt="Preview" className="h-20 rounded-lg object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground font-medium truncate">{imageFile?.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{imageFile ? (imageFile.size / 1024).toFixed(0) + " KB" : ""}</p>
+                    </div>
+                    <button
+                      onClick={() => { setImageFile(null); setImagePreview(null); }}
+                      className="rounded p-1.5 text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-1 border-border text-muted-foreground hover:text-foreground"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <ImageIcon className="mr-1.5 h-4 w-4" /> Anexar Imagem
+                  </Button>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Quando há imagem, o texto da mensagem vira o caption.</p>
+              </div>
+
               <div>
                 <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Nome da Campanha</Label>
                 <Input
