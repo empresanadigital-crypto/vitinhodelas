@@ -1,16 +1,17 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Smartphone, Users, Send, LogOut, Flame } from "lucide-react";
+ import { Smartphone, Users, Send, LogOut, Flame, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 
 const navGroups = [
   {
     label: "Menu",
-    items: [
-      { to: "/instancias", icon: Smartphone, label: "Instâncias" },
-      { to: "/contatos", icon: Users, label: "Contatos" },
-      { to: "/campanhas", icon: Send, label: "Campanhas" },
-    ],
+     items: [
+       { to: "/dashboard", icon: BarChart3, label: "Dashboard" },
+       { to: "/instancias", icon: Smartphone, label: "Instâncias" },
+       { to: "/contatos", icon: Users, label: "Contatos" },
+       { to: "/campanhas", icon: Send, label: "Campanhas" },
+     ],
   },
 ];
 

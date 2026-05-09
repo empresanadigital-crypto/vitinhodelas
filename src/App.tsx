@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import DashboardLayout from "./components/DashboardLayout";
+ import DashboardLayout from "./components/DashboardLayout";
+ import Dashboard from "./pages/Dashboard";
 import Instances from "./pages/Instances";
 import Contacts from "./pages/Contacts";
 import Campaigns from "./pages/Campaigns";
@@ -28,11 +29,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Auth />} />
-          <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route path="/instancias" element={<Instances />} />
-            <Route path="/contatos" element={<Contacts />} />
-            <Route path="/campanhas" element={<Campaigns />} />
-          </Route>
+           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+             <Route path="/dashboard" element={<Dashboard />} />
+             <Route path="/instancias" element={<Instances />} />
+             <Route path="/contatos" element={<Contacts />} />
+             <Route path="/campanhas" element={<Campaigns />} />
+           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
