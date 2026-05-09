@@ -1,45 +1,46 @@
 import { useEffect, useState } from "react";
-import { Plus, Loader2, Send, Users, Smartphone, BarChart3 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Plus, Send, Users, Smartphone, CheckCircle, ArrowRight, Check, Zap, Pause, X, FileText, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
+interface Campaign {
+  id: string;
+  name: string;
+  created_at: string;
+  total_contacts: number;
+  sent_count: number;
+  failed_count: number;
+  status: string;
+}
 
-const statusConfig: Record<string, { label: string; className?: string; style?: React.CSSProperties }> = {
-  completed: { label: "Concluída", className: "badge-ok" },
-  sending: { label: "Enviando", className: "badge-info" },
-  paused: { label: "Pausada", className: "badge-warning" },
-  draft: {
-    label: "Rascunho",
-    style: { background: "rgba(255,255,255,0.04)", color: "rgba(242,242,255,0.3)", border: "1px solid rgba(255,255,255,0.06)" },
-  },
-  scheduled: { label: "Agendada", className: "badge-info" },
-  cancelled: { label: "Cancelada", className: "badge-error" },
+const statusConfig: Record<string, { label: string; tone: "green" | "blue" | "amber" | "red" | "gray"; icon: any }> = {
+  completed: { label: "Concluída", tone: "green", icon: Check },
+  sending: { label: "Enviando", tone: "blue", icon: Zap },
+  paused: { label: "Pausada", tone: "amber", icon: Pause },
+  draft: { label: "Rascunho", tone: "gray", icon: FileText },
+  scheduled: { label: "Agendada", tone: "blue", icon: Calendar },
+  cancelled: { label: "Cancelada", tone: "red", icon: X },
+  failed: { label: "Falhou", tone: "red", icon: X },
+  stopped: { label: "Parada", tone: "red", icon: X },
 };
 
-const metricNumberStyle: React.CSSProperties = {
-  fontFamily: "'Outfit', sans-serif",
-  fontSize: 38,
-  fontWeight: 900,
-  letterSpacing: "-0.05em",
-  background: "linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  fontVariantNumeric: "tabular-nums",
-  lineHeight: 1,
-  marginBottom: 6,
+const toneStyles: Record<string, string> = {
+  green: "bg-[var(--pastel-green)] text-[var(--green-dark)]",
+  blue: "bg-[var(--pastel-blue)] text-[var(--blue)]",
+  amber: "bg-[var(--pastel-yellow)] text-[var(--amber)]",
+  red: "bg-[#FEE2E2] text-[var(--red)]",
+  gray: "bg-[var(--pastel-gray)] text-[var(--text-muted)]",
 };
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({ contacts: 0, instances: 0, campaigns: 0, totalSent: 0 });
-  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [stats, setStats] = useState({ contacts: 0, instances: 0, totalSent: 0, successRate: 0 });
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
-      const [contactsRes, instancesRes, allCampaignsRes, recentCampaignsRes] = await Promise.all([
+      const [contactsRes, instancesRes, allCampaignsRes, recentRes] = await Promise.all([
         supabase.from("contacts").select("id", { count: "exact", head: true }),
         supabase.from("instances").select("id, status"),
         supabase.from("campaigns").select("id, sent_count, failed_count"),
@@ -49,175 +50,156 @@ const Dashboard = () => {
       const activeInstances = (instancesRes.data || []).filter((i: any) => i.status === "connected").length;
       const allCampaigns = allCampaignsRes.data || [];
       const totalSent = allCampaigns.reduce((acc: number, c: any) => acc + (c.sent_count || 0), 0);
+      const totalFailed = allCampaigns.reduce((acc: number, c: any) => acc + (c.failed_count || 0), 0);
+      const total = totalSent + totalFailed;
+      const successRate = total > 0 ? Math.round((totalSent / total) * 100) : 0;
 
       setStats({
         contacts: contactsRes.count || 0,
         instances: activeInstances,
-        campaigns: allCampaigns.length,
         totalSent,
+        successRate,
       });
-      setCampaigns(recentCampaignsRes.data || []);
+      setCampaigns(recentRes.data || []);
       setLoading(false);
-
     };
     fetchData();
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-[var(--border-strong)] border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-7 space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="px-9 pb-12 pt-7 max-w-[1440px]">
+      {/* Topbar */}
+      <div className="mb-7 flex items-end justify-between gap-6">
         <div>
-          <h1
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              fontSize: 26,
-              fontWeight: 800,
-              letterSpacing: "-0.05em",
-              color: "#f2f2ff",
-              marginBottom: 2,
-            }}
-          >
-            Dashboard
-          </h1>
-          <p className="text-xs" style={{ color: "rgba(242,242,255,0.28)" }}>
-            Visão geral dos seus disparos
-          </p>
+          <h1 className="text-[38px] font-medium leading-[1.1] tracking-[-0.03em] text-[var(--text)]">Dashboard</h1>
+          <p className="mt-1.5 text-[14px] text-[var(--text-muted)]">Visão geral dos seus disparos</p>
         </div>
-        <Button
+        <button
           onClick={() => navigate("/campanhas")}
-          className="gradient-blue text-primary-foreground font-semibold"
+          className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)]"
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="h-4 w-4" />
           Nova Campanha
-        </Button>
+        </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: "Mensagens Enviadas", value: stats.totalSent.toLocaleString(), desc: "Total", icon: Send },
-          { label: "Contatos", value: stats.contacts.toLocaleString(), desc: "Total na base", icon: Users },
-          { label: "Instâncias Ativas", value: String(stats.instances), desc: "Conectadas", icon: Smartphone },
-          { label: "Campanhas", value: String(stats.campaigns), desc: "Total criadas", icon: BarChart3 },
-        ].map((s, i) => (
-          <div
-            key={i}
-            className="glass-card rounded-xl p-4 transition-colors hover:border-border/60"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.10em",
-                  textTransform: "uppercase" as const,
-                  color: "rgba(242,242,255,0.25)",
-                  fontFamily: "'Outfit', sans-serif",
-                }}
-              >
-                {s.label}
-              </span>
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{ background: "rgba(59,130,246,0.08)" }}
-              >
-                <s.icon className="h-4 w-4" style={{ color: "#60a5fa" }} />
-              </div>
-            </div>
-            <div style={metricNumberStyle}>
-              {s.value}
-            </div>
-            <div style={{ fontSize: 10, fontWeight: 400, color: "rgba(242,242,255,0.28)" }}>
-              {s.desc}
-            </div>
+      {/* KPIs */}
+      <div className="mb-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi icon={Send} label="Mensagens enviadas" value={stats.totalSent.toLocaleString("pt-BR")} foot="Total acumulado" />
+        <Kpi icon={Users} label="Contatos" value={stats.contacts.toLocaleString("pt-BR")} foot="Total na base" />
+        <Kpi icon={Smartphone} label="Instâncias ativas" value={stats.instances.toString()} foot="Conectadas" />
+        <Kpi icon={CheckCircle} label="Taxa de sucesso" value={stats.successRate.toString()} unit="%" foot="Últimos disparos" />
+      </div>
+
+      {/* Histórico */}
+      <div className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border-color)] px-5 py-4">
+          <div>
+            <div className="text-[16px] font-bold text-[var(--text)]">Últimas campanhas</div>
+            <div className="mt-0.5 text-[12px] text-[var(--text-muted)]">Resumo das 5 mais recentes</div>
           </div>
-        ))}
-      </div>
-
-      {/* Campaigns Table */}
-      <div className="glass-card rounded-xl overflow-hidden">
-        {/* Table Header */}
-        <div
-          className="hidden sm:grid px-5 py-3 border-b border-border"
-          style={{
-            gridTemplateColumns: "1fr 90px 90px 100px",
-            background: "rgba(255,255,255,0.02)",
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "rgba(242,242,255,0.2)",
-          }}
-        >
-          <div>Campanha</div>
-          <div>Enviadas</div>
-          <div>Falhas</div>
-          <div>Status</div>
+          <button
+            onClick={() => navigate("/relatorios")}
+            className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-2 text-[13px] font-semibold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[1.5px_1.5px_0_var(--border-strong)]"
+          >
+            Ver todas em Relatórios
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </div>
 
-        {/* Table Rows */}
         {campaigns.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <Send className="mb-3 h-10 w-10" />
-            <p className="text-base font-medium mb-1">Nenhuma campanha ainda</p>
-            <p className="text-sm mb-4">Crie sua primeira campanha para começar a disparar</p>
-            <Button onClick={() => navigate("/campanhas")} className="gradient-blue text-primary-foreground font-semibold">
-              <Plus className="mr-2 h-4 w-4" /> Criar primeira campanha
-            </Button>
+          <div className="px-5 py-12 text-center">
+            <Send className="mx-auto mb-3 h-7 w-7 text-[var(--text-muted)]" />
+            <p className="text-[14px] text-[var(--text-muted)]">Nenhuma campanha ainda.</p>
+            <button
+              onClick={() => navigate("/campanhas")}
+              className="mt-4 inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-4 py-2 text-[13px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-sm)] transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-md)]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Criar primeira campanha
+            </button>
           </div>
         ) : (
-          campaigns.map((campaign) => {
-            const status = statusConfig[campaign.status as string] || statusConfig.draft;
-            return (
-              <div
-                key={campaign.id}
-                className="flex flex-col sm:grid gap-2 sm:gap-0 px-5 py-4 border-b border-border transition-colors hover:bg-white/[0.02] cursor-pointer"
-                style={{ gridTemplateColumns: "1fr 90px 90px 100px", alignItems: "center" }}
-              >
-                <div>
-                  <div className="text-sm font-semibold text-foreground">
-                    {campaign.name}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {new Date(campaign.created_at).toLocaleDateString("pt-BR")}
-                  </div>
-                </div>
-                <div className="flex sm:block gap-4">
-                  <span className="sm:hidden text-xs text-muted-foreground">Enviadas: </span>
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {campaign.sent_count}
-                  </span>
-                </div>
-                <div className="flex sm:block gap-4">
-                  <span className="sm:hidden text-xs text-muted-foreground">Falhas: </span>
-                  <span className="text-sm text-destructive font-medium">
-                    {campaign.failed_count}
-                  </span>
-                </div>
-                <div>
-                  <span
-                    className={`inline-flex text-[10px] font-bold px-2.5 py-1 rounded-md ${status.className || ""}`}
-                    style={status.style}
-                  >
-                    {status.label}
-                  </span>
-                </div>
-              </div>
-            );
-          })
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)]">
+                <tr>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Campanha</th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Data</th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Enviadas</th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Progresso</th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.map((c) => {
+                  const cfg = statusConfig[c.status] || { label: c.status, tone: "gray" as const, icon: FileText };
+                  const Icon = cfg.icon;
+                  const total = c.total_contacts || 0;
+                  const sent = c.sent_count || 0;
+                  const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
+                  return (
+                    <tr key={c.id} className="border-b border-[var(--border-color)] last:border-b-0 hover:bg-[var(--pastel-gray)]">
+                      <td className="px-5 py-3.5 text-[13px] font-bold text-[var(--text)]">{c.name}</td>
+                      <td className="px-5 py-3.5 text-[13px] text-[var(--text)]">{new Date(c.created_at).toLocaleDateString("pt-BR")}</td>
+                      <td className="px-5 py-3.5 text-[13px] text-[var(--text)]">{sent} / {total}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="h-1.5 w-full max-w-[140px] overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--pastel-gray)]">
+                          <span className="block h-full rounded-full bg-[var(--green-fn)]" style={{ width: `${pct}%` }} />
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${toneStyles[cfg.tone]}`}>
+                          <Icon className="h-2.5 w-2.5" />
+                          {cfg.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
   );
 };
+
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  unit,
+  foot,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  unit?: string;
+  foot: string;
+}) {
+  return (
+    <div className="rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-md)]">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">{label}</span>
+        <Icon className="h-4 w-4 text-[var(--text-muted)]" />
+      </div>
+      <div className="text-[42px] font-bold leading-none tracking-[-0.03em] text-[var(--text)]">
+        {value}
+        {unit && <span className="text-[24px] text-[var(--text-muted)]">{unit}</span>}
+      </div>
+      <div className="mt-1.5 text-[11px] text-[var(--text-muted)]">{foot}</div>
+    </div>
+  );
+}
 
 export default Dashboard;
