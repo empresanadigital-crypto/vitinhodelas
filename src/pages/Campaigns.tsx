@@ -492,12 +492,6 @@ const Campaigns = () => {
                 <p className="text-[10px] text-muted-foreground mt-1.5 ml-0.5">
                   O sistema escolhe uma mensagem aleatória para cada contato, reduzindo risco de ban.
                 </p>
-                <div className="flex items-start gap-2 mt-2 px-1">
-                  <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
-                  <p className="text-xs text-muted-foreground">
-                    Dica anti-ban: use <code className="rounded bg-secondary px-1 py-0.5 text-[10px] font-mono text-primary">{"{opção1|opção2|opção3}"}</code> para variar a mensagem automaticamente. Ex: <code className="rounded bg-secondary px-1 py-0.5 text-[10px] font-mono text-primary">{"{Olá|Oi|E aí}"}</code> → cada contato recebe uma versão diferente.
-                  </p>
-                </div>
               </div>
 
             </TabsContent>
