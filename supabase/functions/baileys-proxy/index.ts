@@ -43,7 +43,8 @@ serve(async (req) => {
     }
 
     const baseUrl = BAILEYS_API_URL.replace(/\/$/, '');
-    const { action, instanceName, phone, message } = await req.json();
+    const requestBody = await req.json();
+    const { action, instanceName, phone, message, imageUrl, caption } = requestBody;
 
     let endpoint = '';
     let method = 'GET';
@@ -79,6 +80,19 @@ serve(async (req) => {
         endpoint = `/message/send-text`;
         method = 'POST';
         body = { instanceName, phone, message };
+        break;
+      }
+
+      case 'send-image': {
+        if (!phone || !imageUrl) {
+          return new Response(
+            JSON.stringify({ error: 'phone e imageUrl são obrigatórios' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        endpoint = `/message/send-image`;
+        method = 'POST';
+        body = { instanceName, phone, imageUrl, caption: caption || '' };
         break;
       }
 
