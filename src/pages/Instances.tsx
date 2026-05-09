@@ -236,6 +236,29 @@ const Instances = () => {
   const getQrCodeBaileys = async (instance: Instance) => {
     if (!instance.instance_id) throw new Error("Instance ID não configurado");
 
+    setQrStatus("Verificando status...");
+    try {
+      const { data: statusData } = await supabase.functions.invoke("baileys-proxy", {
+        body: { action: "status", instanceName: instance.instance_id },
+      });
+      
+      if (statusData?.data?.status === "connected") {
+        const phone = statusData?.data?.phone || null;
+        await supabase.from("instances").update({ status: "connected", phone }).eq("id", instance.id);
+        toast({ 
+          title: "✅ Já conectado", 
+          description: "Esta instância já está conectada. Status atualizado." 
+        });
+        setQrDialogOpen(false);
+        setQrImage(null);
+        setPairingCode(null);
+        fetchInstances();
+        return;
+      }
+    } catch (e) {
+      console.log("Erro ao checar status prévio (prosseguindo):", e);
+    }
+
     setQrStatus("Limpando sessão antiga...");
     try {
       await supabase.functions.invoke("baileys-proxy", {
