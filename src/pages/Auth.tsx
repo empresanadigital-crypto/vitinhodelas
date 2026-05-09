@@ -8,11 +8,11 @@ const Auth = () => {
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!authLoading && session) {
-      navigate("/campanhas", { replace: true });
-    }
-  }, [session, authLoading, navigate]);
+   useEffect(() => {
+     if (!authLoading && session) {
+       navigate("/dashboard", { replace: true });
+     }
+   }, [session, authLoading, navigate]);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,9 +38,9 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate("/campanhas");
+         const { error } = await supabase.auth.signInWithPassword({ email, password });
+         if (error) throw error;
+         navigate("/dashboard");
       } else {
         if (!name.trim()) throw new Error("Preencha seu nome");
         const phoneDigits = phone.replace(/\D/g, "");
@@ -61,11 +61,11 @@ const Auth = () => {
           await supabase.from("profiles").update({ phone: phoneDigits, full_name: name.trim() }).eq("id", user.id);
         }
 
-        toast({
-          title: "Conta criada! 🎉",
-          description: "Você já pode começar a usar o ReadyZap gratuitamente.",
-        });
-        navigate("/campanhas");
+         toast({
+           title: "Conta criada! 🎉",
+           description: "Você já pode começar a usar o ReadyZap gratuitamente.",
+         });
+         navigate("/dashboard");
       }
     } catch (error: any) {
       toast({
