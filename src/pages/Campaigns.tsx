@@ -377,14 +377,37 @@ const Campaigns = () => {
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) {
-                      setImageFile(file);
-                      setImagePreview(URL.createObjectURL(file));
+                    if (!file) return;
+
+                    const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+                    const ALLOWED_MIME = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+                    if (!ALLOWED_MIME.includes(file.type)) {
+                      toast({
+                        title: "Formato não suportado",
+                        description: "Aceitamos apenas JPG, PNG e WEBP.",
+                        variant: "destructive",
+                      });
+                      e.target.value = "";
+                      return;
                     }
+
+                    if (file.size > MAX_IMAGE_BYTES) {
+                      toast({
+                        title: "Imagem muito grande",
+                        description: "Tamanho máximo 5 MB. Comprima e tente novamente.",
+                        variant: "destructive",
+                      });
+                      e.target.value = "";
+                      return;
+                    }
+
+                    setImageFile(file);
+                    setImagePreview(URL.createObjectURL(file));
                   }}
                 />
                 {imagePreview ? (
@@ -411,7 +434,9 @@ const Campaigns = () => {
                     <ImageIcon className="mr-1.5 h-4 w-4" /> Anexar Imagem
                   </Button>
                 )}
-                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Quando há imagem, o texto da mensagem vira o caption.</p>
+                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">
+                  JPG, PNG ou WEBP até 5 MB. A imagem será enviada como mídia junto da mensagem.
+                </p>
               </div>
 
               <div>
