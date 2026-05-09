@@ -546,47 +546,58 @@ const Instances = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence>
           {instances.map((instance) => (
-            <motion.div key={instance.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="rounded-[10px] p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <motion.div
+              key={instance.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-md)]"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: instance.status === 'connected' ? 'rgba(24,242,106,0.08)' : 'rgba(255,255,255,0.04)' }}>
-                    <Smartphone className="h-5 w-5" style={{ color: instance.status === 'connected' ? '#18f26a' : 'rgba(242,242,255,0.3)' }} />
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-[11px] border-[1.5px] border-[var(--border-strong)] shadow-[1.5px_1.5px_0_var(--border-strong)] ${instance.status === 'connected' ? 'bg-[var(--pastel-green)]' : 'bg-[var(--pastel-blue)]'}`}>
+                    <Smartphone className="h-5 w-5 text-[var(--blue)]" />
                   </div>
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#f2f2ff', letterSpacing: '-0.02em' }}>{instance.name}</p>
-                    <p style={{ fontSize: 11, fontWeight: 400, color: 'rgba(242,242,255,0.5)' }}>{instance.phone || "Não conectado"}</p>
-                    {instance.vps_url && <p style={{ fontSize: 10, fontWeight: 400, color: 'rgba(242,242,255,0.3)' }}>{instance.vps_url}</p>}
+                    <p className="text-[14px] font-bold text-[var(--text)] tracking-tight">{instance.name}</p>
+                    <p className="font-mono text-[12px] text-[var(--text-muted)]">{instance.phone || "Não conectado"}</p>
+                    {instance.vps_url && <p className="font-mono text-[10px] text-[var(--text-muted)]">{instance.vps_url}</p>}
                   </div>
                 </div>
-                <span className="flex items-center gap-1.5 rounded-[10px]" style={{
-                  padding: '2px 8px',
-                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em',
-                  ...(instance.status === 'connected'
-                    ? { background: 'rgba(24,242,106,0.08)', color: '#18f26a', border: '1px solid rgba(24,242,106,0.12)' }
-                    : { background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.12)' }),
-                }}>
+                <span className={`inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${instance.status === 'connected' ? 'bg-[var(--pastel-green)] text-[var(--green-dark)]' : 'bg-[#FEE2E2] text-[var(--red)]'}`}>
                   {instance.status === "connected" ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                  {instance.status === "connected" ? "Online" : "Offline"}
+                  {instance.status === "connected" ? "Conectado" : "Desconectado"}
                 </span>
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+              <div className="mt-4 flex items-center justify-between border-t border-[var(--border-color)] pt-4">
                 <div className="text-sm">
                   <span className="text-muted-foreground">Enviadas: </span>
-                  <span className="font-semibold text-foreground">{(instance.messages_sent || 0).toLocaleString()}</span>
+                  <span className="font-bold text-foreground">{(instance.messages_sent || 0).toLocaleString()}</span>
                 </div>
               </div>
               <div className="mt-3 flex gap-2">
-                <Button size="sm" className="flex-1 gradient-blue text-primary-foreground" style={{ fontSize: 11, fontWeight: 600 }} onClick={() => getQrCode(instance)} disabled={instance.status === "connected"}>
-                  <QrCode className="mr-1.5 h-3.5 w-3.5" />
+                <button
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-3 py-2 text-[11px] font-bold text-[#1D1D1B] shadow-[1.5px_1.5px_0_var(--border-strong)] transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-sm)] disabled:opacity-50"
+                  onClick={() => getQrCode(instance)}
+                  disabled={instance.status === "connected"}
+                >
+                  <QrCode className="h-3.5 w-3.5" />
                   {instance.status === "connected" ? "Conectado" : "QR Code"}
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-foreground" style={{ fontSize: 11 }} onClick={() => checkStatus(instance)} disabled={verifyingId === instance.id}>
-                  {verifyingId === instance.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}
+                </button>
+                <button
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2 text-[11px] font-bold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)]"
+                  onClick={() => checkStatus(instance)}
+                  disabled={verifyingId === instance.id}
+                >
+                  {verifyingId === instance.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   Status
-                </Button>
-                <Button variant="outline" size="sm" style={{ fontSize: 11, border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }} className="hover:bg-destructive/10" onClick={() => setDeleteTarget(instance)}>
+                </button>
+                <button
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border-[1.5px] border-[var(--red)] bg-[var(--surface)] text-[var(--red)] transition-all hover:bg-[#FEE2E2]"
+                  onClick={() => setDeleteTarget(instance)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                </button>
               </div>
             </motion.div>
           ))}
@@ -596,9 +607,12 @@ const Instances = () => {
             <Smartphone className="mb-3 h-10 w-10" />
             <p className="text-lg font-medium">Nenhuma instância ainda</p>
             <p className="mb-4 text-sm">Crie sua primeira instância para começar a disparar</p>
-            <Button className="gradient-blue text-primary-foreground font-semibold" onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Criar primeira instância
-            </Button>
+            <button
+              className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-4 py-2.5 text-[13px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-sm)] transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-md)]"
+              onClick={() => setDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" /> Criar primeira instância
+            </button>
           </div>
         )}
       </div>
