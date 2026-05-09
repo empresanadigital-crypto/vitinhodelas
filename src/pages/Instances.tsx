@@ -428,7 +428,6 @@ const Instances = () => {
 
     try {
       await supabase.from("campaign_jobs").update({ instance_id: null }).eq("instance_id", instance.id);
-      await supabase.from("campaign_logs").update({ instance_id: null }).eq("instance_id", instance.id);
 
       const { error: delError } = await supabase
         .from("instances")

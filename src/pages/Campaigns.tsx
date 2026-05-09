@@ -908,7 +908,6 @@ const Campaigns = () => {
                                   onClick={async () => {
                                     try {
                                       await supabase.from("campaign_jobs").delete().eq("campaign_id", c.id);
-                                      await supabase.from("campaign_logs").delete().eq("campaign_id", c.id);
                                       await supabase.from("campaigns").delete().eq("id", c.id);
                                       fetchPastCampaigns();
                                       toast({ title: "Campanha excluída" });
