@@ -11,6 +11,7 @@ import Contacts from "./pages/Contacts";
 import Campaigns from "./pages/Campaigns";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,7 @@ const App = () => (
              <Route path="/instancias" element={<Instances />} />
              <Route path="/contatos" element={<Contacts />} />
              <Route path="/campanhas" element={<Campaigns />} />
-              <Route path="/relatorios" element={<NotFound />} />
+              <Route path="/relatorios" element={<Reports />} />
            </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
