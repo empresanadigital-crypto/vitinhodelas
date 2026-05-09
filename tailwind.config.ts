@@ -13,6 +13,15 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'nb-sm': '2px 2px 0 #1D1D1B',
+        'nb-md': '3px 3px 0 #1D1D1B',
+        'nb-lg': '5px 5px 0 #1D1D1B',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
