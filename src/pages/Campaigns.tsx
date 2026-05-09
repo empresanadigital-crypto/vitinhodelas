@@ -1,45 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion } from "framer-motion";
 import {
-  Send,
-  Pause,
-  Play,
-  MessageSquare,
-  Settings2,
-  Zap,
-  Users,
-  CheckSquare,
-  Square,
-  StopCircle,
-  RefreshCw,
-  Info,
-  History,
-  Trash2,
-  Plus,
-  ImageIcon,
-  X,
+  Send, Pause, Play, MessageSquare, Zap, Users, Square, RefreshCw,
+  Plus, ImageIcon, X, ArrowLeft, ArrowRight, Check, Search, Trash2, Info,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-
-
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 interface Contact {
   id: string;
@@ -57,48 +23,52 @@ interface Instance {
 }
 
 const Campaigns = () => {
+  // Wizard
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Step 1
   const [campaignName, setCampaignName] = useState("");
   const [messages, setMessages] = useState<string[]>([""]);
-  const [activeMessageIndex, setActiveMessageIndex] = useState(0);
   const [previewVariation, setPreviewVariation] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [selectedInstance, setSelectedInstance] = useState("all");
-  const [rotateInstances, setRotateInstances] = useState(true);
-  const [messagesPerInstance, setMessagesPerInstance] = useState("10");
-  const [intervalSeconds, setIntervalSeconds] = useState("15");
 
-  // Contacts
+  // Step 2
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [contactSearch, setContactSearch] = useState("");
   const [filterTag, setFilterTag] = useState("all");
 
+  // Step 3 — Configs
+  const [selectedInstance, setSelectedInstance] = useState("all");
+  const [rotateInstances, setRotateInstances] = useState(true);
+  const [messagesPerInstance, setMessagesPerInstance] = useState("10");
+  const [intervalSeconds, setIntervalSeconds] = useState("15");
+
   // Instances
   const [instances, setInstances] = useState<Instance[]>([]);
 
-  // Campaign tracking
+  // Tracking
+  const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
   const [sentCount, setSentCount] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
   const [totalToSend, setTotalToSend] = useState(0);
   const [dispatchLog, setDispatchLog] = useState<string[]>([]);
   const [campaignStatus, setCampaignStatus] = useState<string>("idle");
-  const [pastCampaigns, setPastCampaigns] = useState<any[]>([]);
 
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // ─── FETCH ────────────────────────────────────────
   const fetchContacts = useCallback(async () => {
     const { data } = await supabase
       .from("contacts")
       .select("id, name, phone, tags")
       .order("created_at", { ascending: false });
-    setContacts(data || []);
+    setContacts((data as Contact[]) || []);
   }, []);
 
   const fetchInstances = useCallback(async () => {
@@ -107,28 +77,17 @@ const Campaigns = () => {
       .select("id, name, instance_id, provider, status")
       .eq("status", "connected")
       .order("created_at", { ascending: false });
-    setInstances(data || []);
-  }, []);
-
-  const fetchPastCampaigns = useCallback(async () => {
-    const { data } = await supabase
-      .from("campaigns")
-      .select("id, name, status, total_contacts, sent_count, failed_count, created_at, completed_at")
-      .order("created_at", { ascending: false })
-      .limit(20);
-    setPastCampaigns(data || []);
+    setInstances((data as Instance[]) || []);
   }, []);
 
   useEffect(() => {
     fetchContacts();
     fetchInstances();
-    fetchPastCampaigns();
-  }, [fetchContacts, fetchInstances, fetchPastCampaigns]);
+  }, [fetchContacts, fetchInstances]);
 
-  // Poll campaign progress when running
+  // Poll progresso
   useEffect(() => {
     if (!activeCampaignId || !isRunning) return;
-
     const pollInterval = window.setInterval(async () => {
       const { data } = await supabase
         .from("campaigns")
@@ -145,7 +104,6 @@ const Campaigns = () => {
         if (data.status === "completed" || data.status === "stopped" || data.status === "cancelled") {
           setIsRunning(false);
           setIsPaused(false);
-          fetchPastCampaigns();
           const titleMap: Record<string, string> = {
             completed: "Campanha concluída!",
             stopped: "Campanha parada",
@@ -162,14 +120,11 @@ const Campaigns = () => {
         }
       }
     }, 3000);
-
     return () => window.clearInterval(pollInterval);
-  }, [activeCampaignId, isRunning, toast, fetchPastCampaigns]);
+  }, [activeCampaignId, isRunning, toast]);
 
-  // Get unique tags
-  const allTags = Array.from(
-    new Set(contacts.flatMap((c) => c.tags || []))
-  ).sort();
+  // ─── DERIVADOS ────────────────────────────────────
+  const allTags = Array.from(new Set(contacts.flatMap((c) => c.tags || []))).sort();
 
   const filteredContacts = contacts.filter((c) => {
     const matchSearch =
@@ -179,6 +134,10 @@ const Campaigns = () => {
     return matchSearch && matchTag;
   });
 
+  const validMessages = messages.filter((m) => m.trim());
+  const progress = totalToSend > 0 ? Math.round(((sentCount + failedCount) / totalToSend) * 100) : 0;
+
+  // ─── HANDLERS ─────────────────────────────────────
   const toggleContact = (id: string) => {
     setSelectedContacts((prev) => {
       const next = new Set(prev);
@@ -196,7 +155,27 @@ const Campaigns = () => {
     }
   };
 
-  // Helper to call worker-proxy
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+    const ALLOWED_MIME = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+    if (!ALLOWED_MIME.includes(file.type)) {
+      toast({ title: "Formato não suportado", description: "Aceitamos apenas JPG, PNG e WEBP.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast({ title: "Imagem muito grande", description: "Tamanho máximo 5 MB. Comprima e tente novamente.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   const invokeWorker = async (action: string, extra: Record<string, unknown> = {}) => {
     const { data, error } = await supabase.functions.invoke("worker-proxy", {
       body: { action, ...extra },
@@ -205,14 +184,15 @@ const Campaigns = () => {
     return data;
   };
 
-  // ─── START via worker-proxy ─────────────────────────
+  const addLog = (msg: string) => setDispatchLog((prev) => [...prev.slice(-50), msg]);
+
   const handleStart = async () => {
     if (selectedContacts.size === 0) {
-      toast({ title: "Erro", description: "Selecione pelo menos 1 contato na aba Contatos", variant: "destructive" });
+      toast({ title: "Erro", description: "Selecione pelo menos 1 contato.", variant: "destructive" });
       return;
     }
-    if (!messages.some(m => m.trim())) {
-      toast({ title: "Erro", description: "Escreva pelo menos uma mensagem", variant: "destructive" });
+    if (!messages.some((m) => m.trim())) {
+      toast({ title: "Erro", description: "Escreva pelo menos uma mensagem.", variant: "destructive" });
       return;
     }
     if (instances.length === 0) {
@@ -223,34 +203,36 @@ const Campaigns = () => {
     const contactIds = Array.from(selectedContacts);
     const selectedTags = filterTag !== "all" ? [filterTag] : undefined;
 
-    // Upload image if present
     let uploadedImageUrl: string | null = null;
     if (imageFile) {
       const filePath = `${user!.id}/${Date.now()}-${imageFile.name}`;
-      const { error: uploadError } = await supabase.storage.from('campaign-images').upload(filePath, imageFile);
+      const { error: uploadError } = await supabase.storage.from("campaign-images").upload(filePath, imageFile);
       if (uploadError) {
         toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
         return;
       }
-      const { data: urlData } = supabase.storage.from('campaign-images').getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage.from("campaign-images").getPublicUrl(filePath);
       uploadedImageUrl = urlData.publicUrl;
     }
 
-    // Save campaign to DB
-    const { data: campaign, error: campaignError } = await supabase.from("campaigns").insert({
-      user_id: user!.id,
-      name: campaignName || "Campanha sem nome",
-      message: messages.filter(m => m.trim()).join("|||"),
-      total_contacts: contactIds.length,
-      interval_seconds: parseInt(intervalSeconds) || 15,
-      rotate_instances: selectedInstance === "all" ? rotateInstances : false,
-      messages_per_instance: parseInt(messagesPerInstance) || 10,
-      selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
-      contact_ids: contactIds,
-      status: "draft",
-      image_url: uploadedImageUrl,
-      started_at: null,
-    } as any).select("id").single();
+    const { data: campaign, error: campaignError } = await supabase
+      .from("campaigns")
+      .insert({
+        user_id: user!.id,
+        name: campaignName || "Campanha sem nome",
+        message: messages.filter((m) => m.trim()).join("|||"),
+        total_contacts: contactIds.length,
+        interval_seconds: parseInt(intervalSeconds) || 15,
+        rotate_instances: selectedInstance === "all" ? rotateInstances : false,
+        messages_per_instance: parseInt(messagesPerInstance) || 10,
+        selected_instance_id: selectedInstance !== "all" ? selectedInstance : null,
+        contact_ids: contactIds,
+        status: "draft",
+        image_url: uploadedImageUrl,
+        started_at: null,
+      } as any)
+      .select("id")
+      .single();
 
     if (campaignError || !campaign) {
       toast({ title: "Erro", description: campaignError?.message || "Falha ao criar campanha", variant: "destructive" });
@@ -276,24 +258,17 @@ const Campaigns = () => {
         selected_instance_id: selectedInstance !== "all" ? selectedInstance : undefined,
       });
 
-      addLog(`🚀 Campanha iniciada no worker: ${result?.jobs_created || contactIds.length} jobs criados`);
-      toast({ title: "Campanha iniciada!", description: "O worker está processando os envios em segundo plano." });
+      addLog(`🚀 Campanha iniciada: ${result?.jobs_created || contactIds.length} jobs criados`);
+      toast({ title: "Campanha iniciada!", description: "O worker está processando os envios." });
       if (result?.invalid_skipped > 0) {
         toast({ title: "Atenção", description: `${result.invalid_skipped} contatos com telefone inválido foram ignorados.`, variant: "destructive" });
       }
-      fetchPastCampaigns();
     } catch (err: any) {
       addLog(`❌ Erro ao iniciar: ${err.message}`);
       toast({ title: "Erro ao iniciar", description: err.message, variant: "destructive" });
       setIsRunning(false);
-
-      // Revert campaign status
       await supabase.from("campaigns").update({ status: "draft" }).eq("id", campaignId);
     }
-  };
-
-  const addLog = (msg: string) => {
-    setDispatchLog((prev) => [...prev.slice(-50), msg]);
   };
 
   const handlePause = async () => {
@@ -325,614 +300,544 @@ const Campaigns = () => {
     }
   };
 
-  const handleRefreshStatus = async () => {
-    if (!activeCampaignId) return;
-    try {
-      const result = await invokeWorker("status", { campaign_id: activeCampaignId });
-      addLog(`📊 Status: ${JSON.stringify(result)}`);
-    } catch (err: any) {
-      addLog(`❌ Erro ao consultar status: ${err.message}`);
-    }
-  };
-
-  const progress = totalToSend > 0 ? Math.round(((sentCount + failedCount) / totalToSend) * 100) : 0;
-  const variables = ["{nome}", "{telefone}"];
+  // ─── RENDER ───────────────────────────────────────
+  const canGoNextFromStep1 = messages.some((m) => m.trim());
+  const canGoNextFromStep2 = selectedContacts.size > 0;
 
   return (
-    <div className="p-6 md:p-7 space-y-6">
-      <div>
-        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Nova Campanha</h1>
-        <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Configure e dispare mensagens em massa</p>
+    <div className="px-9 pb-12 pt-7 max-w-[1440px]">
+      {/* Topbar */}
+      <div className="mb-6">
+        <h1 className="text-[38px] font-medium leading-[1.1] tracking-[-0.03em] text-[var(--text)]">Nova Campanha</h1>
+        <p className="mt-1.5 text-[14px] text-[var(--text-muted)]">Configure e dispare mensagens em 3 passos</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left: Message Composer */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card rounded-xl p-5 lg:col-span-2"
-        >
-          <Tabs defaultValue="message" className="space-y-4">
-            <TabsList className="bg-secondary">
-              <TabsTrigger value="message" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
-                <MessageSquare className="mr-1.5 h-4 w-4" /> Mensagem
-              </TabsTrigger>
-              <TabsTrigger value="contacts" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
-                <Users className="mr-1.5 h-4 w-4" /> Contatos
-                {selectedContacts.size > 0 && (
-                  <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 text-xs font-bold">
-                    {selectedContacts.size}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="settings" style={{ fontSize: 12, fontWeight: 500, color: 'rgba(242,242,255,0.4)' }} className="data-[state=active]:!bg-[rgba(59,130,246,0.08)] data-[state=active]:!text-[#f2f2ff] data-[state=active]:!font-semibold">
-                <Settings2 className="mr-1.5 h-4 w-4" /> Config
-              </TabsTrigger>
-            </TabsList>
+      {/* Stepper */}
+      <div className="mb-5 flex items-center gap-4 rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-6 py-4 shadow-[var(--shadow-sm)]">
+        <StepperItem num={1} label="Mensagem" active={step === 1} done={step > 1} canClick={true} onClick={() => setStep(1)} />
+        <span className={`h-[1.5px] w-6 ${step > 1 ? "bg-[var(--green-fn)]" : "bg-[var(--border-color)]"}`} />
+        <StepperItem num={2} label="Contatos" active={step === 2} done={step > 2} canClick={canGoNextFromStep1} onClick={() => canGoNextFromStep1 && setStep(2)} />
+        <span className={`h-[1.5px] w-6 ${step > 2 ? "bg-[var(--green-fn)]" : "bg-[var(--border-color)]"}`} />
+        <StepperItem num={3} label="Revisar e Disparar" active={step === 3} done={false} canClick={canGoNextFromStep1 && canGoNextFromStep2} onClick={() => canGoNextFromStep1 && canGoNextFromStep2 && setStep(3)} />
+      </div>
 
-            <TabsContent value="message" className="space-y-4">
-              {/* Image upload */}
-              <div>
-                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Imagem (opcional)</Label>
-                <input
-                  ref={imageInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
+        {/* LEFT — Wizard */}
+        <div>
+          {/* STEP 1 */}
+          {step === 1 && (
+            <div className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+              <div className="border-b border-[var(--border-color)] px-6 py-5">
+                <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[var(--text)]">Crie sua mensagem</h2>
+                <p className="mt-1 text-[13px] text-[var(--text-muted)]">Escreva o texto. Adicione variações pra reduzir risco de ban — cada contato recebe uma versão diferente.</p>
+              </div>
 
-                    const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
-                    const ALLOWED_MIME = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+              <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_280px]">
+                <div>
+                  {/* Nome da campanha */}
+                  <div className="mb-5">
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)]">Nome da campanha</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Promoção dia das mães"
+                      value={campaignName}
+                      onChange={(e) => setCampaignName(e.target.value)}
+                      className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[14px] text-[var(--text)] outline-none transition-all placeholder:text-[var(--text-muted)] focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[var(--shadow-sm)]"
+                    />
+                  </div>
 
-                    if (!ALLOWED_MIME.includes(file.type)) {
-                      toast({
-                        title: "Formato não suportado",
-                        description: "Aceitamos apenas JPG, PNG e WEBP.",
-                        variant: "destructive",
-                      });
-                      e.target.value = "";
-                      return;
-                    }
-
-                    if (file.size > MAX_IMAGE_BYTES) {
-                      toast({
-                        title: "Imagem muito grande",
-                        description: "Tamanho máximo 5 MB. Comprima e tente novamente.",
-                        variant: "destructive",
-                      });
-                      e.target.value = "";
-                      return;
-                    }
-
-                    setImageFile(file);
-                    setImagePreview(URL.createObjectURL(file));
-                  }}
-                />
-                {imagePreview ? (
-                  <div className="flex items-center gap-3 mt-1 rounded-lg border border-border bg-secondary/30 p-3">
-                    <img src={imagePreview} alt="Preview" className="h-20 rounded-lg object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-foreground font-medium truncate">{imageFile?.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{imageFile ? (imageFile.size / 1024).toFixed(0) + " KB" : ""}</p>
+                  {/* Variações */}
+                  <div className="mb-5">
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)]">Variações de mensagem</label>
+                      <span className="text-[11px] text-[var(--text-muted)]">Clique numa pra ver no celular</span>
                     </div>
-                    <button
-                      onClick={() => { setImageFile(null); setImagePreview(null); }}
-                      className="rounded p-1.5 text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-1 border-border text-muted-foreground hover:text-foreground"
-                    onClick={() => imageInputRef.current?.click()}
-                  >
-                    <ImageIcon className="mr-1.5 h-4 w-4" /> Anexar Imagem
-                  </Button>
-                )}
-                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">
-                  JPG, PNG ou WEBP até 5 MB. A imagem será enviada como mídia junto da mensagem.
-                </p>
-              </div>
-
-              <div>
-                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Nome da Campanha</Label>
-                <Input
-                  placeholder="Ex: Promoção Janeiro"
-                  value={campaignName}
-                  onChange={(e) => setCampaignName(e.target.value)}
-                  className="bg-secondary border-border text-foreground"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagens</Label>
-                  <div className="flex gap-1">
-                     {variables.map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => {
-                          setMessages((prev) => {
-                            const updated = [...prev];
-                            updated[activeMessageIndex] = (updated[activeMessageIndex] || "") + " " + v;
-                            return updated;
-                          });
-                        }}
-                        className="rounded bg-primary/10 px-2 py-0.5 text-primary transition-colors hover:bg-primary/20"
-                        style={{ fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em' }}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-3 mt-1">
-                  {messages.map((msg, index) => (
-                    <div key={index} className="relative">
-                      <div className="flex items-center justify-between mb-1">
-                        <Label style={{ fontSize: 10, fontWeight: 600, color: 'rgba(242,242,255,0.3)' }}>Mensagem {index + 1}</Label>
-                        {messages.length > 1 && (
-                          <button
-                            onClick={() => {
-                              setMessages((prev) => prev.filter((_, i) => i !== index));
-                              setActiveMessageIndex((prev) => Math.min(prev, messages.length - 2));
+                    <div className="flex flex-col gap-2.5">
+                      {messages.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setPreviewVariation(idx)}
+                          className={[
+                            "rounded-xl border-[1.5px] p-3.5 transition-all",
+                            previewVariation === idx
+                              ? "border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]"
+                              : "border-[var(--border-color)] bg-[var(--surface)] hover:border-[var(--border-strong)]",
+                          ].join(" ")}
+                        >
+                          <div className="mb-2 flex items-center justify-between">
+                            <span className={`text-[11px] font-bold uppercase tracking-[0.08em] ${previewVariation === idx ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
+                              Variação {idx + 1}
+                            </span>
+                            {messages.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMessages((prev) => prev.filter((_, i) => i !== idx));
+                                  setPreviewVariation((p) => Math.min(p, messages.length - 2));
+                                }}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border-[1.5px] border-[var(--red)] bg-[var(--surface)] text-[var(--red)] transition-all hover:bg-[#FEE2E2]"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                          <textarea
+                            value={msg}
+                            onChange={(e) => {
+                              const updated = [...messages];
+                              updated[idx] = e.target.value;
+                              setMessages(updated);
                             }}
-                            className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                      <Textarea
-                        placeholder={"Olá {nome}! 👋\n\nTemos uma oferta especial para você..."}
-                        value={msg}
-                        onChange={(e) => {
-                          setMessages((prev) => {
-                            const updated = [...prev];
-                            updated[index] = e.target.value;
-                            return updated;
-                          });
-                        }}
-                        onFocus={() => setActiveMessageIndex(index)}
-                        className="min-h-[140px] bg-secondary border-border text-foreground"
-                      />
+                            onFocus={() => setPreviewVariation(idx)}
+                            placeholder={"Olá {nome}! 👋\n\nTemos uma oferta especial para você..."}
+                            className="min-h-[100px] w-full resize-y rounded-md border-0 bg-transparent text-[13px] leading-[1.5] text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+                          />
+                        </div>
+                      ))}
+                      {messages.length < 5 && (
+                        <button
+                          type="button"
+                          onClick={() => setMessages((prev) => [...prev, ""])}
+                          className="rounded-xl border-[1.5px] border-dashed border-[var(--border-strong)] bg-transparent p-3.5 text-center text-[13px] font-semibold text-[var(--text-muted)] transition-all hover:bg-[var(--pastel-gray)] hover:text-[var(--text)]"
+                        >
+                          <Plus className="mr-1.5 inline h-3.5 w-3.5 -translate-y-0.5" />
+                          Adicionar variação
+                        </button>
+                      )}
                     </div>
-                  ))}
-                </div>
-                {messages.length < 5 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 border-border text-muted-foreground hover:text-foreground"
-                    onClick={() => setMessages((prev) => [...prev, ""])}
-                  >
-                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar variação
-                  </Button>
-                )}
-                <p className="text-[10px] text-muted-foreground mt-1.5 ml-0.5">
-                  O sistema escolhe uma mensagem aleatória para cada contato, reduzindo risco de ban.
-                </p>
-              </div>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {["{nome}", "{telefone}"].map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => {
+                            const updated = [...messages];
+                            updated[previewVariation] = (updated[previewVariation] || "") + " " + v;
+                            setMessages(updated);
+                          }}
+                          className="rounded-md border border-[var(--border-strong)] bg-[var(--pastel-blue)] px-2 py-1 font-mono text-[11px] font-semibold text-[var(--blue)] transition-all hover:bg-[var(--blue)] hover:text-white"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                      O sistema escolhe uma mensagem aleatória para cada contato, reduzindo risco de ban.
+                    </p>
+                  </div>
 
-            </TabsContent>
-
-            {/* CONTACTS TAB */}
-            <TabsContent value="contacts" className="space-y-4">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <p className="text-sm text-muted-foreground">
-                  {selectedContacts.size} de {contacts.length} selecionados
-                </p>
-                <div className="flex gap-2">
-                  {allTags.length > 0 && (
-                    <Select value={filterTag} onValueChange={setFilterTag}>
-                      <SelectTrigger className="w-[160px] bg-secondary border-border text-foreground text-xs h-8">
-                        <SelectValue placeholder="Filtrar por tag" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="all">Todas as tags</SelectItem>
-                        {allTags.map((tag) => (
-                          <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Button variant="outline" size="sm" className="border-border text-foreground h-8" onClick={toggleAll}>
-                    {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? (
-                      <><CheckSquare className="mr-1.5 h-3.5 w-3.5" /> Desmarcar</>
+                  {/* Imagem */}
+                  <div className="mb-2">
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)]">Imagem (opcional)</label>
+                      <span className="text-[11px] text-[var(--text-muted)]">JPG, PNG ou WEBP até 5 MB</span>
+                    </div>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    {imagePreview ? (
+                      <div className="relative inline-block">
+                        <img src={imagePreview} alt="Preview" className="max-h-[140px] rounded-xl border-[1.5px] border-[var(--border-strong)] shadow-[var(--shadow-sm)]" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(null);
+                            if (imageInputRef.current) imageInputRef.current.value = "";
+                          }}
+                          className="absolute -right-2 -top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-[var(--border-strong)] bg-[var(--red)] text-white shadow-[1.5px_1.5px_0_var(--border-strong)]"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     ) : (
-                      <><Square className="mr-1.5 h-3.5 w-3.5" /> Selecionar todos</>
+                      <button
+                        type="button"
+                        onClick={() => imageInputRef.current?.click()}
+                        className="w-full rounded-xl border-[1.5px] border-dashed border-[var(--border-strong)] bg-[var(--pastel-gray)] p-5 text-center transition-all hover:bg-[var(--pastel-blue)]"
+                      >
+                        <div className="mx-auto mb-2 inline-flex h-9 w-9 items-center justify-center rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)]">
+                          <ImageIcon className="h-4 w-4 text-[var(--text)]" />
+                        </div>
+                        <div className="text-[14px] font-bold text-[var(--text)]">Clique para anexar uma imagem</div>
+                        <div className="mt-1 text-[11px] text-[var(--text-muted)]">Será enviada como mídia junto da mensagem</div>
+                      </button>
                     )}
-                  </Button>
-                </div>
-              </div>
-
-              <Input
-                placeholder="Buscar contato..."
-                value={contactSearch}
-                onChange={(e) => setContactSearch(e.target.value)}
-                className="bg-secondary border-border text-foreground"
-              />
-
-              <div className="max-h-[350px] overflow-y-auto rounded-lg border border-border divide-y divide-border">
-                {filteredContacts.length === 0 ? (
-                  <div className="flex flex-col items-center py-8 text-muted-foreground">
-                    <Users className="mb-2 h-6 w-6" />
-                    <p className="text-sm">Nenhum contato. Importe na aba Contatos do menu.</p>
                   </div>
-                ) : (
-                  filteredContacts.map((contact) => (
-                    <label
-                      key={contact.id}
-                      className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-secondary/40 transition-colors"
-                    >
-                      <Checkbox
-                        checked={selectedContacts.has(contact.id)}
-                        onCheckedChange={() => toggleContact(contact.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{contact.phone}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        {(contact.tags || []).map((tag) => (
-                          <span key={tag} className="rounded-[10px]" style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', background: 'rgba(59,130,246,0.08)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.12)' }}>{tag}</span>
-                        ))}
-                      </div>
-                    </label>
-                  ))
-                )}
-              </div>
-            </TabsContent>
+                </div>
 
-            <TabsContent value="settings" className="space-y-5">
-              <div>
-                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Instância WhatsApp</Label>
-                <Select value={selectedInstance} onValueChange={setSelectedInstance}>
-                  <SelectTrigger className="bg-secondary border-border text-foreground">
-                    <SelectValue placeholder="Selecione uma instância" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="all">Todas conectadas (rotacionar)</SelectItem>
-                    {instances.map((inst) => (
-                      <SelectItem key={inst.id} value={inst.id}>
-                        {inst.name} ({inst.provider})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {instances.length === 0 && (
-                  <p className="mt-1 text-xs text-destructive">Nenhuma instância conectada. Conecte uma na aba Instâncias.</p>
-                )}
-              </div>
-
-              <div>
-                <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Intervalo entre mensagens (segundos)</Label>
-                <Input type="number" min="10" max="120" value={intervalSeconds} onChange={(e) => setIntervalSeconds(e.target.value)} className="bg-secondary border-border text-foreground" />
-                <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Tempo de espera entre cada envio. Mínimo 10s. Recomendado: 15-30s para contas novas, 10-15s para contas antigas. O sistema adiciona variação aleatória de ±5s automaticamente.</p>
-              </div>
-
-              <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
-                <Switch checked={rotateInstances} onCheckedChange={setRotateInstances} />
+                {/* Phone preview */}
                 <div>
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Rotacionar entre instâncias</Label>
-                  <p className="text-xs text-muted-foreground">Alterna entre WhatsApps conectados</p>
-                </div>
-              </div>
-
-              {rotateInstances && (
-                <div>
-                  <Label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(242,242,255,0.4)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Mensagens por instância antes de alternar</Label>
-                  <Input type="number" min="1" value={messagesPerInstance} onChange={(e) => setMessagesPerInstance(e.target.value)} className="bg-secondary border-border text-foreground" />
-                </div>
-              )}
-            </TabsContent>
-
-          </Tabs>
-        </motion.div>
-
-        {/* Right: Controls & Status */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-4"
-        >
-          {/* Status */}
-          <div className="glass-card rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground">Status do Disparo</h3>
-              {isRunning && (
-                <Button variant="ghost" size="sm" onClick={handleRefreshStatus} className="h-7 w-7 p-0">
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-            {isRunning ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progresso</span>
-                  <span style={{
-                    fontSize: 22, fontWeight: 900,
-                    background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  }}>{progress}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                  <motion.div
-                    className="h-full gradient-blue rounded-full"
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-lg bg-secondary p-2">
-                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{sentCount}</p>
-                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Enviadas</p>
+                  <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)]">Preview no celular</div>
+                  <div className="mx-auto w-[240px] rounded-[24px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] p-3 shadow-[var(--shadow-md)]">
+                    <div className="min-h-[360px] rounded-[16px] bg-[#DDD3C4] p-2.5">
+                      {validMessages.length === 0 ? (
+                        <div className="rounded-lg bg-[#DCF8C6] p-2.5 text-[12px] leading-[1.4] text-[#666] italic">
+                          Sua mensagem aparecerá aqui...
+                        </div>
+                      ) : (
+                        <div className="rounded-tl-none rounded-lg bg-[#DCF8C6] p-2.5 text-[12px] leading-[1.4] text-[#111] shadow-sm">
+                          {imagePreview && <img src={imagePreview} alt="" className="mb-1.5 aspect-[4/3] w-full rounded object-cover" />}
+                          <div className="whitespace-pre-wrap">
+                            {(messages[previewVariation] || messages.find((m) => m.trim()) || "").replace(/\{nome\}/gi, "Maria")}
+                          </div>
+                          <span className="mt-1 block text-right text-[9px] text-[#667]">12:00 ✓✓</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="rounded-lg bg-secondary p-2">
-                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{failedCount}</p>
-                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Falhas</p>
-                  </div>
-                  <div className="rounded-lg bg-secondary p-2">
-                    <p style={{ fontSize: 22, fontWeight: 900, background: 'linear-gradient(160deg, #ffffff 20%, rgba(200,210,255,0.5) 60%, rgba(242,242,255,0.15))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{totalToSend - sentCount - failedCount}</p>
-                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(242,242,255,0.2)' }}>Restantes</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${isPaused ? "bg-yellow-500" : "bg-primary animate-pulse"}`} />
-                  <span className="text-xs text-muted-foreground">
-                    {isPaused ? "Pausado" : "Worker processando..."}
-                  </span>
-                </div>
-              </div>
-            ) : totalToSend > 0 ? (
-              <div className="space-y-2 text-center py-4">
-                <p className="text-sm font-medium text-foreground">Campanha finalizada</p>
-                <p className="text-xs text-muted-foreground">
-                  ✅ {sentCount} enviadas · ❌ {failedCount} falhas
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center py-6 text-muted-foreground">
-                <Zap className="mb-2 h-8 w-8" />
-                <p className="text-sm">Campanha não iniciada</p>
-                {selectedContacts.size > 0 && (
-                  <p className="mt-1 text-xs text-primary font-medium">
-                    {selectedContacts.size} contatos selecionados
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="glass-card space-y-2 rounded-xl p-5">
-            <h3 className="mb-3 font-semibold text-foreground">Ações</h3>
-            {!isRunning ? (
-              <Button
-                onClick={handleStart}
-                className="w-full gradient-blue text-primary-foreground"
-                style={{ fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em' }}
-                disabled={selectedContacts.size === 0 || !messages.some(m => m.trim())}
-              >
-                <Send className="mr-2 h-4 w-4" /> Iniciar Disparo ({selectedContacts.size} contatos)
-              </Button>
-            ) : (
-              <>
-                <Button onClick={handlePause} variant="outline" className="w-full border-border text-foreground">
-                  {isPaused ? (
-                    <><Play className="mr-2 h-4 w-4" /> Retomar</>
-                  ) : (
-                    <><Pause className="mr-2 h-4 w-4" /> Pausar</>
+                  {validMessages.length > 1 && (
+                    <p className="mt-2 text-center text-[11px] text-[var(--text-muted)]">
+                      Variação <strong className="text-[var(--text)]">{previewVariation + 1}</strong> de {validMessages.length}
+                    </p>
                   )}
-                </Button>
-                <Button onClick={handleStop} variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/10">
-                  <StopCircle className="mr-2 h-4 w-4" /> Parar Campanha
-                </Button>
-              </>
-            )}
-            <p className="text-[10px] text-muted-foreground text-center mt-1">Intervalo: {intervalSeconds}s ±5s entre envios</p>
-          </div>
+                </div>
+              </div>
 
-          {/* Log */}
-          {dispatchLog.length > 0 && (
-            <div className="glass-card rounded-xl p-5">
-              <h3 className="mb-3 font-semibold text-foreground">Log</h3>
-              <div className="max-h-[200px] overflow-y-auto space-y-1 text-xs font-mono">
-                {dispatchLog.map((log, i) => (
-                  <p key={i} className="text-muted-foreground">{log}</p>
-                ))}
+              <div className="flex justify-between border-t border-[var(--border-color)] bg-[var(--pastel-gray)] px-6 py-3.5">
+                <span />
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={!canGoNextFromStep1}
+                  className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[var(--shadow-md)]"
+                >
+                  Próximo: Contatos
+                  <ArrowRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
           )}
 
-          {/* Preview */}
-          <div className="glass-card rounded-xl p-5">
-            <h3 className="mb-3 font-semibold text-foreground">Pré-visualização</h3>
-            {messages.filter(m => m.trim()).length > 1 && (
-              <div className="flex gap-1 mb-2 flex-wrap">
-                {messages.map((m, i) => m.trim() ? (
+          {/* STEP 2 */}
+          {step === 2 && (
+            <div className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+              <div className="border-b border-[var(--border-color)] px-6 py-5">
+                <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[var(--text)]">Selecione os contatos</h2>
+                <p className="mt-1 text-[13px] text-[var(--text-muted)]">Escolha quais contatos vão receber. Use a busca ou filtre por tag.</p>
+              </div>
+
+              <div className="p-6">
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <div className="relative max-w-[320px] flex-1">
+                    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+                    <input
+                      type="search"
+                      placeholder="Buscar por nome ou telefone..."
+                      value={contactSearch}
+                      onChange={(e) => setContactSearch(e.target.value)}
+                      className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] py-2.5 pl-10 pr-3.5 text-[14px] text-[var(--text)] outline-none transition-all placeholder:text-[var(--text-muted)] focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[var(--shadow-sm)]"
+                    />
+                  </div>
+                  {allTags.length > 0 && (
+                    <select
+                      value={filterTag}
+                      onChange={(e) => setFilterTag(e.target.value)}
+                      className="rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2.5 text-[13px] text-[var(--text)] outline-none"
+                    >
+                      <option value="all">Todas as tags</option>
+                      {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                    </select>
+                  )}
                   <button
-                    key={i}
-                    onClick={() => setPreviewVariation(i)}
-                    className={`rounded px-2 py-0.5 text-[10px] font-semibold transition-colors ${
-                      previewVariation === i
-                        ? "bg-primary/20 text-primary"
-                        : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
+                    type="button"
+                    onClick={toggleAll}
+                    className="inline-flex items-center gap-1.5 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2 text-[12px] font-semibold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)]"
                   >
-                    Variação {i + 1}
+                    {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? "Desmarcar todos" : "Selecionar todos"}
                   </button>
-                ) : null)}
+                  <div className="ml-auto text-[13px] text-[var(--text-muted)]">
+                    <strong className="text-[var(--text)]">{selectedContacts.size}</strong> de {contacts.length}
+                  </div>
+                </div>
+
+                <div className="max-h-[420px] overflow-y-auto rounded-xl border-[1.5px] border-[var(--border-strong)]">
+                  {filteredContacts.length === 0 ? (
+                    <div className="flex flex-col items-center py-12 text-[var(--text-muted)]">
+                      <Users className="mb-2 h-7 w-7" />
+                      <p className="text-[14px]">Nenhum contato. Importe na aba Contatos.</p>
+                    </div>
+                  ) : (
+                    filteredContacts.map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex cursor-pointer items-center gap-3 border-b border-[var(--border-color)] px-4 py-2.5 last:border-b-0 hover:bg-[var(--pastel-gray)]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedContacts.has(c.id)}
+                          onChange={() => toggleContact(c.id)}
+                          className="h-4 w-4 cursor-pointer accent-[var(--green)]"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-bold text-[var(--text)]">{c.name}</div>
+                          <div className="truncate font-mono text-[11px] text-[var(--text-muted)]">{c.phone}</div>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {(c.tags || []).slice(0, 3).map((tag) => (
+                            <span key={tag} className="rounded-full border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.04em] text-[var(--text)]">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between border-t border-[var(--border-color)] bg-[var(--pastel-gray)] px-6 py-3.5">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-semibold text-[var(--text)] transition-all hover:bg-[var(--surface)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[1.5px_1.5px_0_var(--border-strong)]"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  disabled={!canGoNextFromStep2}
+                  className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[var(--shadow-md)]"
+                >
+                  Próximo: Revisar
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 */}
+          {step === 3 && (
+            <div className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+              <div className="border-b border-[var(--border-color)] px-6 py-5">
+                <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[var(--text)]">Revisar e disparar</h2>
+                <p className="mt-1 text-[13px] text-[var(--text-muted)]">Confira tudo antes de iniciar o envio. Você pode pausar ou parar a qualquer momento.</p>
+              </div>
+
+              <div className="p-6">
+                <div className="mb-5 grid grid-cols-2 gap-3.5">
+                  <ReviewCard label="Total de contatos" value={selectedContacts.size.toString()} big />
+                  <ReviewCard label="Variações" value={validMessages.length.toString()} big />
+                  <ReviewCard label="Imagem" value={imageFile ? "Sim" : "Não"} />
+                  <ReviewCard label="Tag filtrada" value={filterTag === "all" ? "Todas" : filterTag} />
+                </div>
+
+                <div className="mb-5">
+                  <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)]">Configurações de envio</label>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <select
+                      value={selectedInstance}
+                      onChange={(e) => setSelectedInstance(e.target.value)}
+                      className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[14px] text-[var(--text)] outline-none"
+                    >
+                      <option value="all">Todas conectadas (rotacionar)</option>
+                      {instances.map((inst) => (
+                        <option key={inst.id} value={inst.id}>{inst.name}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min="10"
+                      max="120"
+                      value={intervalSeconds}
+                      onChange={(e) => setIntervalSeconds(e.target.value)}
+                      placeholder="Intervalo em segundos"
+                      className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[14px] text-[var(--text)] outline-none"
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                    Intervalo entre mensagens. Recomendado: 15-30s para chips novos, 10-15s para chips antigos.
+                  </p>
+                </div>
+
+                {selectedInstance === "all" && (
+                  <div className="mb-5">
+                    <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)]">
+                      <input
+                        type="checkbox"
+                        checked={rotateInstances}
+                        onChange={(e) => setRotateInstances(e.target.checked)}
+                        className="h-4 w-4 accent-[var(--green)]"
+                      />
+                      Rotacionar entre instâncias
+                    </label>
+                    {rotateInstances && (
+                      <input
+                        type="number"
+                        min="1"
+                        value={messagesPerInstance}
+                        onChange={(e) => setMessagesPerInstance(e.target.value)}
+                        placeholder="Mensagens por chip antes de alternar"
+                        className="mt-2 w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[14px] text-[var(--text)] outline-none"
+                      />
+                    )}
+                  </div>
+                )}
+
+                {instances.length === 0 && (
+                  <div className="mb-5 flex items-center gap-3 rounded-xl border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-yellow)] p-4 shadow-[var(--shadow-sm)]">
+                    <div className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)]">
+                      <Info className="h-4 w-4 text-[var(--amber)]" />
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-bold text-[#1D1D1B]">Nenhuma instância conectada</div>
+                      <div className="text-[12px] text-[#1D1D1B] opacity-70">Conecte uma instância em /instancias antes de disparar.</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between border-t border-[var(--border-color)] bg-[var(--pastel-gray)] px-6 py-3.5">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-semibold text-[var(--text)] transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[1.5px_1.5px_0_var(--border-strong)]"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={isRunning || instances.length === 0}
+                  className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-6 py-3 text-[15px] font-bold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[var(--shadow-md)]"
+                >
+                  <Zap className="h-4 w-4" />
+                  Iniciar Disparo
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — Status sticky */}
+        <div className="lg:sticky lg:top-7 lg:self-start">
+          <div className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+            <div className="border-b border-[var(--border-color)] px-5 py-4">
+              <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-green)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--green-dark)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--green-fn)] animate-pulse" />
+                {isRunning ? (isPaused ? "PAUSADO" : "AO VIVO") : "AGUARDANDO"}
+              </span>
+              <h3 className="text-[14px] font-bold text-[var(--text)]">Status do disparo</h3>
+              <p className="mt-0.5 text-[12px] text-[var(--text-muted)]">{campaignName || "Sem nome"}</p>
+            </div>
+
+            <div className="px-5 py-4">
+              <div className="text-[36px] font-bold leading-none tracking-[-0.03em] text-[var(--text)]">
+                {sentCount + failedCount}
+                <span className="text-[18px] text-[var(--text-muted)]"> / {totalToSend || selectedContacts.size}</span>
+              </div>
+              <div className="mt-1 text-[11px] text-[var(--text-muted)]">{progress}% concluído</div>
+
+              <div className="my-3.5 h-2 w-full overflow-hidden rounded-full border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)]">
+                <span className="block h-full rounded-full bg-[var(--green-fn)] transition-all" style={{ width: `${progress}%` }} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg border border-[var(--border-color)] bg-[var(--pastel-gray)] p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Enviadas</div>
+                  <div className="mt-0.5 text-[18px] font-bold text-[var(--green-dark)]">{sentCount}</div>
+                </div>
+                <div className="rounded-lg border border-[var(--border-color)] bg-[var(--pastel-gray)] p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Falhas</div>
+                  <div className="mt-0.5 text-[18px] font-bold text-[var(--red)]">{failedCount}</div>
+                </div>
+              </div>
+
+              {isRunning && (
+                <div className="mt-3.5 flex gap-2 border-t border-[var(--border-color)] pt-3.5">
+                  <button
+                    onClick={handlePause}
+                    className="flex-1 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2 text-[11px] font-bold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)]"
+                  >
+                    {isPaused ? <><Play className="mr-1 inline h-3 w-3" />Retomar</> : <><Pause className="mr-1 inline h-3 w-3" />Pausar</>}
+                  </button>
+                  <button
+                    onClick={handleStop}
+                    className="flex-1 rounded-[10px] border-[1.5px] border-[var(--red)] bg-[var(--surface)] px-3 py-2 text-[11px] font-bold text-[var(--red)] transition-all hover:bg-[#FEE2E2]"
+                  >
+                    <Square className="mr-1 inline h-3 w-3" />
+                    Parar
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {dispatchLog.length > 0 && (
+              <div className="border-t border-[var(--border-color)] px-5 py-3">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Log ao vivo</div>
+                <div className="max-h-[160px] space-y-1 overflow-y-auto font-mono text-[10px] text-[var(--text-muted)]">
+                  {dispatchLog.slice(-15).reverse().map((log, i) => (
+                    <div key={i} className="border-b border-[var(--border-color)] py-1 last:border-b-0">{log}</div>
+                  ))}
+                </div>
               </div>
             )}
-            <div className="rounded-lg bg-[hsl(142_30%_15%)] p-4">
-              <div className="rounded-lg rounded-tl-none bg-[hsl(142_40%_20%)] p-3 overflow-hidden">
-                {imagePreview && (
-                  <img src={imagePreview} alt="Preview" className="w-full rounded-lg mb-2" />
-                )}
-                <p className="whitespace-pre-wrap text-sm text-foreground">
-                  {(() => {
-                    const currentMsg = messages[previewVariation] || messages.find(m => m.trim()) || "";
-                    return currentMsg.trim()
-                      ? currentMsg.split(/(\{[^}]*\|[^}]*\})/).map((part, i) => {
-                          const spinMatch = part.match(/^\{([^}]*\|[^}]*)\}$/);
-                          if (spinMatch) {
-                            const firstOption = spinMatch[1].split("|")[0];
-                            return <span key={i} className="rounded bg-primary/10 px-1">{firstOption}</span>;
-                          }
-                          return <span key={i}>{part}</span>;
-                        })
-                      : "Sua mensagem aparecerá aqui...";
-                  })()}
-                </p>
-              </div>
-              <p className="mt-1 text-right text-[10px] text-muted-foreground">12:00 ✓✓</p>
-            </div>
           </div>
-        </motion.div>
+        </div>
       </div>
-
-      {/* Histórico de Campanhas */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="glass-card rounded-xl p-5"
-      >
-        <h3 className="flex items-center gap-2 mb-4 font-semibold text-foreground">
-          <History className="h-4 w-4" /> Histórico de Campanhas
-        </h3>
-        {pastCampaigns.length === 0 ? (
-          <div className="flex flex-col items-center py-8 text-muted-foreground">
-            <History className="mb-2 h-6 w-6" />
-            <p className="text-sm">Nenhuma campanha ainda</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead style={{ fontSize: 11 }}>Nome</TableHead>
-                  <TableHead style={{ fontSize: 11 }}>Status</TableHead>
-                  <TableHead style={{ fontSize: 11 }}>Enviadas</TableHead>
-                  <TableHead style={{ fontSize: 11 }}>Falhas</TableHead>
-                  <TableHead style={{ fontSize: 11 }}>Data</TableHead>
-                  <TableHead style={{ fontSize: 11 }}>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pastCampaigns.map((c) => {
-                  const statusConfig: Record<string, { color: string; label: string }> = {
-                    sending: { color: "bg-blue-500 animate-pulse", label: "Enviando" },
-                    completed: { color: "bg-green-500", label: "Concluída" },
-                    paused: { color: "bg-yellow-500", label: "Pausada" },
-                    cancelled: { color: "bg-red-500", label: "Cancelada" },
-                    failed: { color: "bg-red-500", label: "Falhou" },
-                    stopped: { color: "bg-red-500", label: "Parada" },
-                    draft: { color: "bg-gray-500", label: "Rascunho" },
-                    scheduled: { color: "bg-purple-500", label: "Agendada" },
-                  };
-                  const st = statusConfig[c.status] || { color: "bg-gray-400", label: c.status };
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell className="text-sm font-medium">{c.name}</TableCell>
-                      <TableCell>
-                        <span className="flex items-center gap-1.5 text-xs">
-                          <span className={`inline-block h-2 w-2 rounded-full ${st.color}`} />
-                          {st.label}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-xs font-mono">{c.sent_count}/{c.total_contacts}</TableCell>
-                      <TableCell className="text-xs font-mono">{c.failed_count}</TableCell>
-                      <TableCell className="text-xs">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                      <TableCell>
-                        {c.status === "paused" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={async () => {
-                              try {
-                                await invokeWorker("resume", { campaign_id: c.id });
-                                toast({ title: "Campanha retomada" });
-                                fetchPastCampaigns();
-                              } catch (err: any) {
-                                toast({ title: "Erro", description: err.message, variant: "destructive" });
-                              }
-                            }}
-                          >
-                            <Play className="h-3.5 w-3.5 text-green-400" />
-                          </Button>
-                        )}
-                        {c.status === "sending" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={async () => {
-                              try {
-                                await invokeWorker("pause", { campaign_id: c.id });
-                                toast({ title: "Campanha pausada" });
-                                fetchPastCampaigns();
-                              } catch (err: any) {
-                                toast({ title: "Erro", description: err.message, variant: "destructive" });
-                              }
-                            }}
-                          >
-                            <Pause className="h-3.5 w-3.5 text-yellow-400" />
-                          </Button>
-                        )}
-                        {["completed", "cancelled", "failed", "stopped", "draft"].includes(c.status) && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Excluir campanha</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir esta campanha? Os registros de envio também serão removidos.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={async () => {
-                                    try {
-                                      await supabase.from("campaign_jobs").delete().eq("campaign_id", c.id);
-                                      await supabase.from("campaigns").delete().eq("id", c.id);
-                                      fetchPastCampaigns();
-                                      toast({ title: "Campanha excluída" });
-                                    } catch (err: any) {
-                                      toast({ title: "Erro", description: err.message, variant: "destructive" });
-                                    }
-                                  }}
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </motion.div>
     </div>
   );
 };
+
+/* ===== Stepper item ===== */
+function StepperItem({
+  num,
+  label,
+  active,
+  done,
+  canClick,
+  onClick,
+}: {
+  num: number;
+  label: string;
+  active: boolean;
+  done: boolean;
+  canClick: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!canClick}
+      className="flex flex-1 items-center gap-2.5 disabled:cursor-not-allowed"
+    >
+      <div
+        className={[
+          "inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border-[1.5px] text-[14px] font-bold transition-all",
+          done
+            ? "border-[var(--green-fn)] bg-[var(--green-fn)] text-white"
+            : active
+              ? "border-[var(--border-strong)] bg-[var(--green)] text-[#1D1D1B] shadow-[1.5px_1.5px_0_var(--border-strong)]"
+              : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text)]",
+        ].join(" ")}
+      >
+        {done ? <Check className="h-4 w-4" /> : num}
+      </div>
+      <div className="flex flex-col leading-tight">
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Passo {num}</span>
+        <span className={`text-[14px] font-bold ${active || done ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>{label}</span>
+      </div>
+    </button>
+  );
+}
+
+/* ===== Review card ===== */
+function ReviewCard({ label, value, big }: { label: string; value: string; big?: boolean }) {
+  return (
+    <div className="rounded-xl border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)] p-4">
+      <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">{label}</div>
+      <div className={`mt-1 font-bold text-[var(--text)] ${big ? "text-[28px] leading-none" : "text-[16px]"}`}>{value}</div>
+    </div>
+  );
+}
 
 export default Campaigns;
