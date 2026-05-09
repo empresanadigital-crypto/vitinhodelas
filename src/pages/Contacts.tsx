@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Upload, Search, Trash2, Users, Loader2, Pencil, FileSpreadsheet, FileText, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Upload, Search, Trash2, Pencil, FileSpreadsheet, FileText, Plus, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,7 +30,6 @@ const Contacts = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
-
   const [editDialog, setEditDialog] = useState(false);
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [editName, setEditName] = useState("");
@@ -52,7 +46,7 @@ const Contacts = () => {
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      setContacts(data || []);
+      setContacts((data as Contact[]) || []);
     }
     setLoading(false);
   };
@@ -169,206 +163,288 @@ const Contacts = () => {
     }
   };
 
+  // Avatar color por iniciais
+  const avatarColors = ["var(--green)", "var(--pastel-blue)", "var(--pastel-cream)", "var(--pastel-yellow)", "var(--pastel-green)"];
+  const getAvatarColor = (name: string) => {
+    const sum = name.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
+    return avatarColors[sum % avatarColors.length];
+  };
+  const getInitials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase()).join("");
+
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-[var(--border-strong)] border-t-transparent" />
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 md:p-7 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="px-9 pb-12 pt-7 max-w-[1440px]">
+      {/* Topbar */}
+      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Contatos</h1>
-          <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>{contacts.length} contatos na base</p>
+          <h1 className="text-[38px] font-medium leading-[1.1] tracking-[-0.03em] text-[var(--text)]">Contatos</h1>
+          <p className="mt-1.5 text-[14px] text-[var(--text-muted)]">Gerencie sua base de contatos do WhatsApp</p>
         </div>
-        <Dialog open={importDialog} onOpenChange={setImportDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="border-border text-foreground">
-              <Upload className="mr-2 h-4 w-4" /> Importar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">Importar Contatos</DialogTitle>
-            </DialogHeader>
-            <Tabs value={importTab} onValueChange={(v) => setImportTab(v)} className="w-full">
-              <TabsList className="w-full grid grid-cols-2">
-                <TabsTrigger value="text" className="flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5" /> Colar texto
-                </TabsTrigger>
-                <TabsTrigger value="file" className="flex items-center gap-1.5">
-                  <FileSpreadsheet className="h-3.5 w-3.5" /> Arquivo CSV/Excel
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="text" className="space-y-4 pt-2">
-                <div>
-                  <Label className="text-foreground">Cole seus contatos (um por linha)</Label>
-                  <Textarea
-                    placeholder={"5511999991234\nMaria Silva, 5511999991234\n5521988885678"}
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
-                    className="mt-1 min-h-[200px] bg-secondary border-border text-foreground font-mono text-sm"
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Aceita só o número ou Nome, Número (um por linha). Sem nome, o número será usado como nome.
-                  </p>
-                </div>
-                {bulkText.trim() && (
-                  <p className="text-sm text-muted-foreground">
-                    ✅ <strong className="text-foreground">{parseLines(bulkText).length}</strong> contatos válidos encontrados
-                  </p>
-                )}
-                <Button
-                  onClick={() => importContacts("text")}
-                  className="w-full gradient-blue text-primary-foreground font-semibold"
-                  disabled={!bulkText.trim() || parseLines(bulkText).length === 0}
-                >
-                  <Upload className="mr-2 h-4 w-4" /> Importar Contatos
-                </Button>
-              </TabsContent>
-              <TabsContent value="file" className="space-y-4 pt-2">
-                <div>
-                  <Label className="text-foreground">Selecione um arquivo CSV, TXT ou Excel</Label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.txt,.xlsx,.xls"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    className="w-full mt-2 border-dashed border-2 border-border text-muted-foreground hover:text-foreground h-20"
-                    onClick={() => fileInputRef.current?.click()}
+        <div className="flex gap-2.5">
+          <Dialog open={importDialog} onOpenChange={setImportDialog}>
+            <DialogTrigger asChild>
+              <button className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-semibold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[1.5px_1.5px_0_var(--border-strong)]">
+                <Upload className="h-3.5 w-3.5" />
+                Importar
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-[var(--surface)] border-[1.5px] border-[var(--border-strong)] max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="text-[var(--text)] text-[18px] font-bold">Importar Contatos</DialogTitle>
+              </DialogHeader>
+              <Tabs value={importTab} onValueChange={(v) => setImportTab(v)} className="w-full">
+                <TabsList className="w-full grid grid-cols-2 bg-[var(--pastel-gray)] border-[1.5px] border-[var(--border-strong)] rounded-[10px] p-1">
+                  <TabsTrigger value="text" className="flex items-center gap-1.5 data-[state=active]:bg-[var(--surface)] data-[state=active]:border-[1.5px] data-[state=active]:border-[var(--border-strong)] data-[state=active]:shadow-[1px_1px_0_var(--border-strong)] rounded-md text-[13px] font-semibold">
+                    <FileText className="h-3.5 w-3.5" /> Colar texto
+                  </TabsTrigger>
+                  <TabsTrigger value="file" className="flex items-center gap-1.5 data-[state=active]:bg-[var(--surface)] data-[state=active]:border-[1.5px] data-[state=active]:border-[var(--border-strong)] data-[state=active]:shadow-[1px_1px_0_var(--border-strong)] rounded-md text-[13px] font-semibold">
+                    <FileSpreadsheet className="h-3.5 w-3.5" /> Arquivo CSV/Excel
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="text" className="space-y-4 pt-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)] mb-2">Cole seus contatos (um por linha)</label>
+                    <textarea
+                      placeholder={"5511999991234\nMaria Silva, 5511999991234\n5521988885678"}
+                      value={bulkText}
+                      onChange={(e) => setBulkText(e.target.value)}
+                      className="w-full min-h-[200px] rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] p-3 font-mono text-[13px] text-[var(--text)] outline-none transition-all placeholder:text-[var(--text-muted)] focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[var(--shadow-sm)]"
+                    />
+                    <p className="mt-1.5 text-[11px] text-[var(--text-muted)]">
+                      Aceita só o número ou Nome, Número (um por linha). Sem nome, o número será usado como nome.
+                    </p>
+                  </div>
+                  {bulkText.trim() && (
+                    <p className="text-[13px] text-[var(--text-muted)]">
+                      ✅ <strong className="text-[var(--text)]">{parseLines(bulkText).length}</strong> contatos válidos encontrados
+                    </p>
+                  )}
+                  <button
+                    onClick={() => importContacts("text")}
+                    disabled={!bulkText.trim() || parseLines(bulkText).length === 0}
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-3 text-[14px] font-bold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[var(--shadow-md)]"
                   >
-                    <div className="flex flex-col items-center gap-1">
-                      <FileSpreadsheet className="h-5 w-5" />
-                      <span className="text-sm">{fileName || "Clique para selecionar arquivo"}</span>
-                    </div>
-                  </Button>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Formatos aceitos: .csv, .txt, .xlsx — uma coluna com número ou duas colunas (nome, número)
-                  </p>
-                </div>
-                {fileContacts.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    ✅ <strong className="text-foreground">{fileContacts.length}</strong> contatos encontrados no arquivo
-                  </p>
-                )}
-                <Button
-                  onClick={() => importContacts("file")}
-                  className="w-full gradient-blue text-primary-foreground font-semibold"
-                  disabled={fileContacts.length === 0}
-                >
-                  <Upload className="mr-2 h-4 w-4" /> Importar {fileContacts.length} Contatos
-                </Button>
-              </TabsContent>
-            </Tabs>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar por nome ou número..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-secondary border-border text-foreground pl-10" />
-      </div>
-
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card overflow-hidden rounded-xl">
-        {/* Desktop table header */}
-        <div className="hidden md:grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b border-border px-5 py-3"
-          style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(242,242,255,0.2)', background: 'rgba(255,255,255,0.02)' }}>
-          <span>Nome</span><span>Número</span><span>Tags</span><span></span>
+                    <Upload className="h-4 w-4" />
+                    Importar Contatos
+                  </button>
+                </TabsContent>
+                <TabsContent value="file" className="space-y-4 pt-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)] mb-2">Selecione um arquivo CSV, TXT ou Excel</label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,.txt,.xlsx,.xls"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full rounded-[10px] border-[1.5px] border-dashed border-[var(--border-strong)] bg-[var(--pastel-gray)] p-6 text-center transition-all hover:bg-[var(--pastel-blue)]"
+                    >
+                      <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 text-[var(--text-muted)]" />
+                      <p className="text-[14px] font-bold text-[var(--text)]">{fileName || "Clique pra escolher arquivo"}</p>
+                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">CSV, TXT, XLSX ou XLS</p>
+                    </button>
+                  </div>
+                  {fileContacts.length > 0 && (
+                    <p className="text-[13px] text-[var(--text-muted)]">
+                      ✅ <strong className="text-[var(--text)]">{fileContacts.length}</strong> contatos válidos encontrados
+                    </p>
+                  )}
+                  <button
+                    onClick={() => importContacts("file")}
+                    disabled={fileContacts.length === 0}
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-3 text-[14px] font-bold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[var(--shadow-md)]"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Importar Arquivo
+                  </button>
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="divide-y divide-border">
-          {paginatedContacts.map((contact) => (
-            <div key={contact.id} className="flex flex-col md:grid md:grid-cols-[1fr_1fr_auto_auto] md:items-center gap-2 md:gap-4 px-5 py-3 transition-colors hover:bg-[hsl(235,12%,11%)]">
-              <span className="font-medium text-foreground">{contact.name}</span>
-              <span className="font-mono text-sm text-muted-foreground">{contact.phone}</span>
-              <div className="flex gap-1 flex-wrap">
-                {(contact.tags || []).map((tag) => (
-                  <span key={tag} className="rounded-[10px]" style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', background: 'rgba(59,130,246,0.08)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.12)' }}>{tag}</span>
+      </div>
+
+      {/* Toolbar */}
+      <div className="mb-4 flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 max-w-[380px]">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+          <input
+            type="search"
+            placeholder="Buscar por nome ou telefone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] py-2.5 pl-10 pr-3.5 text-[14px] text-[var(--text)] outline-none transition-all placeholder:text-[var(--text-muted)] focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[var(--shadow-sm)]"
+          />
+        </div>
+        <div className="ml-auto text-[13px] text-[var(--text-muted)]">
+          <strong className="text-[var(--text)]">{filtered.length}</strong> contatos
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+        {paginatedContacts.length === 0 ? (
+          <div className="px-5 py-16 text-center">
+            <Users className="mx-auto mb-3 h-8 w-8 text-[var(--text-muted)]" />
+            <p className="text-[14px] text-[var(--text-muted)]">
+              {search ? "Nenhum contato encontrado." : "Nenhum contato ainda."}
+            </p>
+            {!search && (
+              <button
+                onClick={() => setImportDialog(true)}
+                className="mt-4 inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-4 py-2 text-[13px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-sm)] transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-md)]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Importar primeiros contatos
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)]">
+                <tr>
+                  <th className="w-[60px] px-5 py-3"></th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Nome</th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Telefone</th>
+                  <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Tags</th>
+                  <th className="w-[120px] px-5 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedContacts.map((c) => (
+                  <tr key={c.id} className="border-b border-[var(--border-color)] last:border-b-0 hover:bg-[var(--pastel-gray)]">
+                    <td className="px-5 py-3">
+                      <div
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-[var(--border-strong)] text-[11px] font-bold text-[#1D1D1B]"
+                        style={{ background: getAvatarColor(c.name) }}
+                      >
+                        {getInitials(c.name) || "?"}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-[13px] font-bold text-[var(--text)]">{c.name}</td>
+                    <td className="px-5 py-3 font-mono text-[12px] text-[var(--text-muted)]">{c.phone}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {(c.tags || []).map((tag) => (
+                          <span key={tag} className="inline-flex items-center rounded-full border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text)]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex justify-end gap-1.5">
+                        <button
+                          onClick={() => openEdit(c)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)]"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(c)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-[var(--red)] bg-[var(--surface)] text-[var(--red)] transition-all hover:bg-[#FEE2E2]"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => openEdit(contact)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(contact)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <Users className="mb-3 h-10 w-10" style={{ color: 'rgba(242,242,255,0.2)' }} />
-              <p className="text-base font-medium mb-1" style={{ color: 'rgba(242,242,255,0.35)' }}>Nenhum contato encontrado</p>
-              <p className="text-sm mb-4" style={{ color: 'rgba(242,242,255,0.35)' }}>{contacts.length === 0 ? "Importe seus contatos para começar" : "Tente outro termo de busca"}</p>
-              {contacts.length === 0 && (
-                <Button variant="outline" className="border-border text-foreground" onClick={() => setImportDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Importar contatos
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      </motion.div>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Pagination */}
-      {filtered.length > PAGE_SIZE && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages} · {filtered.length} contatos no total
-          </p>
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-[13px] text-[var(--text-muted)]">
+            Página <strong className="text-[var(--text)]">{currentPage}</strong> de {totalPages}
+          </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="border-border text-foreground">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => p - 1)}
+              className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-2 text-[13px] font-semibold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)] disabled:opacity-30 disabled:cursor-not-allowed"
+            >
               Anterior
-            </Button>
-            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="border-border text-foreground">
-              Próximo
-            </Button>
+            </button>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => p + 1)}
+              className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-4 py-2 text-[13px] font-semibold text-[var(--text)] transition-all hover:bg-[var(--pastel-gray)] disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Próxima
+            </button>
           </div>
         </div>
       )}
 
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent className="bg-card border-border">
+      {/* Edit Dialog */}
+      <Dialog open={editDialog} onOpenChange={setEditDialog}>
+        <DialogContent className="bg-[var(--surface)] border-[1.5px] border-[var(--border-strong)] max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[var(--text)] text-[18px] font-bold">Editar Contato</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)] mb-2">Nome</label>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2.5 text-[14px] text-[var(--text)] outline-none transition-all focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[var(--shadow-sm)]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text)] mb-2">Tags (separadas por vírgula)</label>
+              <input
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+                className="w-full rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2.5 text-[14px] text-[var(--text)] outline-none transition-all focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[var(--shadow-sm)]"
+              />
+            </div>
+            <button
+              onClick={saveEdit}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-3 text-[14px] font-bold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)]"
+            >
+              Salvar Alterações
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="bg-[var(--surface)] border-[1.5px] border-[var(--border-strong)]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Remover contato</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja remover este contato? Esta ação não pode ser desfeita.
+            <AlertDialogTitle className="text-[var(--text)]">Excluir Contato</AlertDialogTitle>
+            <AlertDialogDescription className="text-[var(--text-muted)]">
+              Tem certeza que deseja excluir o contato <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-border text-foreground">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={removeContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+            <AlertDialogCancel className="border-[1.5px] border-[var(--border-strong)] rounded-[10px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={removeContact}
+              className="bg-[var(--red)] text-white hover:bg-[var(--red)]/90 rounded-[10px]"
+            >
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Edit dialog */}
-      <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Editar Contato</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label className="text-foreground">Nome</Label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1 bg-secondary border-border text-foreground" />
-            </div>
-            <div>
-              <Label className="text-foreground">Tags (separadas por vírgula)</Label>
-              <Input value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="Ex: VIP, Cliente, Importado" className="mt-1 bg-secondary border-border text-foreground" />
-            </div>
-            <Button onClick={saveEdit} className="w-full gradient-blue text-primary-foreground font-semibold" disabled={!editName.trim()}>
-              Salvar Alterações
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
