@@ -452,19 +452,16 @@ const Instances = () => {
   }
 
   return (
-    <div className="p-6 md:p-7 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="px-9 pb-12 pt-7 max-w-[1440px]">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-7">
         <div>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.05em', color: '#f2f2ff' }}>Instâncias WhatsApp</h1>
-          <p style={{ fontSize: 12, color: 'rgba(242,242,255,0.28)' }}>Gerencie suas conexões de WhatsApp</p>
+          <h1 className="text-[38px] font-medium leading-[1.1] tracking-[-0.03em] text-[var(--text)]">Instâncias WhatsApp</h1>
+          <p className="mt-1.5 text-[14px] text-[var(--text-muted)]">Gerencie suas conexões de WhatsApp</p>
         </div>
         <div className="flex items-center gap-2">
           {instances.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              style={{ border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 11 }}
-              className="hover:bg-destructive/10"
+            <button
+              className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--red)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-semibold text-[var(--red)] transition-all hover:bg-[#FEE2E2]"
               onClick={async () => {
                 if (!confirm("Tem certeza que deseja remover TODAS as instâncias?")) return;
                 for (const inst of instances) {
@@ -489,15 +486,15 @@ const Instances = () => {
                 await fetchInstances();
               }}
             >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              <Trash2 className="h-3.5 w-3.5" />
               Limpar Tudo
-            </Button>
+            </button>
           )}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gradient-blue text-primary-foreground font-semibold">
-                <Plus className="mr-2 h-4 w-4" /> Nova Instância
-              </Button>
+              <button className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1B] shadow-[var(--shadow-md)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)]">
+                <Plus className="h-4 w-4" /> Nova Instância
+              </button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border max-w-lg">
               <DialogHeader>
@@ -506,11 +503,11 @@ const Instances = () => {
               <div className="space-y-4 py-2">
                 <div>
                   <Label className="text-foreground">Nome da Instância</Label>
-                  <Input placeholder="Ex: WhatsApp Marketing" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-secondary border-border text-foreground" />
+                  <Input placeholder="Ex: WhatsApp Marketing" value={newName} onChange={(e) => setNewName(e.target.value)} className="" />
                 </div>
                 <div>
                   <Label className="text-foreground">URL da VPS (servidor Baileys)</Label>
-                  <Input placeholder="http://157.230.13.129:3100" value={newVpsUrl} onChange={(e) => setNewVpsUrl(e.target.value)} className="bg-secondary border-border text-foreground" />
+                  <Input placeholder="http://157.230.13.129:3100" value={newVpsUrl} onChange={(e) => setNewVpsUrl(e.target.value)} className="" />
                   <p className="text-[10px] text-muted-foreground mt-1 ml-0.5">Endereço do servidor Baileys nesta VPS. Formato: http://IP:3100</p>
                 </div>
                 <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-muted-foreground">
