@@ -89,57 +89,6 @@ export type Database = {
           },
         ]
       }
-      campaign_logs: {
-        Row: {
-          campaign_id: string
-          contact_name: string | null
-          contact_phone: string
-          error_message: string | null
-          id: string
-          instance_id: string | null
-          sent_at: string | null
-          status: string
-          user_id: string
-        }
-        Insert: {
-          campaign_id: string
-          contact_name?: string | null
-          contact_phone: string
-          error_message?: string | null
-          id?: string
-          instance_id?: string | null
-          sent_at?: string | null
-          status?: string
-          user_id: string
-        }
-        Update: {
-          campaign_id?: string
-          contact_name?: string | null
-          contact_phone?: string
-          error_message?: string | null
-          id?: string
-          instance_id?: string | null
-          sent_at?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_logs_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_logs_instance_id_fkey"
-            columns: ["instance_id"]
-            isOneToOne: false
-            referencedRelation: "instances"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       campaigns: {
         Row: {
           button_text: string | null
