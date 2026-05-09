@@ -1,268 +1,108 @@
 import { NavLink, useLocation } from "react-router-dom";
- import { Smartphone, Users, Send, LogOut, Flame, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Smartphone, Users, Send, BarChart3, LogOut, Bell, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const navGroups = [
-  {
-    label: "Menu",
-     items: [
-       { to: "/dashboard", icon: BarChart3, label: "Dashboard" },
-       { to: "/instancias", icon: Smartphone, label: "Instâncias" },
-       { to: "/contatos", icon: Users, label: "Contatos" },
-       { to: "/campanhas", icon: Send, label: "Campanhas" },
-     ],
-  },
+const navItems = [
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/instancias", icon: Smartphone, label: "Instâncias" },
+  { to: "/contatos", icon: Users, label: "Contatos" },
+  { to: "/campanhas", icon: Send, label: "Campanhas" },
+  { to: "/relatorios", icon: BarChart3, label: "Relatórios" },
 ];
 
 const AppSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
-  const location = useLocation();
   const { user, signOut } = useAuth();
-  const [exitHover, setExitHover] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const dark = stored === "dark";
+    setIsDark(dark);
+    document.documentElement.classList.toggle("dark", dark);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
 
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
+  const emailHandle = user?.email?.split("@")[0] || "Usuário";
 
   return (
-    <aside
-      style={{
-        position: "fixed",
-        left: 0,
-        top: 0,
-        zIndex: 40,
-        width: 220,
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#040408",
-        borderRight: "1px solid rgba(255,255,255,0.05)",
-      }}
-    >
-      {/* Logo */}
-      <div
-        style={{
-          padding: "20px 18px 18px",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 28,
-            fontWeight: 900,
-            letterSpacing: "-0.03em",
-            background: "linear-gradient(135deg, #3b82f6, #18f26a)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            display: "block",
-            lineHeight: 1.1,
-          }}
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col gap-5 overflow-y-auto border-r-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] p-[22px_18px]">
+      {/* Logo + ações */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/readyzap-logo.png"
+            alt="ReadyZap"
+            className="block h-[38px] w-[38px] rounded-[9px] border-[1.5px] border-[var(--border-strong)]"
+          />
+          <div className="flex flex-col leading-none">
+            <span className="text-[17px] font-bold text-[var(--text)] tracking-tight">ReadyZap</span>
+            <span className="mt-[3px] text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)]">SENDER</span>
+          </div>
+        </div>
+        <button
+          onClick={toggleTheme}
+          title={isDark ? "Tema claro" : "Tema escuro"}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text)] transition-all hover:bg-[var(--text)] hover:text-[var(--surface)]"
         >
-          ReadyZap
-        </span>
-        <span
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase" as const,
-            color: "rgba(242,242,255,0.25)",
-            display: "block",
-            marginTop: 2,
-          }}
-        >
-          SENDER
-        </span>
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
       </div>
 
-      {/* Navigation */}
-      <nav style={{ flex: 1, padding: "14px 10px", overflowY: "auto" }}>
-        {navGroups.map((group) => (
-          <div key={group.label}>
-            <div
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: "0.10em",
-                textTransform: "uppercase" as const,
-                color: "rgba(242,242,255,0.10)",
-                padding: "0 8px",
-                margin: "14px 0 5px",
-              }}
-            >
-              {group.label}
-            </div>
-            {group.items.map((item) => {
-              const isActive = location.pathname === item.to || location.pathname.startsWith(item.to);
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => onNavigate?.()}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: isActive ? "9px 10px 9px 8px" : "9px 10px",
-                    borderRadius: 8,
-                    fontSize: 13,
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#f2f2ff" : "rgba(242,242,255,0.4)",
-                    textDecoration: "none",
-                    cursor: "pointer",
-                    marginBottom: 1,
-                    transition: "background .12s, color .12s",
-                    background: isActive ? "rgba(59,130,246,0.08)" : "transparent",
-                    borderLeft: isActive ? "2px solid #3b82f6" : "2px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                      e.currentTarget.style.color = "rgba(242,242,255,0.7)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(242,242,255,0.4)";
-                    }
-                  }}
-                >
-                  <item.icon
-                    style={{
-                      width: 16,
-                      height: 16,
-                      flexShrink: 0,
-                      color: isActive ? "#60a5fa" : "rgba(242,242,255,0.4)",
-                    }}
-                  />
-                  {item.label}
-                </NavLink>
-              );
-            })}
-          </div>
-        ))}
+      {/* Workspace card */}
+      <div className="flex items-center gap-2.5 rounded-xl border-[1.5px] border-[var(--border-strong)] bg-[var(--pastel-gray)] p-3 shadow-[var(--shadow-sm)]">
+        <div className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[9px] border-[1.5px] border-[var(--border-strong)] bg-[var(--green)] text-xs font-bold text-[#1D1D1B]">
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-bold text-[var(--text)]">{emailHandle}</div>
+          <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">Plano Business</div>
+        </div>
+      </div>
 
-      </nav>
+      {/* Menu */}
+      <div className="flex flex-col gap-[3px]">
+        <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+          Menu
+        </div>
+        {navItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={() => onNavigate?.()}
+            className={({ isActive }) =>
+              [
+                "flex items-center gap-2.5 rounded-[10px] border-[1.5px] px-3 py-2.5 text-[14px] transition-all",
+                isActive
+                  ? "border-[var(--border-strong)] bg-[var(--surface)] font-bold text-[var(--text)] shadow-[var(--shadow-sm)]"
+                  : "border-transparent font-medium text-[var(--text)] hover:bg-[var(--pastel-gray)]",
+              ].join(" ")
+            }
+          >
+            <Icon className="h-[17px] w-[17px] flex-shrink-0" />
+            {label}
+          </NavLink>
+        ))}
+      </div>
 
       {/* Footer */}
-      <div
-        style={{
-          padding: "14px 12px",
-          borderTop: "1px solid rgba(255,255,255,0.05)",
-        }}
-      >
-        {/* User row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 9,
-            padding: "8px 8px",
-            borderRadius: 8,
-            marginBottom: 6,
-          }}
+      <div className="mt-auto">
+        <button
+          onClick={signOut}
+          className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[13px] font-medium text-[var(--text-muted)] transition-all hover:bg-[var(--pastel-gray)] hover:text-[var(--text)]"
         >
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              background: "rgba(59,130,246,0.10)",
-              border: "1px solid rgba(59,130,246,0.22)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#60a5fa",
-              fontFamily: "'Outfit', sans-serif",
-              flexShrink: 0,
-            }}
-          >
-            {initials}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#f2f2ff",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {user?.email?.split("@")[0] || "Usuário"}
-            </div>
-            <div
-              style={{
-                fontSize: 10,
-                color: "rgba(242,242,255,0.22)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {user?.email || ""}
-            </div>
-          </div>
-        </div>
-
-        {/* ReadyZap link */}
-        <div
-          onClick={() => window.open("https://app.readyzap.com.br", "_blank")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 8px",
-            borderRadius: 7,
-            fontSize: 12,
-            color: "rgba(242,242,255,0.4)",
-            cursor: "pointer",
-            transition: "all .12s",
-            marginBottom: 4,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(251,146,60,0.08)";
-            e.currentTarget.style.color = "#fb923c";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "rgba(242,242,255,0.4)";
-          }}
-        >
-          <Flame style={{ width: 14, height: 14 }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>ReadyZap</div>
-            <div style={{ fontSize: 9, opacity: 0.6 }}>Super App</div>
-          </div>
-        </div>
-
-
-        {/* Sair */}
-        <div
-          onClick={async () => { await signOut(); window.location.href = "https://readysender.com.br/"; }}
-          onMouseEnter={() => setExitHover(true)}
-          onMouseLeave={() => setExitHover(false)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 8px",
-            borderRadius: 7,
-            fontSize: 12,
-            color: exitHover ? "#ef4444" : "rgba(242,242,255,0.4)",
-            background: exitHover ? "rgba(239,68,68,0.06)" : "transparent",
-            cursor: "pointer",
-            transition: "all .12s",
-          }}
-        >
-          <LogOut style={{ width: 14, height: 14 }} />
+          <LogOut className="h-4 w-4" />
           Sair
-        </div>
+        </button>
       </div>
     </aside>
   );
